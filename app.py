@@ -2,13 +2,13 @@ import os
 
 from bottle import route, template, request, response, redirect, static_file, error, run
 from json import dumps
-from test import airquality
+from test import AirQuality
 
 @route('/')
-def show_home():
+def show_data():
     lat = float(request.query['lat'])
     lng = float(request.query['lng'])
-    a = airquality(lat, lng).getData()
+    a = AirQuality(lat, lng).getData()
     response.content_type = 'application/json'
     return dumps(a)
 

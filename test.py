@@ -1,14 +1,10 @@
+import os
 import requests
 import json
 import math
 from math import cos, asin, sqrt
 
-#r = requests.get('https://api.thingspeak.com/channels/370620/fields/8.json?start=2018-11-11%2013:23:38&offset=0&round=0&average=10&results=12000&api_key=KD5U9IJ2Y377TKXZ')
-#results = r.json()['feeds']
-#latest = results[-1]
-
-
-class airquality(object):
+class AirQuality(object):
     """AirQuality Class
 
     Attributes:
@@ -22,7 +18,7 @@ class airquality(object):
         self.lng = lng
 
     def getData(self):
-        r = requests.get('https://www.purpleair.com/json')
+        r = requests.get(os.environ['AIRQUALITY_DATA'])
         results = r.json()['results']
         index = 0
         d_ = 1000000
@@ -99,7 +95,3 @@ class airquality(object):
         else:
             AQICategory="Out of Range"
         return {"category": AQICategory, "caution": C, "score": int(AQI)}
-
-if __name__ == "__main__":
-    a = airquality(38.07696, -122.547431)
-    print(a.getData())
