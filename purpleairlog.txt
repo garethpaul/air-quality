@@ -1,3 +1,0 @@
-2018-11-11 13:18: Data loaded from url successfully. 
-2018-11-11 13:19: Data loaded from url successfully. 
-2018-11-11 13:19: Data gathered successfully. 
