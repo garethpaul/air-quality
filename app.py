@@ -4,6 +4,7 @@ from bottle import route, template, request, response, redirect, static_file, er
 from json import dumps
 from test import AirQuality
 
+
 @route('/')
 def show_data():
     lat = float(request.query['lat'])
