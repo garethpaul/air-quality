@@ -37,7 +37,8 @@ jobs:
 
       # Run Some Tests      
       - run:
-          command: pipenv run "python run_tests.py"
+          command: |
+            pipenv run "python run_tests.py"
       - store_test_results:
           path: test-results
       - store_artifacts:
