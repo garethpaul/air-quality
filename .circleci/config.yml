@@ -40,7 +40,6 @@ jobs:
     steps:
       - checkout
       - run
-        name: Running Tests
         command: |
           . venv/bin/activate python3 run_tests.py
 
