@@ -39,7 +39,8 @@ jobs:
       - image: circleci/python:3.6.1
     steps:
       - checkout
-      - run
+      - run:
+        name: Runnign Tests
         command: |
           . venv/bin/activate python3 run_tests.py
 
