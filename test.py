@@ -3,6 +3,7 @@ import requests
 import json
 import math
 from math import cos, asin, sqrt
+import redis
 
 class AirQuality(object):
     """AirQuality Class
@@ -16,22 +17,32 @@ class AirQuality(object):
         """Return a new Truck object."""
         self.lat = lat
         self.lng = lng
+        self.r = redis.StrictRedis.from_url(os.environ.get("REDIS_URL"))
 
     def getData(self):
-        r = requests.get(os.environ['AIRQUALITY_DATA'])
-        results = r.json()['results']
-        index = 0
-        d_ = 1000000
-        for item in results:
-            i = item
-            if i['Lat']:
-                d = self.distance(self.lat,self.lng, i['Lat'], i['Lon'])
-                if d < d_:
-                    d_ = d
-                    index = results.index(i)
-        pm25 = results[index]['PM2_5Value']
-        a = self.AQIPM25(pm25)
-        return (self.AQICategory(a))
+        # Cache Check
+        key = 'a_q_' + str(self.lat) + '_' + str(self.lng)
+        cache = self.r.get(key)
+        if cache is None:
+            r = requests.get(os.environ['AIRQUALITY_DATA'])
+            results = r.json()['results']
+            index = 0
+            d_ = 1000000
+            for item in results:
+                i = item
+                if i['Lat'] and item['PM2_5Value']:
+                    if float(item['PM2_5Value']) >= 5:
+                        d = self.distance(self.lat,self.lng, i['Lat'], i['Lon'])
+                        if d < d_:
+                            d_ = d
+                            index = results.index(i)
+            pm25 = float(results[index]['PM2_5Value'])
+            print(pm25)
+            a = self.AQIPM25(pm25)
+            data = self.AQICategory(a)
+            self.r.setex(key, 180, json.dumps(data))
+            return data
+        return json.loads(cache)
 
     def distance(self, lat1, lon1, lat2, lon2):
         p = 0.017453292519943295     #Pi/180

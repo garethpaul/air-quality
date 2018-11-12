@@ -1,2 +1,4 @@
 bottle==0.12.8
 requests==2.20.1
+mapbox==0.17.1
+redis==2.10.6
