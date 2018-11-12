@@ -1,8 +1,7 @@
 import unittest
 testmodules = [
     'air_tests',
-    'geocode_tests',
-    'app_tests'
+    'geocode_tests'
     ]
 
 suite = unittest.TestSuite()
