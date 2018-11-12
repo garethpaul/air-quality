@@ -29,6 +29,9 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+      - run:
+          name: run tests
+          command: |
             cd ~/repo/
             python3 run_tests.py
 
