@@ -1,8 +1,8 @@
 import os
-
 from bottle import route, template, request, response, redirect, static_file, error, run
+
 from json import dumps
-from test import AirQuality
+from air import AirQuality
 from geocode import GeoCode
 
 @route('/')
@@ -25,8 +25,6 @@ def search():
         
     else:
         return "No query string provided"
-
-
 
 if os.environ.get('APP_LOCATION') == 'heroku':
     run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
