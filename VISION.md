@@ -48,7 +48,7 @@ Network-facing changes should fail closed when required configuration is
 missing. Do not add request paths that expose raw credentials, Redis internals,
 or unvalidated upstream data.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Large framework rewrites that do not preserve the existing endpoint behavior
 - New geocoding or air-quality providers without tests and configuration docs
