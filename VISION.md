@@ -1,5 +1,8 @@
 ## Air Quality Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Air Quality is a small Bottle API for answering a focused question: what is the
 nearest PM2.5 air quality category for a location?
 
