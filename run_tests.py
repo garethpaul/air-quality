@@ -2,6 +2,7 @@ import sys
 import unittest
 
 TEST_MODULES = [
+    "app_tests",
     "air_tests",
     "geocode_tests",
 ]

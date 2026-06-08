@@ -17,3 +17,6 @@
    changes have explicit quality gates.
 6. Pinned Mapbox's AWS transitive dependencies to keep dependency installation
    deterministic and avoid long resolver backtracking in CI.
+7. Added route helper tests and validation for missing, malformed, non-finite,
+   and out-of-range coordinate input, empty search queries, JSON route errors,
+   and import-safe Bottle startup.
