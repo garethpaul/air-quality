@@ -20,3 +20,5 @@
 7. Added route helper tests and validation for missing, malformed, non-finite,
    and out-of-range coordinate input, empty search queries, JSON route errors,
    and import-safe Bottle startup.
+8. Added `make check` as the standard local gate for lint, tests, and build
+   verification.

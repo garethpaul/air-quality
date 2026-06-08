@@ -1,6 +1,8 @@
 PYTHON_FILES := $(shell git ls-files '*.py')
 
-.PHONY: lint test build
+.PHONY: check lint test build
+
+check: lint test build
 
 lint:
 	python -m ruff format --check .

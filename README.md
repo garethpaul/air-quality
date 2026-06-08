@@ -53,6 +53,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
+- `make check` - run lint, tests, and Python bytecode compilation
 - `make lint` - check formatting and static issues with Ruff
 - `make test` - run the dependency-free unittest suite
 - `make build` - compile tracked Python files

@@ -35,7 +35,7 @@ Contribution rules:
 
 - One PR = one focused change. Do not bundle data ingestion, API behavior, and
   deployment changes together.
-- Run `make lint`, `make test`, and `make build` before pushing changes.
+- Run `make check` before pushing changes.
 - Keep API responses simple and documented; callers should not need to infer
   hidden service state.
 - Prefer small fixes that preserve the current API over rewrites without a

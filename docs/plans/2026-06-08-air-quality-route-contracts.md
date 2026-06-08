@@ -52,6 +52,7 @@ Approach:
 
 ## Verification
 
+- `make check`
 - `make lint`
 - `make test`
 - `make build`
