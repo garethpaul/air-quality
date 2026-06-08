@@ -53,14 +53,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `python -m pytest` or the test runner used by the files above
-- `make test` if the Makefile defines that target
+- `make lint` - check formatting and static issues with Ruff
+- `make test` - run the dependency-free unittest suite
+- `make build` - compile tracked Python files
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
 
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty `query` value.
 
 ## Security and Privacy Notes
 

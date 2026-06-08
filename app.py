@@ -52,7 +52,7 @@ def air_quality_payload(lat, lng, air_quality_factory=AirQuality):
 
 
 def search_payload(query, geocode_factory=GeoCode, air_quality_factory=AirQuality):
-    query_string = (query or "").strip()
+    query_string = "" if query is None else str(query).strip()
     if not query_string:
         raise ValueError("query is required")
 

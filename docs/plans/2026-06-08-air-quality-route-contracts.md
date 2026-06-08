@@ -35,7 +35,8 @@ Approach:
 
 - Cover coordinate parsing, empty query handling, search query trimming, and
   injectable air-quality/geocode collaborators. Coordinate parsing should reject
-  missing, non-numeric, non-finite, and out-of-range values.
+  missing, non-numeric, non-finite, and out-of-range values. Search parsing
+  should trim and normalize request values before passing them to geocoding.
 
 ### U2: Route Helper Refactor
 

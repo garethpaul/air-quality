@@ -74,6 +74,16 @@ class AppRouteHelperTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             search_payload("   ", geocode_factory=FakeGeoCode)
 
+    def test_search_payload_coerces_non_string_query_values(self):
+        payload = search_payload(
+            94105,
+            geocode_factory=FakeGeoCode,
+            air_quality_factory=FakeAirQuality,
+        )
+
+        self.assertEqual(payload, {"category": "Good", "caution": "None", "score": 42})
+        self.assertEqual(FakeGeoCode.calls, ["94105"])
+
 
 if __name__ == "__main__":
     unittest.main()
