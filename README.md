@@ -1,5 +1,8 @@
 # Air Quality
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 Small Bottle app that returns the nearest PM2.5 air quality category for a
 latitude and longitude, or for a search query resolved through Mapbox.
 

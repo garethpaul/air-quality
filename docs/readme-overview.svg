@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">air-quality project overview</title>
+  <desc id="desc">Generated overview of the repository purpose, code shape, entry points, and verification surfaces.</desc>
+  <rect width="1200" height="675" fill="#f8fafc"/>
+  <rect x="32" y="32" width="1136" height="611" rx="24" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+  <rect x="32" y="32" width="1136" height="126" rx="24" fill="#111827"/>
+  <path d="M32 134h1136v24H32z" fill="#111827"/>
+  <circle cx="1062" cy="82" r="18" fill="#2563eb"/>
+  <circle cx="1110" cy="82" r="18" fill="#10b981"/>
+  <circle cx="1014" cy="82" r="18" fill="#f97316"/>
+  <text x="76" y="82" font-size="36" fill="#ffffff" font-weight="700">air-quality</text>
+  <text x="76" y="124" font-size="20" fill="#cbd5e1">Python web API or service project</text>
+  <text x="76" y="206" font-size="24" fill="#111827">Python Bottle API for Getting Air Quality based on Lat/Lng or Query</text>
+<text x="76" y="240" font-size="24" fill="#111827">String</text>
+
+  <rect x="76" y="294" width="316" height="246" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="102" y="340" font-size="24" font-weight="700" fill="#1d4ed8">Code Shape</text>
+  <text x="102" y="382" font-size="19" fill="#1f2937">Languages: Python (7)</text>
+  <text x="102" y="440" font-size="19" fill="#1f2937">Source: .circleci, docs</text>
+  <text x="102" y="498" font-size="19" fill="#1f2937">Manifests: Makefile, Procfile, pyproject.toml, requirements.txt</text>
+
+  <rect x="442" y="294" width="316" height="246" rx="14" fill="#ecfdf5" stroke="#bbf7d0"/>
+  <text x="468" y="340" font-size="24" font-weight="700" fill="#047857">How It Runs</text>
+  <text x="468" y="382" font-size="19" fill="#1f2937">Entry points: app.py, Makefile</text>
+  <text x="468" y="460" font-size="19" fill="#1f2937">Tests: air_tests.py, geocode_tests.py, run_tests.py, 1 more</text>
+
+  <rect x="808" y="294" width="316" height="246" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="834" y="340" font-size="24" font-weight="700" fill="#c2410c">Review Focus</text>
+  <text x="834" y="382" font-size="19" fill="#1f2937">Integrations: Mapbox</text>
+  <text x="834" y="460" font-size="19" fill="#1f2937">Sensitive surfaces: database, file_parsing, infrastructure, network</text>
+
+  <path d="M392 417h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M430 405l18 12-18 12z" fill="#94a3b8"/>
+  <path d="M758 417h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M796 405l18 12-18 12z" fill="#94a3b8"/>
+  <text x="76" y="596" font-size="18" fill="#475569">Generated from repository source, manifests, README, and GitHub metadata.</text>
+</svg>
