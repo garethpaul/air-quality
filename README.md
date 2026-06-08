@@ -77,9 +77,3 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
-
-## Existing Project Notes
-
-Prior README summary:
-
-> Air Quality Small Bottle app that returns the nearest PM2.5 air quality category for a latitude and longitude, or for a search query resolved through Mapbox. Requirements - Python 3.8 - Redis - Mapbox credentials available to the `mapbox` package - An `AIRQUALITY_DATA` URL that returns a JSON document with a `results` array Setup ```sh python -m venv venv . venv/bin/activate python -m pip install -r requirements.txt -r requirements-dev.txt
