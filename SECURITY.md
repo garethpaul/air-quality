@@ -24,7 +24,7 @@ Helpful reports include:
 
 ## Project Security Posture
 
-- This repository appears to be a python web api or service project. The active security scope is the code and documentation on the default branch.
+- This repository appears to be a Python web API or service project. The active security scope is the code and documentation on the default branch.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
