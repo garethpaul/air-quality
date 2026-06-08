@@ -44,7 +44,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 This service depends on external credentials and URLs. Mapbox credentials,
 Redis connection strings, and private data-source URLs must stay in environment
 configuration and out of git.
