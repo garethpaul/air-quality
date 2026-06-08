@@ -54,3 +54,6 @@ or unvalidated upstream data.
 - New geocoding or air-quality providers without tests and configuration docs
 - UI features that belong in a client application rather than this API
 - Silent fallbacks that hide missing data, credentials, or upstream failures
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
