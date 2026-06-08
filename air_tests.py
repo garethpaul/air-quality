@@ -1,10 +1,25 @@
+import sys
 import unittest
+from types import SimpleNamespace
 
 import air
 from test_helpers import JsonResponse, MemoryCache
 
 
 class AirQualityTest(unittest.TestCase):
+    def with_fake_requests(self, fake_requests, callback):
+        sentinel = object()
+        original = sys.modules.get("requests", sentinel)
+        sys.modules["requests"] = fake_requests
+
+        try:
+            callback()
+        finally:
+            if original is sentinel:
+                del sys.modules["requests"]
+            else:
+                sys.modules["requests"] = original
+
     def test_getting_data_uses_nearest_valid_sensor_and_caches_it(self):
         cache = MemoryCache()
         requested_urls = []
@@ -36,6 +51,49 @@ class AirQualityTest(unittest.TestCase):
         self.assertEqual(first, {"category": "Good", "caution": "None", "score": 50})
         self.assertEqual(second, first)
         self.assertEqual(requested_urls, ["https://example.test/air.json"])
+
+    def test_default_http_get_uses_bounded_timeout(self):
+        calls = []
+        response = object()
+
+        def fake_get(url, timeout=None):
+            calls.append((url, timeout))
+            return response
+
+        fake_requests = SimpleNamespace(
+            get=fake_get,
+            exceptions=SimpleNamespace(Timeout=TimeoutError),
+        )
+
+        def assertion():
+            self.assertIs(
+                air._default_http_get("https://example.test/air.json"), response
+            )
+
+        self.with_fake_requests(fake_requests, assertion)
+        self.assertEqual(
+            calls, [("https://example.test/air.json", air.HTTP_TIMEOUT)]
+        )
+
+    def test_default_http_get_wraps_request_timeouts(self):
+        class FakeTimeout(Exception):
+            pass
+
+        def fake_get(_url, timeout=None):
+            raise FakeTimeout("stalled")
+
+        fake_requests = SimpleNamespace(
+            get=fake_get,
+            exceptions=SimpleNamespace(Timeout=FakeTimeout),
+        )
+
+        def assertion():
+            with self.assertRaisesRegex(
+                RuntimeError, "Timed out fetching air quality data"
+            ):
+                air._default_http_get("https://example.test/air.json")
+
+        self.with_fake_requests(fake_requests, assertion)
 
     def test_score(self):
         a = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())

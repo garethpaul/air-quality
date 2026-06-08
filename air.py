@@ -4,6 +4,7 @@ import os
 from math import cos, asin, sqrt
 
 CACHE_TTL_SECONDS = 180
+HTTP_TIMEOUT = (3.05, 10)
 
 
 def _missing(value):
@@ -13,7 +14,10 @@ def _missing(value):
 def _default_http_get(url):
     import requests
 
-    return requests.get(url)
+    try:
+        return requests.get(url, timeout=HTTP_TIMEOUT)
+    except requests.exceptions.Timeout as exc:
+        raise RuntimeError("Timed out fetching air quality data") from exc
 
 
 class AirQuality(object):
