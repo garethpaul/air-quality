@@ -1,19 +1,26 @@
+import sys
 import unittest
-testmodules = [
-    'air_tests',
-    'geocode_tests'
-    ]
 
-suite = unittest.TestSuite()
+TEST_MODULES = [
+    "air_tests",
+    "geocode_tests",
+]
 
-for t in testmodules:
-    try:
-        # If the module defines a suite() function, call it to get the suite.
-        mod = __import__(t, globals(), locals(), ['suite'])
-        suitefn = getattr(mod, 'suite')
-        suite.addTest(suitefn())
-    except (ImportError, AttributeError):
-        # else, just load all the test cases from the module.
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
 
-unittest.TextTestRunner().run(suite)
+def load_suite():
+    suite = unittest.TestSuite()
+
+    for test_module in TEST_MODULES:
+        try:
+            mod = __import__(test_module, globals(), locals(), ["suite"])
+            suitefn = getattr(mod, "suite")
+            suite.addTest(suitefn())
+        except (ImportError, AttributeError):
+            suite.addTest(unittest.defaultTestLoader.loadTestsFromName(test_module))
+
+    return suite
+
+
+if __name__ == "__main__":
+    result = unittest.TextTestRunner(verbosity=2).run(load_suite())
+    sys.exit(0 if result.wasSuccessful() else 1)
