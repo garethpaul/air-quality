@@ -13,25 +13,30 @@
   <text x="76" y="206" font-size="24" fill="#111827">Python Bottle API for Getting Air Quality based on Lat/Lng or Query</text>
 <text x="76" y="240" font-size="24" fill="#111827">String</text>
 
-  <rect x="76" y="294" width="316" height="246" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
-  <text x="102" y="340" font-size="24" font-weight="700" fill="#1d4ed8">Code Shape</text>
-  <text x="102" y="382" font-size="19" fill="#1f2937">Languages: Python (7)</text>
-  <text x="102" y="440" font-size="19" fill="#1f2937">Source: .circleci, docs</text>
-  <text x="102" y="498" font-size="19" fill="#1f2937">Manifests: Makefile, Procfile, pyproject.toml, requirements.txt</text>
+  <rect x="76" y="286" width="316" height="276" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="102" y="328" font-size="24" font-weight="700" fill="#1d4ed8">Code Shape</text>
+  <text x="102" y="370" font-size="19" fill="#1f2937">Languages: Python (7)</text>
+  <text x="102" y="430" font-size="19" fill="#1f2937">Source: .circleci, docs</text>
+  <text x="102" y="490" font-size="19" fill="#1f2937">Manifests: Makefile, Procfile,</text>
+<text x="102" y="514" font-size="19" fill="#1f2937">pyproject.toml, requirements.txt</text>
 
-  <rect x="442" y="294" width="316" height="246" rx="14" fill="#ecfdf5" stroke="#bbf7d0"/>
-  <text x="468" y="340" font-size="24" font-weight="700" fill="#047857">How It Runs</text>
-  <text x="468" y="382" font-size="19" fill="#1f2937">Entry points: app.py, Makefile</text>
-  <text x="468" y="460" font-size="19" fill="#1f2937">Tests: air_tests.py, geocode_tests.py, run_tests.py, 1 more</text>
+  <rect x="442" y="286" width="316" height="276" rx="14" fill="#ecfdf5" stroke="#bbf7d0"/>
+  <text x="468" y="328" font-size="24" font-weight="700" fill="#047857">How It Runs</text>
+  <text x="468" y="370" font-size="19" fill="#1f2937">Entry points: app.py, Makefile</text>
+  <text x="468" y="466" font-size="19" fill="#1f2937">Tests: air_tests.py,</text>
+<text x="468" y="490" font-size="19" fill="#1f2937">geocode_tests.py, run_tests.py, 1</text>
+<text x="468" y="514" font-size="19" fill="#1f2937">more</text>
 
-  <rect x="808" y="294" width="316" height="246" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
-  <text x="834" y="340" font-size="24" font-weight="700" fill="#c2410c">Review Focus</text>
-  <text x="834" y="382" font-size="19" fill="#1f2937">Integrations: Mapbox</text>
-  <text x="834" y="460" font-size="19" fill="#1f2937">Sensitive surfaces: database, file_parsing, infrastructure, network</text>
+  <rect x="808" y="286" width="316" height="276" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="834" y="328" font-size="24" font-weight="700" fill="#c2410c">Review Focus</text>
+  <text x="834" y="370" font-size="19" fill="#1f2937">Integrations: Mapbox</text>
+  <text x="834" y="466" font-size="19" fill="#1f2937">Sensitive surfaces: database,</text>
+<text x="834" y="490" font-size="19" fill="#1f2937">file_parsing, infrastructure,</text>
+<text x="834" y="514" font-size="19" fill="#1f2937">network</text>
 
-  <path d="M392 417h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
-  <path d="M430 405l18 12-18 12z" fill="#94a3b8"/>
-  <path d="M758 417h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
-  <path d="M796 405l18 12-18 12z" fill="#94a3b8"/>
-  <text x="76" y="596" font-size="18" fill="#475569">Generated from repository source, manifests, README, and GitHub metadata.</text>
+  <path d="M392 424h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M430 412l18 12-18 12z" fill="#94a3b8"/>
+  <path d="M758 424h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M796 412l18 12-18 12z" fill="#94a3b8"/>
+  <text x="76" y="608" font-size="18" fill="#475569">Generated from repository source, manifests, README, and GitHub metadata.</text>
 </svg>
