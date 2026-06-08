@@ -4,6 +4,7 @@ import unittest
 TEST_MODULES = [
     "air_tests",
     "geocode_tests",
+    "request_validation_tests",
 ]
 
 
