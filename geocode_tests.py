@@ -36,6 +36,25 @@ class GeoCodeTest(unittest.TestCase):
 
         self.assertEqual(geo.getLatLng(), {"lat": 37.794678, "lng": -122.41143})
 
+    def test_center_must_be_finite_and_in_coordinate_bounds(self):
+        invalid_centers = [
+            ["nan", "37.794678"],
+            ["-122.41143", "inf"],
+            ["-181", "37.794678"],
+            ["-122.41143", "91"],
+        ]
+
+        for center in invalid_centers:
+            with self.subTest(center=center):
+                geo = GeoCode(
+                    "Invalid coordinates",
+                    cache_client=MemoryCache(),
+                    geocoder=FakeGeocoder({"features": [{"center": center}]}),
+                )
+
+                with self.assertRaises(ValueError):
+                    geo.getLatLng()
+
     def test_missing_geocoder_results_raise_value_error(self):
         geo = GeoCode(
             "Not a real place",

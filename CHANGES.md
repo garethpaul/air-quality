@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Rejected non-finite and out-of-range geocoder center coordinates before
+  caching search results.
+- Added unit coverage for malformed geocoder coordinate values.
 - Ignored non-finite upstream sensor latitude, longitude, and PM2.5 values
   before distance or AQI calculations.
 - Added unit coverage for non-finite upstream sensor readings.

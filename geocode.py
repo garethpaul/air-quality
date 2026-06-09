@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from collections.abc import Mapping
 
@@ -41,6 +42,12 @@ class GeoCode(object):
             lat = float(center[1])
         except (TypeError, ValueError):
             raise ValueError("geocoder center values must be numeric")
+
+        if not math.isfinite(lat) or not math.isfinite(lng):
+            raise ValueError("geocoder center values must be finite")
+
+        if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+            raise ValueError("geocoder center values must be valid coordinates")
 
         return {"lat": lat, "lng": lng}
 

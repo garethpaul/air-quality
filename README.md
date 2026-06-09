@@ -70,8 +70,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
   timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
-  numeric `center`; malformed geocoder payloads fail with a controlled route
-  error.
+  finite numeric `center` in valid coordinate bounds; malformed geocoder
+  payloads fail with a controlled route error before caching.
 
 ## Security and Privacy Notes
 
@@ -92,6 +92,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `/s` query validation contract.
 - See `docs/plans/2026-06-09-air-quality-nonfinite-sensor-values.md` for
   upstream sensor finite-value guard coverage.
+- See `docs/plans/2026-06-09-air-quality-geocode-coordinate-validation.md` for
+  geocoder coordinate finite/range validation.
 
 ## Contributing
 
