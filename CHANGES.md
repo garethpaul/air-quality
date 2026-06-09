@@ -24,3 +24,5 @@
    verification.
 9. Validated upstream `AIRQUALITY_DATA` payloads before reading sensor results
    so malformed provider responses fail with a controlled service error.
+10. Validated Mapbox geocoder feature and center shapes before converting them
+    into air-quality coordinates.

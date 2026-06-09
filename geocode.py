@@ -1,5 +1,6 @@
 import json
 import os
+from collections.abc import Mapping
 
 
 class GeoCode(object):
@@ -13,15 +14,35 @@ class GeoCode(object):
         cache = self.cache().get(key)
         if cache is None:
             response = self.geocoder_client().forward(self.query)
-            features = response.json().get("features", [])
-            if not features:
-                raise ValueError("No geocoding results were returned")
-
-            collection = features[0]["center"]
-            data = {"lat": collection[1], "lng": collection[0]}
+            data = self.parse_first_feature_center(response.json())
             self.cache().set(key, json.dumps(data))
             return data
         return json.loads(cache)
+
+    @staticmethod
+    def parse_first_feature_center(payload):
+        if not isinstance(payload, Mapping):
+            raise ValueError("geocoder response must be a JSON object")
+
+        features = payload.get("features", [])
+        if not isinstance(features, list) or not features:
+            raise ValueError("No geocoding results were returned")
+
+        first_feature = features[0]
+        if not isinstance(first_feature, Mapping):
+            raise ValueError("geocoder feature must be a JSON object")
+
+        center = first_feature.get("center")
+        if not isinstance(center, list) or len(center) < 2:
+            raise ValueError("geocoder feature must include lng/lat center")
+
+        try:
+            lng = float(center[0])
+            lat = float(center[1])
+        except (TypeError, ValueError):
+            raise ValueError("geocoder center values must be numeric")
+
+        return {"lat": lat, "lng": lng}
 
     def cache(self):
         if self.r is None:

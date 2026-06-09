@@ -24,6 +24,8 @@ Priority:
 - Preserve test, lint, and build commands that work in a fresh checkout
 - Make failure modes explicit when data, Redis, upstream payloads, or geocoding
   inputs are missing
+- Convert malformed provider response shapes into controlled route errors
+  before serializing responses
 
 Next priorities:
 
