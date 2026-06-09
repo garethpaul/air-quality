@@ -35,9 +35,9 @@ class AirQuality(object):
 
     def getData(self):
         key = self.cache_key()
-        cache = self.cache().get(key)
+        cache = self.cached_data(key)
         if cache is not None:
-            return json.loads(cache)
+            return cache
 
         data_url = self.data_url or os.environ.get("AIRQUALITY_DATA")
         if not data_url:
@@ -55,6 +55,25 @@ class AirQuality(object):
         pm25 = float(reading["PM2_5Value"])
         data = self.AQICategory(self.AQIPM25(pm25))
         self.cache().setex(key, CACHE_TTL_SECONDS, json.dumps(data))
+        return data
+
+    def cached_data(self, key):
+        cache = self.cache().get(key)
+        if cache is None:
+            return None
+
+        try:
+            data = json.loads(cache)
+        except (TypeError, ValueError):
+            return None
+
+        if not isinstance(data, dict):
+            return None
+
+        required_fields = {"category", "caution", "score"}
+        if not required_fields.issubset(data):
+            return None
+
         return data
 
     def cache(self):

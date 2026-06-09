@@ -67,6 +67,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
 - Upstream sensor readings with non-finite latitude, longitude, or PM2.5 values
   are ignored before distance and AQI calculations.
+- Cached air-quality payloads must decode to the expected response shape;
+  corrupt entries are ignored and refreshed from the configured data source.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
   timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
@@ -94,6 +96,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   upstream sensor finite-value guard coverage.
 - See `docs/plans/2026-06-09-air-quality-geocode-coordinate-validation.md` for
   geocoder coordinate finite/range validation.
+- See `docs/plans/2026-06-09-air-quality-cache-payload-validation.md` for
+  corrupt cache refresh behavior.
 
 ## Contributing
 

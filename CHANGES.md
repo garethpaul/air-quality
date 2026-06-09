@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Ignored corrupt or malformed cached air-quality payloads and refreshed them
+  from validated upstream readings.
+- Added unit coverage for corrupt cache refresh behavior.
 - Rejected non-finite and out-of-range geocoder center coordinates before
   caching search results.
 - Added unit coverage for malformed geocoder coordinate values.

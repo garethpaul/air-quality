@@ -1,5 +1,6 @@
-import unittest
+import json
 import sys
+import unittest
 from types import SimpleNamespace
 
 import air
@@ -64,6 +65,45 @@ class AirQualityTest(unittest.TestCase):
         self.assertEqual(first, {"category": "Good", "caution": "None", "score": 50})
         self.assertEqual(second, first)
         self.assertEqual(requested_urls, ["https://example.test/air.json"])
+
+    def test_corrupt_cached_data_is_ignored_and_refreshed(self):
+        invalid_cached_values = [
+            "not-json",
+            json.dumps(["not", "an", "air-quality", "payload"]),
+            json.dumps({"category": "Good"}),
+        ]
+
+        for cached_value in invalid_cached_values:
+            with self.subTest(cached_value=cached_value):
+                cache = MemoryCache()
+                requested_urls = []
+                quality = air.AirQuality(
+                    37.794678,
+                    -122.41143,
+                    cache_client=cache,
+                    data_url="https://example.test/air.json",
+                    http_get=lambda url: requested_urls.append(url)
+                    or JsonResponse(
+                        {
+                            "results": [
+                                {
+                                    "Lat": 37.8,
+                                    "Lon": -122.41,
+                                    "PM2_5Value": "12.0",
+                                }
+                            ]
+                        }
+                    ),
+                )
+                cache.set(quality.cache_key(), cached_value)
+
+                refreshed = quality.getData()
+
+                self.assertEqual(
+                    refreshed, {"category": "Good", "caution": "None", "score": 50}
+                )
+                self.assertEqual(requested_urls, ["https://example.test/air.json"])
+                self.assertEqual(cache.decoded(quality.cache_key()), refreshed)
 
     def test_score(self):
         a = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
