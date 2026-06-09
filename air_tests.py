@@ -156,6 +156,28 @@ class AirQualityTest(unittest.TestCase):
             quality.getData(), {"category": "Good", "caution": "None", "score": 50}
         )
 
+    def test_nonfinite_sensor_values_are_ignored(self):
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: JsonResponse(
+                {
+                    "results": [
+                        {"Lat": "inf", "Lon": -122.41, "PM2_5Value": "12.0"},
+                        {"Lat": 37.8, "Lon": "nan", "PM2_5Value": "12.0"},
+                        {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "nan"},
+                        {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"},
+                    ]
+                }
+            ),
+        )
+
+        self.assertEqual(
+            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

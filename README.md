@@ -65,6 +65,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty text `query` value of 200 characters or fewer.
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
+- Upstream sensor readings with non-finite latitude, longitude, or PM2.5 values
+  are ignored before distance and AQI calculations.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
   timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
@@ -88,6 +90,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   HTTP timeout coverage.
 - See `docs/plans/2026-06-09-air-quality-search-query-validation.md` for the
   `/s` query validation contract.
+- See `docs/plans/2026-06-09-air-quality-nonfinite-sensor-values.md` for
+  upstream sensor finite-value guard coverage.
 
 ## Contributing
 

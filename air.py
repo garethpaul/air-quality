@@ -93,6 +93,9 @@ class AirQuality(object):
             except (TypeError, ValueError):
                 continue
 
+            if not all(math.isfinite(value) for value in (pm25, lat, lon)):
+                continue
+
             if pm25 < 5:
                 continue
 

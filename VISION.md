@@ -28,6 +28,7 @@ Priority:
   before serializing responses
 - Keep upstream HTTP calls bounded by default
 - Bound search-query inputs before cache-key construction or Mapbox lookup
+- Ignore non-finite upstream sensor values before distance and AQI calculations
 
 Next priorities:
 

@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-09
+
+- Ignored non-finite upstream sensor latitude, longitude, and PM2.5 values
+  before distance or AQI calculations.
+- Added unit coverage for non-finite upstream sensor readings.
+
 ## 2026-06-08
 
 1. Made the test harness reliable by having `run_tests.py` return a failing
