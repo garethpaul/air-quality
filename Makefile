@@ -3,6 +3,7 @@ PYTHON_FILES := $(shell git ls-files '*.py')
 .PHONY: check lint test build
 
 check: lint test build
+	./scripts/check-baseline.sh
 
 lint:
 	python -m ruff format --check .

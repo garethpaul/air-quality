@@ -22,6 +22,8 @@ Priority:
 - Maintain clear local setup with Python, Redis, Mapbox credentials, and the
   `AIRQUALITY_DATA` source
 - Preserve test, lint, and build commands that work in a fresh checkout
+- Keep `make check` and `scripts/check-baseline.sh` green before pushing
+  changes
 - Make failure modes explicit when data, Redis, upstream payloads, or geocoding
   inputs are missing
 - Convert malformed provider response shapes into controlled route errors
@@ -45,6 +47,8 @@ Contribution rules:
 - One PR = one focused change. Do not bundle data ingestion, API behavior, and
   deployment changes together.
 - Run `make check` before pushing changes.
+- Update `scripts/check-baseline.sh` when required files or verification docs
+  intentionally change.
 - Keep API responses simple and documented; callers should not need to infer
   hidden service state.
 - Prefer small fixes that preserve the current API over rewrites without a

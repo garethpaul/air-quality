@@ -20,13 +20,14 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `Procfile`
 - `pyproject.toml` - Python dependency or packaging metadata
 - `SECURITY.md` - security reporting and disclosure guidance
+- `scripts/check-baseline.sh` - repository baseline and local metadata hygiene guard
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
 
 - Source directories: .circleci, docs
 - Dependency and build manifests: Makefile, Procfile, pyproject.toml, requirements.txt
-- Entry points or build surfaces: app.py, Makefile
+- Entry points or build surfaces: app.py, Makefile, scripts/check-baseline.sh
 - Test-looking files: air_tests.py, geocode_tests.py, run_tests.py, test_helpers.py
 
 ## Getting Started
@@ -57,6 +58,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make lint` - check formatting and static issues with Ruff
 - `make test` - run the dependency-free unittest suite
 - `make build` - compile tracked Python files
+- `scripts/check-baseline.sh` - verify required files, Make targets,
+  completed plan metadata, README notes, and local secret/editor ignore hygiene
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -102,6 +105,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   corrupt cache refresh behavior.
 - See `docs/plans/2026-06-09-air-quality-geocode-cache-validation.md` for
   corrupt geocode cache refresh behavior.
+- See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
+  repository baseline guard.
 
 ## Contributing
 
