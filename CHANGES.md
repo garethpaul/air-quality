@@ -26,3 +26,4 @@
    so malformed provider responses fail with a controlled service error.
 10. Validated Mapbox geocoder feature and center shapes before converting them
     into air-quality coordinates.
+11. Added a bounded timeout to the default upstream air-quality HTTP fetch path.

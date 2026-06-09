@@ -65,6 +65,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty `query` value.
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
+- Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
+  timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
   numeric `center`; malformed geocoder payloads fail with a controlled route
   error.
@@ -82,6 +84,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-09-air-quality-geocode-shape-validation.md` for the
   current geocoder response-shape validation plan.
+- See `docs/plans/2026-06-09-air-quality-http-timeout.md` for default upstream
+  HTTP timeout coverage.
 
 ## Contributing
 

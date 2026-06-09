@@ -4,6 +4,7 @@ import os
 from math import cos, asin, sqrt
 
 CACHE_TTL_SECONDS = 180
+REQUEST_TIMEOUT_SECONDS = 10
 
 
 def _missing(value):
@@ -13,7 +14,7 @@ def _missing(value):
 def _default_http_get(url):
     import requests
 
-    return requests.get(url)
+    return requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
 
 
 class AirQuality(object):

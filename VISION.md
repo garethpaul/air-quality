@@ -26,6 +26,7 @@ Priority:
   inputs are missing
 - Convert malformed provider response shapes into controlled route errors
   before serializing responses
+- Keep upstream HTTP calls bounded by default
 
 Next priorities:
 

@@ -1,10 +1,38 @@
 import unittest
+import sys
+from types import SimpleNamespace
 
 import air
 from test_helpers import JsonResponse, MemoryCache
 
 
 class AirQualityTest(unittest.TestCase):
+    def test_default_http_get_uses_timeout(self):
+        calls = []
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = SimpleNamespace(
+            get=lambda url, **kwargs: calls.append((url, kwargs)) or JsonResponse({})
+        )
+
+        try:
+            response = air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
+
+        self.assertIsInstance(response, JsonResponse)
+        self.assertEqual(
+            calls,
+            [
+                (
+                    "https://example.test/air.json",
+                    {"timeout": air.REQUEST_TIMEOUT_SECONDS},
+                )
+            ],
+        )
+
     def test_getting_data_uses_nearest_valid_sensor_and_caches_it(self):
         cache = MemoryCache()
         requested_urls = []
