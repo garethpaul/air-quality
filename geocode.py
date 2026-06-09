@@ -12,13 +12,41 @@ class GeoCode(object):
 
     def getLatLng(self):
         key = "geocode_query_1_" + self.query
+        data = self.cached_data(key)
+        if data is not None:
+            return data
+
+        response = self.geocoder_client().forward(self.query)
+        data = self.parse_first_feature_center(response.json())
+        self.cache().set(key, json.dumps(data))
+        return data
+
+    def cached_data(self, key):
         cache = self.cache().get(key)
         if cache is None:
-            response = self.geocoder_client().forward(self.query)
-            data = self.parse_first_feature_center(response.json())
-            self.cache().set(key, json.dumps(data))
-            return data
-        return json.loads(cache)
+            return None
+
+        try:
+            data = json.loads(cache)
+        except (TypeError, ValueError):
+            return None
+
+        if not isinstance(data, Mapping):
+            return None
+
+        try:
+            lat = float(data["lat"])
+            lng = float(data["lng"])
+        except (KeyError, TypeError, ValueError):
+            return None
+
+        if not math.isfinite(lat) or not math.isfinite(lng):
+            return None
+
+        if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+            return None
+
+        return {"lat": lat, "lng": lng}
 
     @staticmethod
     def parse_first_feature_center(payload):

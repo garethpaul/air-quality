@@ -31,6 +31,7 @@ Priority:
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Ignore corrupt cached air-quality payloads before returning API data
+- Ignore corrupt cached geocode coordinates before search lookups
 
 Next priorities:
 

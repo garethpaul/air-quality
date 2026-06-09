@@ -1,4 +1,5 @@
 import unittest
+import json
 
 from geocode import GeoCode
 from test_helpers import JsonResponse, MemoryCache
@@ -35,6 +36,33 @@ class GeoCodeTest(unittest.TestCase):
         geo = GeoCode("San Francisco, CA", cache_client=cache, geocoder=geocoder)
 
         self.assertEqual(geo.getLatLng(), {"lat": 37.794678, "lng": -122.41143})
+
+    def test_corrupt_cached_geocode_is_ignored_and_refreshed(self):
+        invalid_cached_values = [
+            "not-json",
+            json.dumps(["not", "a", "coordinate"]),
+            json.dumps({"lat": 37.794678}),
+            json.dumps({"lat": "nan", "lng": -122.41143}),
+            json.dumps({"lat": 91, "lng": -122.41143}),
+        ]
+
+        for cached_value in invalid_cached_values:
+            with self.subTest(cached_value=cached_value):
+                cache = MemoryCache()
+                geocoder = FakeGeocoder(
+                    {"features": [{"center": [-122.41143, 37.794678]}]}
+                )
+                geo = GeoCode(
+                    "San Francisco, CA", cache_client=cache, geocoder=geocoder
+                )
+                key = "geocode_query_1_San Francisco, CA"
+                cache.set(key, cached_value)
+
+                refreshed = geo.getLatLng()
+
+                self.assertEqual(refreshed, {"lat": 37.794678, "lng": -122.41143})
+                self.assertEqual(geocoder.queries, ["San Francisco, CA"])
+                self.assertEqual(cache.decoded(key), refreshed)
 
     def test_center_must_be_finite_and_in_coordinate_bounds(self):
         invalid_centers = [

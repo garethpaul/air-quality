@@ -74,6 +74,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Mapbox geocoder responses must return a first feature with a two-value
   finite numeric `center` in valid coordinate bounds; malformed geocoder
   payloads fail with a controlled route error before caching.
+- Cached geocode payloads must decode to finite in-range `lat` and `lng`
+  values; corrupt entries are ignored and refreshed from Mapbox.
 
 ## Security and Privacy Notes
 
@@ -98,6 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   geocoder coordinate finite/range validation.
 - See `docs/plans/2026-06-09-air-quality-cache-payload-validation.md` for
   corrupt cache refresh behavior.
+- See `docs/plans/2026-06-09-air-quality-geocode-cache-validation.md` for
+  corrupt geocode cache refresh behavior.
 
 ## Contributing
 

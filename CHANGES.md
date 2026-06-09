@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Ignored corrupt or malformed cached geocode payloads and refreshed them from
+  validated Mapbox responses.
+- Added unit coverage for corrupt geocode cache refresh behavior.
 - Ignored corrupt or malformed cached air-quality payloads and refreshed them
   from validated upstream readings.
 - Added unit coverage for corrupt cache refresh behavior.
