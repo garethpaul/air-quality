@@ -64,6 +64,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty `query` value.
+- The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
 
 ## Security and Privacy Notes
 

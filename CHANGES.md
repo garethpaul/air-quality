@@ -22,3 +22,5 @@
    and import-safe Bottle startup.
 8. Added `make check` as the standard local gate for lint, tests, and build
    verification.
+9. Validated upstream `AIRQUALITY_DATA` payloads before reading sensor results
+   so malformed provider responses fail with a controlled service error.

@@ -43,7 +43,13 @@ class AirQuality(object):
             raise RuntimeError("AIRQUALITY_DATA must be set when data is not cached")
 
         response = self.http_get(data_url)
-        results = response.json()["results"]
+        payload = response.json()
+        if not isinstance(payload, dict) or not isinstance(
+            payload.get("results"), list
+        ):
+            raise RuntimeError("AIRQUALITY_DATA response must include a results list")
+
+        results = payload["results"]
         reading = self.nearest_reading(results)
         pm25 = float(reading["PM2_5Value"])
         data = self.AQICategory(self.AQIPM25(pm25))
@@ -69,6 +75,9 @@ class AirQuality(object):
         nearest_distance = float("inf")
 
         for item in results:
+            if not isinstance(item, dict):
+                continue
+
             if (
                 _missing(item.get("Lat"))
                 or _missing(item.get("Lon"))

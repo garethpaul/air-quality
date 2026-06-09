@@ -22,11 +22,12 @@ Priority:
 - Maintain clear local setup with Python, Redis, Mapbox credentials, and the
   `AIRQUALITY_DATA` source
 - Preserve test, lint, and build commands that work in a fresh checkout
-- Make failure modes explicit when data, Redis, or geocoding inputs are missing
+- Make failure modes explicit when data, Redis, upstream payloads, or geocoding
+  inputs are missing
 
 Next priorities:
 
-- Improve data-source validation and error reporting
+- Continue improving data-source validation and error reporting
 - Add clearer deployment guidance for small hosted instances
 - Keep dependencies current enough to run on supported Python versions
 - Expand tests around empty datasets, invalid coordinates, and Mapbox failures

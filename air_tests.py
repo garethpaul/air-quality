@@ -72,6 +72,47 @@ class AirQualityTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             quality.getData()
 
+    def test_missing_results_list_raises_runtime_error(self):
+        invalid_payloads = [
+            {},
+            {"results": None},
+            {"results": {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"}},
+        ]
+
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                quality = air.AirQuality(
+                    37.794678,
+                    -122.41143,
+                    cache_client=MemoryCache(),
+                    data_url="https://example.test/air.json",
+                    http_get=lambda _url, payload=payload: JsonResponse(payload),
+                )
+
+                with self.assertRaises(RuntimeError):
+                    quality.getData()
+
+    def test_malformed_result_items_are_ignored(self):
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: JsonResponse(
+                {
+                    "results": [
+                        "not-a-reading",
+                        ["also", "not", "a", "reading"],
+                        {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"},
+                    ]
+                }
+            ),
+        )
+
+        self.assertEqual(
+            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
+        )
+
     def test_zero_coordinate_sensor_is_valid(self):
         quality = air.AirQuality(
             0,
