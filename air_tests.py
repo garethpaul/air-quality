@@ -71,6 +71,13 @@ class AirQualityTest(unittest.TestCase):
             "not-json",
             json.dumps(["not", "an", "air-quality", "payload"]),
             json.dumps({"category": "Good"}),
+            json.dumps({"category": 42, "caution": "None", "score": 50}),
+            json.dumps({"category": "Good", "caution": None, "score": 50}),
+            json.dumps({"category": "Good", "caution": "None", "score": "50"}),
+            json.dumps({"category": "Good", "caution": "None", "score": True}),
+            json.dumps({"category": "Good", "caution": "None", "score": float("nan")}),
+            json.dumps({"category": "Good", "caution": "None", "score": -1}),
+            json.dumps({"category": "Good", "caution": "None", "score": 50.5}),
         ]
 
         for cached_value in invalid_cached_values:
@@ -104,6 +111,25 @@ class AirQualityTest(unittest.TestCase):
                 )
                 self.assertEqual(requested_urls, ["https://example.test/air.json"])
                 self.assertEqual(cache.decoded(quality.cache_key()), refreshed)
+
+    def test_valid_cached_data_is_normalized_without_fetching(self):
+        cache = MemoryCache()
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=cache)
+        cache.set(
+            quality.cache_key(),
+            json.dumps(
+                {
+                    "category": "Good",
+                    "caution": "None",
+                    "score": 50.0,
+                    "raw_provider_payload": {"do": "not return"},
+                }
+            ),
+        )
+
+        self.assertEqual(
+            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
+        )
 
     def test_score(self):
         a = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())

@@ -72,6 +72,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   are ignored before distance and AQI calculations.
 - Cached air-quality payloads must decode to the expected response shape;
   corrupt entries are ignored and refreshed from the configured data source.
+- Cached air-quality hits return only the public `category`, `caution`, and
+  finite non-negative integer `score` fields.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
   timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
@@ -103,6 +105,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   geocoder coordinate finite/range validation.
 - See `docs/plans/2026-06-09-air-quality-cache-payload-validation.md` for
   corrupt cache refresh behavior.
+- See `docs/plans/2026-06-09-air-quality-cache-score-validation.md` for cached
+  response field type and score validation.
 - See `docs/plans/2026-06-09-air-quality-geocode-cache-validation.md` for
   corrupt geocode cache refresh behavior.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted

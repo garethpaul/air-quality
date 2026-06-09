@@ -2,6 +2,10 @@
 
 ## 2026-06-09
 
+- Validated cached air-quality response field types and finite non-negative
+  integer scores before returning cache hits.
+- Normalized cached air-quality hits to the public response fields.
+- Added unit coverage for cached score validation and field stripping.
 - Added `scripts/check-baseline.sh` and wired it into `make check` so required
   files, Make targets, completed plans, README notes, and local metadata
   hygiene are checked before pushing.

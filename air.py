@@ -74,7 +74,23 @@ class AirQuality(object):
         if not required_fields.issubset(data):
             return None
 
-        return data
+        category = data["category"]
+        caution = data["caution"]
+        score = data["score"]
+        if not isinstance(category, str) or not isinstance(caution, str):
+            return None
+
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            return None
+
+        if not math.isfinite(float(score)):
+            return None
+
+        normalized_score = int(score)
+        if normalized_score != score or normalized_score < 0:
+            return None
+
+        return {"category": category, "caution": caution, "score": normalized_score}
 
     def cache(self):
         if self.r is None:
