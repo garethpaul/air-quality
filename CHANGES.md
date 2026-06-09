@@ -27,3 +27,5 @@
 10. Validated Mapbox geocoder feature and center shapes before converting them
     into air-quality coordinates.
 11. Added a bounded timeout to the default upstream air-quality HTTP fetch path.
+12. Tightened `/s` search-query validation so missing, blank, non-string, and
+    oversized values fail before cache-key construction or Mapbox lookup.

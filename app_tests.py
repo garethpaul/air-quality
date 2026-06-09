@@ -1,6 +1,12 @@
 import unittest
 
-from app import air_quality_payload, parse_coordinate, search_payload
+from app import (
+    SEARCH_QUERY_MAX_LENGTH,
+    air_quality_payload,
+    parse_coordinate,
+    parse_search_query,
+    search_payload,
+)
 
 
 class FakeAirQuality(object):
@@ -70,19 +76,26 @@ class AppRouteHelperTest(unittest.TestCase):
         self.assertEqual(FakeGeoCode.calls, ["San Francisco"])
         self.assertEqual(FakeAirQuality.calls, [(37.7749, -122.4194)])
 
-    def test_search_payload_rejects_empty_query(self):
-        with self.assertRaises(ValueError):
-            search_payload("   ", geocode_factory=FakeGeoCode)
-
-    def test_search_payload_coerces_non_string_query_values(self):
-        payload = search_payload(
+    def test_parse_search_query_rejects_missing_empty_non_string_and_long_query(self):
+        invalid_queries = [
+            None,
+            "   ",
             94105,
-            geocode_factory=FakeGeoCode,
-            air_quality_factory=FakeAirQuality,
-        )
+            ["San Francisco"],
+            "a" * (SEARCH_QUERY_MAX_LENGTH + 1),
+        ]
 
-        self.assertEqual(payload, {"category": "Good", "caution": "None", "score": 42})
-        self.assertEqual(FakeGeoCode.calls, ["94105"])
+        for query in invalid_queries:
+            with self.subTest(query=query):
+                with self.assertRaises(ValueError):
+                    parse_search_query(query)
+
+        self.assertEqual(FakeGeoCode.calls, [])
+
+    def test_parse_search_query_accepts_max_length_trimmed_text(self):
+        query = " " + ("a" * SEARCH_QUERY_MAX_LENGTH) + " "
+
+        self.assertEqual(parse_search_query(query), "a" * SEARCH_QUERY_MAX_LENGTH)
 
 
 if __name__ == "__main__":

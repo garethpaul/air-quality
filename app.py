@@ -5,6 +5,8 @@ from json import dumps
 from air import AirQuality
 from geocode import GeoCode
 
+SEARCH_QUERY_MAX_LENGTH = 200
+
 try:
     from bottle import request, response, route, run
 except ImportError:
@@ -51,11 +53,27 @@ def air_quality_payload(lat, lng, air_quality_factory=AirQuality):
     return air_quality_factory(latitude, longitude).getData()
 
 
-def search_payload(query, geocode_factory=GeoCode, air_quality_factory=AirQuality):
-    query_string = "" if query is None else str(query).strip()
+def parse_search_query(query):
+    if query is None:
+        raise ValueError("query is required")
+
+    if not isinstance(query, str):
+        raise ValueError("query must be a string")
+
+    query_string = query.strip()
     if not query_string:
         raise ValueError("query is required")
 
+    if len(query_string) > SEARCH_QUERY_MAX_LENGTH:
+        raise ValueError(
+            "query must be {0} characters or fewer".format(SEARCH_QUERY_MAX_LENGTH)
+        )
+
+    return query_string
+
+
+def search_payload(query, geocode_factory=GeoCode, air_quality_factory=AirQuality):
+    query_string = parse_search_query(query)
     query_data = geocode_factory(query_string).getLatLng()
     try:
         return air_quality_payload(

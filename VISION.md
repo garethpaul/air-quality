@@ -27,6 +27,7 @@ Priority:
 - Convert malformed provider response shapes into controlled route errors
   before serializing responses
 - Keep upstream HTTP calls bounded by default
+- Bound search-query inputs before cache-key construction or Mapbox lookup
 
 Next priorities:
 
