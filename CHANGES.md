@@ -9,6 +9,10 @@
 - Removed redundant direct AWS SDK pins that Mapbox resolves transitively.
 - Added a completed runtime modernization plan and baseline contracts for the
   selected runtime and CI matrix.
+- Streamed default sensor-data responses with a 1 MiB limit, HTTP status checks,
+  and controlled JSON decoding errors.
+- Pinned GitHub Actions to Ubuntu 24.04 with superseded-run cancellation and
+  made Make verification independent of the caller's working directory.
 
 ## 2026-06-09
 

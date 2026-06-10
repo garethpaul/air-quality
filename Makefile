@@ -1,16 +1,17 @@
-PYTHON_FILES := $(shell git ls-files '*.py')
+ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+PYTHON_FILES := $(shell git -C "$(ROOT)" ls-files '*.py')
 
 .PHONY: check lint test build
 
 check: lint test build
-	./scripts/check-baseline.sh
+	"$(ROOT)/scripts/check-baseline.sh"
 
 lint:
-	python -m ruff format --check .
-	python -m ruff check .
+	cd "$(ROOT)" && python -m ruff format --check .
+	cd "$(ROOT)" && python -m ruff check .
 
 test:
-	python run_tests.py
+	cd "$(ROOT)" && python run_tests.py
 
 build:
-	python -m compileall -q $(PYTHON_FILES)
+	cd "$(ROOT)" && python -m compileall -q $(PYTHON_FILES)

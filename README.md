@@ -62,6 +62,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14.
 - `scripts/check-baseline.sh` - verify required files, Make targets,
   completed plan metadata, CI contracts, README notes, and local secret/editor
   ignore hygiene
+- The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
+  JSON and HTTP failures, and keeps the existing 10-second timeout.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -115,6 +117,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   repository baseline guard.
 - See `docs/plans/2026-06-10-python-runtime-modernization.md` for the current
   Python runtime, dependency pins, and CI matrix.
+- See `docs/plans/2026-06-10-air-quality-upstream-size-limit.md` for bounded
+  sensor-data streaming and root-independent verification.
 
 ## Contributing
 

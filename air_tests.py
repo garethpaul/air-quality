@@ -8,31 +8,83 @@ from test_helpers import JsonResponse, MemoryCache
 
 
 class AirQualityTest(unittest.TestCase):
+    class StreamingResponse(object):
+        def __init__(self, chunks, headers=None, encoding="utf-8"):
+            self.chunks = chunks
+            self.headers = headers or {}
+            self.encoding = encoding
+            self.status_checked = False
+
+        def raise_for_status(self):
+            self.status_checked = True
+
+        def iter_content(self, chunk_size):
+            self.chunk_size = chunk_size
+            return iter(self.chunks)
+
+    def test_upstream_response_limit_is_one_mebibyte(self):
+        self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)
+
     def test_default_http_get_uses_timeout(self):
         calls = []
+        streaming_response = self.StreamingResponse([b'{"results": []}'])
         original_requests = sys.modules.get("requests")
         sys.modules["requests"] = SimpleNamespace(
-            get=lambda url, **kwargs: calls.append((url, kwargs)) or JsonResponse({})
+            get=lambda url, **kwargs: calls.append((url, kwargs)) or streaming_response
         )
 
         try:
-            response = air._default_http_get("https://example.test/air.json")
+            payload = air._default_http_get("https://example.test/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
             else:
                 sys.modules["requests"] = original_requests
 
-        self.assertIsInstance(response, JsonResponse)
+        self.assertEqual(payload, {"results": []})
         self.assertEqual(
             calls,
             [
                 (
                     "https://example.test/air.json",
-                    {"timeout": air.REQUEST_TIMEOUT_SECONDS},
+                    {"timeout": air.REQUEST_TIMEOUT_SECONDS, "stream": True},
                 )
             ],
         )
+        self.assertTrue(streaming_response.status_checked)
+        self.assertEqual(streaming_response.chunk_size, 64 * 1024)
+
+    def test_default_http_get_rejects_oversized_streamed_responses(self):
+        response = self.StreamingResponse(
+            [b"x" * air.UPSTREAM_RESPONSE_MAX_BYTES, b"x"]
+        )
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+
+        try:
+            with self.assertRaisesRegex(RuntimeError, "response is too large"):
+                air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
+
+    def test_default_http_get_rejects_oversized_content_length(self):
+        response = self.StreamingResponse(
+            [], headers={"Content-Length": str(air.UPSTREAM_RESPONSE_MAX_BYTES + 1)}
+        )
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+
+        try:
+            with self.assertRaisesRegex(RuntimeError, "response is too large"):
+                air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
 
     def test_getting_data_uses_nearest_valid_sensor_and_caches_it(self):
         cache = MemoryCache()

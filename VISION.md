@@ -29,6 +29,7 @@ Priority:
 - Convert malformed provider response shapes into controlled route errors
   before serializing responses
 - Keep upstream HTTP calls bounded by default
+- Bound upstream sensor response bytes before JSON decoding
 - Bound search-query inputs before cache-key construction or Mapbox lookup
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching

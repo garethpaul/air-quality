@@ -41,12 +41,18 @@ for path in \
   "docs/plans/2026-06-09-air-quality-geocode-cache-validation.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
   "docs/plans/2026-06-10-python-runtime-modernization.md" \
+  "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
 
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must resolve the repository root." >&2
   exit 1
 fi
 
@@ -144,11 +150,19 @@ for workflow_contract in \
   'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10' \
   'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405' \
   'python-version: ["3.12", "3.14"]' \
+  'concurrency:' \
+  'cancel-in-progress: true' \
+  'runs-on: ubuntu-24.04' \
   'run: make check'; do
   if ! grep -Fq "$workflow_contract" "$ROOT_DIR/.github/workflows/check.yml"; then
     printf '%s\n' "GitHub Actions must keep contract: $workflow_contract" >&2
     exit 1
   fi
 done
+
+if grep -Fq 'ubuntu-latest' "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions must not use a floating Ubuntu runner." >&2
+  exit 1
+fi
 
 printf '%s\n' "air-quality baseline checks passed."

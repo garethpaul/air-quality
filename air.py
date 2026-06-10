@@ -5,6 +5,7 @@ from math import cos, asin, sqrt
 
 CACHE_TTL_SECONDS = 180
 REQUEST_TIMEOUT_SECONDS = 10
+UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
 
 
 def _missing(value):
@@ -14,7 +15,29 @@ def _missing(value):
 def _default_http_get(url):
     import requests
 
-    return requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
+    response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS, stream=True)
+    response.raise_for_status()
+
+    content_length = response.headers.get("Content-Length")
+    if content_length is not None:
+        try:
+            if int(content_length) > UPSTREAM_RESPONSE_MAX_BYTES:
+                raise RuntimeError("AIRQUALITY_DATA response is too large")
+        except ValueError:
+            raise RuntimeError("AIRQUALITY_DATA Content-Length must be an integer")
+
+    body = bytearray()
+    for chunk in response.iter_content(chunk_size=64 * 1024):
+        if not chunk:
+            continue
+        body.extend(chunk)
+        if len(body) > UPSTREAM_RESPONSE_MAX_BYTES:
+            raise RuntimeError("AIRQUALITY_DATA response is too large")
+
+    try:
+        return json.loads(body.decode(response.encoding or "utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
 
 
 class AirQuality(object):
@@ -44,7 +67,7 @@ class AirQuality(object):
             raise RuntimeError("AIRQUALITY_DATA must be set when data is not cached")
 
         response = self.http_get(data_url)
-        payload = response.json()
+        payload = response.json() if hasattr(response, "json") else response
         if not isinstance(payload, dict) or not isinstance(
             payload.get("results"), list
         ):
