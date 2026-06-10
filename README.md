@@ -35,7 +35,7 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python matching the era of the project
+- Python 3.12
 
 ### Setup
 
@@ -45,7 +45,8 @@ cd air-quality
 python -m pip install -r requirements.txt
 ```
 
-The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+The setup commands above are derived from repository files. Runtime and CI
+validation target Python 3.12.
 
 ## Running or Using the Project
 

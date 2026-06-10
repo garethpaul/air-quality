@@ -89,17 +89,19 @@ class AirQualityTest(unittest.TestCase):
                     -122.41143,
                     cache_client=cache,
                     data_url="https://example.test/air.json",
-                    http_get=lambda url: requested_urls.append(url)
-                    or JsonResponse(
-                        {
-                            "results": [
-                                {
-                                    "Lat": 37.8,
-                                    "Lon": -122.41,
-                                    "PM2_5Value": "12.0",
-                                }
-                            ]
-                        }
+                    http_get=lambda url: (
+                        requested_urls.append(url)
+                        or JsonResponse(
+                            {
+                                "results": [
+                                    {
+                                        "Lat": 37.8,
+                                        "Lon": -122.41,
+                                        "PM2_5Value": "12.0",
+                                    }
+                                ]
+                            }
+                        )
                     ),
                 )
                 cache.set(quality.cache_key(), cached_value)

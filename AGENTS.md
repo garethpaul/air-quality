@@ -15,6 +15,7 @@
 
 ## Development commands
 
+- Supported runtime: Python 3.12
 - Install dependencies: `python3 -m pip install -r requirements-dev.txt`; `python3 -m pip install -r requirements.txt`
 - Full baseline: `make check`
 - Lint/static checks: `make lint`
