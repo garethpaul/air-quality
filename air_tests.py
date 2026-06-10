@@ -6,6 +6,12 @@ from types import SimpleNamespace
 import air
 from test_helpers import JsonResponse, MemoryCache
 
+MODERATE_12_PAYLOAD = {
+    "category": "Moderate",
+    "caution": "Unusually sensitive people should consider reducing prolonged or heavy exertion.",
+    "score": 56,
+}
+
 
 class AirQualityTest(unittest.TestCase):
     class StreamingResponse(object):
@@ -24,6 +30,11 @@ class AirQualityTest(unittest.TestCase):
 
     def test_upstream_response_limit_is_one_mebibyte(self):
         self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)
+
+    def test_cache_key_versions_current_epa_breakpoints(self):
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
+
+        self.assertEqual(quality.cache_key(), "a_q_2_37.794678_-122.41143")
 
     def test_default_http_get_uses_timeout(self):
         calls = []
@@ -114,7 +125,7 @@ class AirQualityTest(unittest.TestCase):
         first = quality.getData()
         second = quality.getData()
 
-        self.assertEqual(first, {"category": "Good", "caution": "None", "score": 50})
+        self.assertEqual(first, {"category": "Good", "caution": "None", "score": 22})
         self.assertEqual(second, first)
         self.assertEqual(requested_urls, ["https://example.test/air.json"])
 
@@ -160,9 +171,7 @@ class AirQualityTest(unittest.TestCase):
 
                 refreshed = quality.getData()
 
-                self.assertEqual(
-                    refreshed, {"category": "Good", "caution": "None", "score": 50}
-                )
+                self.assertEqual(refreshed, MODERATE_12_PAYLOAD)
                 self.assertEqual(requested_urls, ["https://example.test/air.json"])
                 self.assertEqual(cache.decoded(quality.cache_key()), refreshed)
 
@@ -185,9 +194,35 @@ class AirQualityTest(unittest.TestCase):
             quality.getData(), {"category": "Good", "caution": "None", "score": 50}
         )
 
-    def test_score(self):
+    def test_score_uses_current_epa_breakpoints(self):
         a = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
-        self.assertEqual(a.AQIPM25(120), 184.0)
+        expected_scores = {
+            0.0: 0,
+            9.0: 50,
+            9.1: 51,
+            35.4: 100,
+            35.5: 101,
+            55.4: 150,
+            55.5: 151,
+            125.4: 200,
+            125.5: 201,
+            225.4: 300,
+            225.5: 301,
+            325.4: 500,
+            400.0: 500,
+        }
+
+        for concentration, expected_score in expected_scores.items():
+            with self.subTest(concentration=concentration):
+                self.assertEqual(a.AQIPM25(concentration), expected_score)
+
+    def test_score_rejects_negative_and_nonfinite_concentrations(self):
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
+
+        for concentration in (-0.1, float("nan"), float("inf")):
+            with self.subTest(concentration=concentration):
+                with self.assertRaises(ValueError):
+                    quality.AQIPM25(concentration)
 
     def test_category(self):
         d = air.AirQuality.AQICategory(120)
@@ -211,7 +246,7 @@ class AirQualityTest(unittest.TestCase):
                 {
                     "results": [
                         {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": ""},
-                        {"Lat": 37.79, "Lon": -122.41, "PM2_5Value": "4.0"},
+                        {"Lat": 37.79, "Lon": -122.41, "PM2_5Value": "-0.1"},
                     ]
                 }
             ),
@@ -257,9 +292,7 @@ class AirQualityTest(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(
-            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
-        )
+        self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
 
     def test_zero_coordinate_sensor_is_valid(self):
         quality = air.AirQuality(
@@ -272,9 +305,7 @@ class AirQualityTest(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(
-            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
-        )
+        self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
 
     def test_nonfinite_sensor_values_are_ignored(self):
         quality = air.AirQuality(
@@ -288,15 +319,15 @@ class AirQualityTest(unittest.TestCase):
                         {"Lat": "inf", "Lon": -122.41, "PM2_5Value": "12.0"},
                         {"Lat": 37.8, "Lon": "nan", "PM2_5Value": "12.0"},
                         {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "nan"},
+                        {"Lat": 91, "Lon": -122.41, "PM2_5Value": "12.0"},
+                        {"Lat": 37.8, "Lon": -181, "PM2_5Value": "12.0"},
                         {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"},
                     ]
                 }
             ),
         )
 
-        self.assertEqual(
-            quality.getData(), {"category": "Good", "caution": "None", "score": 50}
-        )
+        self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
 
 
 if __name__ == "__main__":

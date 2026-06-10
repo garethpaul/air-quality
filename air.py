@@ -4,8 +4,17 @@ import os
 from math import cos, asin, sqrt
 
 CACHE_TTL_SECONDS = 180
+AQI_CACHE_VERSION = 2
 REQUEST_TIMEOUT_SECONDS = 10
 UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
+PM25_AQI_BREAKPOINTS = (
+    (0.0, 9.0, 0, 50),
+    (9.1, 35.4, 51, 100),
+    (35.5, 55.4, 101, 150),
+    (55.5, 125.4, 151, 200),
+    (125.5, 225.4, 201, 300),
+    (225.5, 325.4, 301, 500),
+)
 
 
 def _missing(value):
@@ -127,7 +136,7 @@ class AirQuality(object):
         return self.r
 
     def cache_key(self):
-        return "a_q_{0}_{1}".format(self.lat, self.lng)
+        return "a_q_{0}_{1}_{2}".format(AQI_CACHE_VERSION, self.lat, self.lng)
 
     def nearest_reading(self, results):
         nearest = None
@@ -154,7 +163,7 @@ class AirQuality(object):
             if not all(math.isfinite(value) for value in (pm25, lat, lon)):
                 continue
 
-            if pm25 < 5:
+            if pm25 < 0 or lat < -90 or lat > 90 or lon < -180 or lon > 180:
                 continue
 
             distance = self.distance(self.lat, self.lng, lat, lon)
@@ -178,25 +187,26 @@ class AirQuality(object):
 
     def AQIPM25(self, raw_value):
         conc = float(raw_value)
+        if not math.isfinite(conc) or conc < 0:
+            raise ValueError("PM2.5 concentration must be a finite non-negative number")
+
         c = (math.floor(10 * conc)) / 10
-        AQI = 0
-        if c >= 0 and c < 12.1:
-            AQI = self.Linear(50, 0, 12, 0, c)
-        elif c >= 12.1 and c < 35.5:
-            AQI = self.Linear(100, 51, 35.4, 12.1, c)
-        elif c >= 35.5 and c < 55.5:
-            AQI = self.Linear(150, 101, 55.4, 35.5, c)
-        elif c >= 55.5 and c < 150.5:
-            AQI = self.Linear(200, 151, 150.4, 55.5, c)
-        elif c >= 150.5 and c < 250.5:
-            AQI = self.Linear(300, 201, 250.4, 150.5, c)
-        elif c >= 250.5 and c < 350.5:
-            AQI = self.Linear(400, 301, 350.4, 250.5, c)
-        elif c >= 350.5 and c < 500.5:
-            AQI = self.Linear(500, 401, 500.4, 350.5, c)
-        else:
-            AQI = "PM25message"
-        return AQI
+        for (
+            concentration_low,
+            concentration_high,
+            aqi_low,
+            aqi_high,
+        ) in PM25_AQI_BREAKPOINTS:
+            if concentration_low <= c <= concentration_high:
+                return self.Linear(
+                    aqi_high,
+                    aqi_low,
+                    concentration_high,
+                    concentration_low,
+                    c,
+                )
+
+        return 500
 
     @staticmethod
     def Linear(AQIhigh, AQIlow, Conchigh, Conclow, Concentration):

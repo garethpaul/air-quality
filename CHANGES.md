@@ -2,6 +2,9 @@
 
 ## 2026-06-10
 
+- Updated PM2.5 scoring to the EPA breakpoints effective May 6, 2024, restored
+  valid readings below 5 µg/m³, rejected out-of-range sensor coordinates, and
+  versioned cache keys so superseded scores are not reused.
 - Moved the runtime baseline from Python 3.7 to `.python-version` 3.14 and a
   CircleCI Python 3.12/3.14 matrix.
 - Added pinned, read-only GitHub Actions verification on Python 3.12 and 3.14.
