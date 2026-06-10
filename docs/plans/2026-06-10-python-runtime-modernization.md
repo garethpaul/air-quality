@@ -14,6 +14,8 @@ runtimes.
   and hosted runtime discovery.
 - Test the locked application and development dependencies on Python 3.12 and
   3.14 in CircleCI, with runtime-specific dependency caches.
+- Add an observable, read-only GitHub Actions matrix with immutable action
+  revisions and the same `make check` gate.
 - Upgrade Bottle, Requests, Mapbox, Redis, and Ruff to current direct pins.
 - Remove direct boto3, botocore, and s3transfer pins because they are Mapbox
   transitive dependencies rather than application imports.

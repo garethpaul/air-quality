@@ -45,8 +45,8 @@ cd air-quality
 python -m pip install -r requirements.txt
 ```
 
-The setup commands above are derived from repository files. CircleCI validates
-the locked dependency set on Python 3.12 and 3.14.
+The setup commands above are derived from repository files. GitHub Actions and
+CircleCI validate the locked dependency set on Python 3.12 and 3.14.
 
 ## Running or Using the Project
 
@@ -60,7 +60,8 @@ the locked dependency set on Python 3.12 and 3.14.
 - `make test` - run the dependency-free unittest suite
 - `make build` - compile tracked Python files
 - `scripts/check-baseline.sh` - verify required files, Make targets,
-  completed plan metadata, README notes, and local secret/editor ignore hygiene
+  completed plan metadata, CI contracts, README notes, and local secret/editor
+  ignore hygiene
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

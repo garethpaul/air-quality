@@ -4,6 +4,7 @@
 
 - Moved the runtime baseline from Python 3.7 to `.python-version` 3.14 and a
   CircleCI Python 3.12/3.14 matrix.
+- Added pinned, read-only GitHub Actions verification on Python 3.12 and 3.14.
 - Upgraded Bottle, Requests, Mapbox, Redis, and Ruff to current direct pins.
 - Removed redundant direct AWS SDK pins that Mapbox resolves transitively.
 - Added a completed runtime modernization plan and baseline contracts for the

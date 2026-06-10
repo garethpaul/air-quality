@@ -17,6 +17,7 @@ require_file() {
 
 for path in \
   ".circleci/config.yml" \
+  ".github/workflows/check.yml" \
   ".python-version" \
   ".gitignore" \
   "CHANGES.md" \
@@ -133,6 +134,19 @@ for ci_contract in \
   'cimg/python:<< parameters.python-version >>'; do
   if ! grep -Fq "$ci_contract" "$ROOT_DIR/.circleci/config.yml"; then
     printf '%s\n' "CircleCI must keep contract: $ci_contract" >&2
+    exit 1
+  fi
+done
+
+for workflow_contract in \
+  'permissions:' \
+  'contents: read' \
+  'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10' \
+  'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405' \
+  'python-version: ["3.12", "3.14"]' \
+  'run: make check'; do
+  if ! grep -Fq "$workflow_contract" "$ROOT_DIR/.github/workflows/check.yml"; then
+    printf '%s\n' "GitHub Actions must keep contract: $workflow_contract" >&2
     exit 1
   fi
 done

@@ -45,8 +45,9 @@ callers or used as coordinates.
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
 The maintained dependency baseline uses exact direct pins and is exercised on
-Python 3.12 and 3.14. AWS SDK packages are resolved through Mapbox instead of
-being duplicated as application-level pins.
+Python 3.12 and 3.14 in immutable, read-only GitHub Actions jobs. AWS SDK
+packages are resolved through Mapbox instead of being duplicated as
+application-level pins.
 
 ## Safe Research Guidelines
 
