@@ -35,7 +35,7 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python matching the era of the project
+- Python 3.12 or 3.14; `.python-version` selects 3.14 by default
 
 ### Setup
 
@@ -45,7 +45,8 @@ cd air-quality
 python -m pip install -r requirements.txt
 ```
 
-The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+The setup commands above are derived from repository files. CircleCI validates
+the locked dependency set on Python 3.12 and 3.14.
 
 ## Running or Using the Project
 
@@ -111,6 +112,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   corrupt geocode cache refresh behavior.
 - See `docs/plans/2026-06-09-scripted-baseline-check.md` for the scripted
   repository baseline guard.
+- See `docs/plans/2026-06-10-python-runtime-modernization.md` for the current
+  Python runtime, dependency pins, and CI matrix.
 
 ## Contributing
 

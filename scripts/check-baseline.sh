@@ -17,6 +17,7 @@ require_file() {
 
 for path in \
   ".circleci/config.yml" \
+  ".python-version" \
   ".gitignore" \
   "CHANGES.md" \
   "Makefile" \
@@ -34,11 +35,11 @@ for path in \
   "requirements.txt" \
   "requirements-dev.txt" \
   "run_tests.py" \
-  "runtime.txt" \
   "test_helpers.py" \
   "docs/plans/2026-06-08-air-quality-engineering-bar.md" \
   "docs/plans/2026-06-09-air-quality-geocode-cache-validation.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-python-runtime-modernization.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -114,9 +115,24 @@ fi
 
 for plan in \
   "$DOCS_PLANS/2026-06-09-air-quality-geocode-cache-validation.md" \
-  "$DOCS_PLANS/2026-06-09-scripted-baseline-check.md"; do
+  "$DOCS_PLANS/2026-06-09-scripted-baseline-check.md" \
+  "$DOCS_PLANS/2026-06-10-python-runtime-modernization.md"; do
   if ! grep -Fq "make check" "$plan"; then
     printf '%s\n' "$plan must document make check verification." >&2
+    exit 1
+  fi
+done
+
+if [ "$(cat "$ROOT_DIR/.python-version")" != "3.14" ]; then
+  printf '%s\n' ".python-version must select Python 3.14." >&2
+  exit 1
+fi
+
+for ci_contract in \
+  'python-version: ["3.12", "3.14"]' \
+  'cimg/python:<< parameters.python-version >>'; do
+  if ! grep -Fq "$ci_contract" "$ROOT_DIR/.circleci/config.yml"; then
+    printf '%s\n' "CircleCI must keep contract: $ci_contract" >&2
     exit 1
   fi
 done

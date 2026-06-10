@@ -35,6 +35,7 @@ Priority:
 - Ignore corrupt cached air-quality payloads before returning API data
 - Keep cached air-quality responses limited to validated public response fields
 - Ignore corrupt cached geocode coordinates before search lookups
+- Keep current direct dependencies verified on Python 3.12 and 3.14
 
 Next priorities:
 

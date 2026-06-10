@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-10
+
+- Moved the runtime baseline from Python 3.7 to `.python-version` 3.14 and a
+  CircleCI Python 3.12/3.14 matrix.
+- Upgraded Bottle, Requests, Mapbox, Redis, and Ruff to current direct pins.
+- Removed redundant direct AWS SDK pins that Mapbox resolves transitively.
+- Added a completed runtime modernization plan and baseline contracts for the
+  selected runtime and CI matrix.
+
 ## 2026-06-09
 
 - Validated cached air-quality response field types and finite non-negative
