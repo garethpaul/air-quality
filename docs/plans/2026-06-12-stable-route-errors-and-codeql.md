@@ -37,5 +37,7 @@ cannot be verified as absent from its head.
 - Four isolated mutations were rejected for public-message drift, restored
   exception serialization, a mutable CodeQL action, and missing
   `security-events: write` permission.
-- Exact-head hosted Check and CodeQL verification remains required before the
-  pull request is considered ready.
+- At implementation head `31c660b6805cc99c6308239eb7aa6486aba12748`,
+  Check run `27426094216` passed Python 3.12 and 3.14, and CodeQL run
+  `27426094269` passed actions and Python analysis. The pull-request head
+  reported zero open code-scanning, Dependabot, and secret-scanning alerts.
