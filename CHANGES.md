@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-12
+
+- Closed streamed `AIRQUALITY_DATA` responses after successful reads and every
+  status, size, decoding, and JSON-validation failure path.
+- Added dependency-free regression coverage for exact response cleanup.
+
 ## 2026-06-10
 
 - Updated PM2.5 scoring to the EPA breakpoints effective May 6, 2024, restored

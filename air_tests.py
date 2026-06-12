@@ -15,18 +15,25 @@ MODERATE_12_PAYLOAD = {
 
 class AirQualityTest(unittest.TestCase):
     class StreamingResponse(object):
-        def __init__(self, chunks, headers=None, encoding="utf-8"):
+        def __init__(self, chunks, headers=None, encoding="utf-8", status_error=None):
             self.chunks = chunks
             self.headers = headers or {}
             self.encoding = encoding
+            self.status_error = status_error
             self.status_checked = False
+            self.close_calls = 0
 
         def raise_for_status(self):
             self.status_checked = True
+            if self.status_error is not None:
+                raise self.status_error
 
         def iter_content(self, chunk_size):
             self.chunk_size = chunk_size
             return iter(self.chunks)
+
+        def close(self):
+            self.close_calls += 1
 
     def test_upstream_response_limit_is_one_mebibyte(self):
         self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)
@@ -64,6 +71,7 @@ class AirQualityTest(unittest.TestCase):
         )
         self.assertTrue(streaming_response.status_checked)
         self.assertEqual(streaming_response.chunk_size, 64 * 1024)
+        self.assertEqual(streaming_response.close_calls, 1)
 
     def test_default_http_get_rejects_oversized_streamed_responses(self):
         response = self.StreamingResponse(
@@ -81,6 +89,8 @@ class AirQualityTest(unittest.TestCase):
             else:
                 sys.modules["requests"] = original_requests
 
+        self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_rejects_oversized_content_length(self):
         response = self.StreamingResponse(
             [], headers={"Content-Length": str(air.UPSTREAM_RESPONSE_MAX_BYTES + 1)}
@@ -96,6 +106,40 @@ class AirQualityTest(unittest.TestCase):
                 sys.modules.pop("requests", None)
             else:
                 sys.modules["requests"] = original_requests
+
+        self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_closes_response_after_status_failure(self):
+        response = self.StreamingResponse([], status_error=OSError("upstream failed"))
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+
+        try:
+            with self.assertRaisesRegex(OSError, "upstream failed"):
+                air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
+
+        self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_closes_response_after_invalid_json(self):
+        response = self.StreamingResponse([b"not-json"])
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+
+        try:
+            with self.assertRaisesRegex(RuntimeError, "must be valid JSON"):
+                air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
+
+        self.assertEqual(response.close_calls, 1)
 
     def test_getting_data_uses_nearest_valid_sensor_and_caches_it(self):
         cache = MemoryCache()

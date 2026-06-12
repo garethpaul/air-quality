@@ -42,7 +42,8 @@ callers or used as coordinates.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
 limit. HTTP failures, oversized bodies, and malformed JSON should fail before
-sensor payload processing.
+sensor payload processing. The response is closed after successful reads and
+all validation failures so pooled connections are not retained indefinitely.
 
 ## Dependency and Supply Chain Security
 

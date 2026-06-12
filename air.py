@@ -25,28 +25,31 @@ def _default_http_get(url):
     import requests
 
     response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS, stream=True)
-    response.raise_for_status()
-
-    content_length = response.headers.get("Content-Length")
-    if content_length is not None:
-        try:
-            if int(content_length) > UPSTREAM_RESPONSE_MAX_BYTES:
-                raise RuntimeError("AIRQUALITY_DATA response is too large")
-        except ValueError:
-            raise RuntimeError("AIRQUALITY_DATA Content-Length must be an integer")
-
-    body = bytearray()
-    for chunk in response.iter_content(chunk_size=64 * 1024):
-        if not chunk:
-            continue
-        body.extend(chunk)
-        if len(body) > UPSTREAM_RESPONSE_MAX_BYTES:
-            raise RuntimeError("AIRQUALITY_DATA response is too large")
-
     try:
-        return json.loads(body.decode(response.encoding or "utf-8"))
-    except (UnicodeDecodeError, ValueError):
-        raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
+        response.raise_for_status()
+
+        content_length = response.headers.get("Content-Length")
+        if content_length is not None:
+            try:
+                if int(content_length) > UPSTREAM_RESPONSE_MAX_BYTES:
+                    raise RuntimeError("AIRQUALITY_DATA response is too large")
+            except ValueError:
+                raise RuntimeError("AIRQUALITY_DATA Content-Length must be an integer")
+
+        body = bytearray()
+        for chunk in response.iter_content(chunk_size=64 * 1024):
+            if not chunk:
+                continue
+            body.extend(chunk)
+            if len(body) > UPSTREAM_RESPONSE_MAX_BYTES:
+                raise RuntimeError("AIRQUALITY_DATA response is too large")
+
+        try:
+            return json.loads(body.decode(response.encoding or "utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
+    finally:
+        response.close()
 
 
 class AirQuality(object):

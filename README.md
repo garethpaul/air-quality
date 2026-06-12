@@ -65,7 +65,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14.
   completed plan metadata, CI contracts, README notes, and local secret/editor
   ignore hygiene
 - The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
-  JSON and HTTP failures, and keeps the existing 10-second timeout.
+  JSON and HTTP failures, keeps the existing 10-second timeout, and closes the
+  streamed response after both successful and failed reads.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -127,6 +128,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   sensor-data streaming and root-independent verification.
 - See `docs/plans/2026-06-10-current-epa-pm25-breakpoints.md` for the current
   PM2.5 AQI calculation and cache-version contract.
+- See `docs/plans/2026-06-12-air-quality-response-cleanup.md` for deterministic
+  upstream response cleanup.
 
 ## Contributing
 

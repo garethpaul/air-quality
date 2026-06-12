@@ -42,9 +42,15 @@ for path in \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
   "docs/plans/2026-06-10-python-runtime-modernization.md" \
   "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
+  "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+if ! grep -Fq "response.close()" "$ROOT_DIR/air.py"; then
+  printf '%s\n' "Default upstream responses must be closed." >&2
+  exit 1
+fi
 
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
