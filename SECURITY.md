@@ -68,3 +68,9 @@ Good-faith research is welcome when it stays within these boundaries:
 ## Maintainer Response
 
 The maintainer will review complete reports as availability allows, prioritize issues by exploitability and impact, and coordinate a fix or mitigation when the affected code is still maintained. For sample, archived, or educational repositories, the likely remediation may be documentation, dependency updates, or clearly marking unsupported code rather than a production-style patch release.
+
+## Automated Analysis
+
+GitHub Actions runs immutable-pinned CodeQL analysis for workflow and Python
+sources. Public route errors use stable messages and do not serialize caught
+exception details, environment values, provider responses, or stack traces.

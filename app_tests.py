@@ -1,5 +1,9 @@
+import json
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
+import app as app_module
 from app import (
     SEARCH_QUERY_MAX_LENGTH,
     air_quality_payload,
@@ -96,6 +100,52 @@ class AppRouteHelperTest(unittest.TestCase):
         query = " " + ("a" * SEARCH_QUERY_MAX_LENGTH) + " "
 
         self.assertEqual(parse_search_query(query), "a" * SEARCH_QUERY_MAX_LENGTH)
+
+    def test_show_data_does_not_expose_exception_details(self):
+        cases = [
+            (ValueError("private validation detail"), 400, "invalid request"),
+            (
+                RuntimeError("AIRQUALITY_DATA=https://secret"),
+                503,
+                "service unavailable",
+            ),
+        ]
+
+        for error, expected_status, expected_message in cases:
+            with self.subTest(error=type(error).__name__):
+                fake_response = SimpleNamespace(status=None, content_type=None)
+                fake_request = SimpleNamespace(query={"lat": "1", "lng": "2"})
+                with (
+                    patch.object(app_module, "response", fake_response),
+                    patch.object(app_module, "request", fake_request),
+                    patch.object(app_module, "air_quality_payload", side_effect=error),
+                ):
+                    payload = json.loads(app_module.show_data())
+
+                self.assertEqual(fake_response.status, expected_status)
+                self.assertEqual(payload, {"error": expected_message})
+                self.assertNotIn(str(error), json.dumps(payload))
+
+    def test_search_does_not_expose_exception_details(self):
+        cases = [
+            (ValueError("private geocoder detail"), 400, "invalid request"),
+            (RuntimeError("REDIS_URL=redis://secret"), 503, "service unavailable"),
+        ]
+
+        for error, expected_status, expected_message in cases:
+            with self.subTest(error=type(error).__name__):
+                fake_response = SimpleNamespace(status=None, content_type=None)
+                fake_request = SimpleNamespace(query={"query": "San Francisco"})
+                with (
+                    patch.object(app_module, "response", fake_response),
+                    patch.object(app_module, "request", fake_request),
+                    patch.object(app_module, "search_payload", side_effect=error),
+                ):
+                    payload = json.loads(app_module.search())
+
+                self.assertEqual(fake_response.status, expected_status)
+                self.assertEqual(payload, {"error": expected_message})
+                self.assertNotIn(str(error), json.dumps(payload))
 
 
 if __name__ == "__main__":

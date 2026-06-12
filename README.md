@@ -64,6 +64,9 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
 - `scripts/check-baseline.sh` - verify required files, Make targets,
   completed plan metadata, CI contracts, README notes, and local secret/editor
   ignore hygiene
+- Route failures return stable JSON messages instead of exposing caught
+  exception details; hosted CodeQL analyzes actions and Python on every push
+  and pull request and on a weekly schedule.
 - The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
   JSON and HTTP failures, keeps the existing 10-second timeout, and closes the
   streamed response after both successful and failed reads.

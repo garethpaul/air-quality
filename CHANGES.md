@@ -2,6 +2,10 @@
 
 ## 2026-06-12
 
+- Replaced exception-derived route responses with stable public JSON errors and
+  added route-level regression coverage for hidden internal details.
+- Added immutable-pinned actions and Python CodeQL analysis plus fail-closed
+  workflow contracts.
 - Closed streamed `AIRQUALITY_DATA` responses after successful reads and every
   status, size, decoding, and JSON-validation failure path.
 - Added dependency-free regression coverage for exact response cleanup.

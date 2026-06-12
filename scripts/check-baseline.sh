@@ -18,6 +18,7 @@ require_file() {
 for path in \
   ".circleci/config.yml" \
   ".github/workflows/check.yml" \
+  ".github/workflows/codeql.yml" \
   ".python-version" \
   ".gitignore" \
   "CHANGES.md" \
@@ -43,6 +44,7 @@ for path in \
   "docs/plans/2026-06-10-python-runtime-modernization.md" \
   "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
   "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
+  "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -51,6 +53,31 @@ if ! grep -Fq "response.close()" "$ROOT_DIR/air.py"; then
   printf '%s\n' "Default upstream responses must be closed." >&2
   exit 1
 fi
+
+for route_error_contract in \
+  'INVALID_REQUEST_MESSAGE = "invalid request"' \
+  'SERVICE_UNAVAILABLE_MESSAGE = "service unavailable"'; do
+  if ! grep -Fq "$route_error_contract" "$ROOT_DIR/app.py"; then
+    printf '%s\n' "Routes must keep stable public error contract: $route_error_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Eq 'json_error\([[:space:]]*str\(' "$ROOT_DIR/app.py"; then
+  printf '%s\n' "Routes must not serialize exception details into JSON errors." >&2
+  exit 1
+fi
+
+for route_test_contract in \
+  'test_show_data_does_not_expose_exception_details' \
+  'test_search_does_not_expose_exception_details' \
+  'AIRQUALITY_DATA=https://secret' \
+  'REDIS_URL=redis://secret'; do
+  if ! grep -Fq "$route_test_contract" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "Route error regression tests must keep contract: $route_test_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
@@ -199,6 +226,39 @@ if grep -Fq 'pull_request_target' "$ROOT_DIR/.github/workflows/check.yml"; then
   exit 1
 fi
 
+for workflow_contract in \
+  'push:' \
+  'pull_request:' \
+  'schedule:' \
+  'workflow_dispatch:' \
+  'contents: read' \
+  'security-events: write' \
+  'runs-on: ubuntu-24.04' \
+  'timeout-minutes: 10' \
+  'language: [actions, python]' \
+  'build-mode: none' \
+  'concurrency:' \
+  'cancel-in-progress: true' \
+  'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10' \
+  'github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e' \
+  'github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e' \
+  'persist-credentials: false'; do
+  if ! grep -Fq "$workflow_contract" "$ROOT_DIR/.github/workflows/codeql.yml"; then
+    printf '%s\n' "CodeQL must keep contract: $workflow_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'ubuntu-latest' "$ROOT_DIR/.github/workflows/codeql.yml"; then
+  printf '%s\n' "CodeQL must not use a floating Ubuntu runner." >&2
+  exit 1
+fi
+
+if grep -Fq 'pull_request_target' "$ROOT_DIR/.github/workflows/codeql.yml"; then
+  printf '%s\n' "CodeQL must not run pull-request code with target-branch privileges." >&2
+  exit 1
+fi
+
 action_count=$(grep -Ec '^[[:space:]]*(- )?uses: ' "$ROOT_DIR/.github/workflows/check.yml")
 if [ "$action_count" -ne 2 ]; then
   printf '%s\n' "GitHub Actions must use exactly the approved checkout and setup-python actions." >&2
@@ -218,9 +278,29 @@ sed -n 's/^[[:space:]]*-\{0,1\}[[:space:]]*uses:[[:space:]]*\([^[:space:]]*\).*/
   esac
 done
 
+codeql_action_count=$(grep -Ec '^[[:space:]]*(- )?uses: ' "$ROOT_DIR/.github/workflows/codeql.yml")
+if [ "$codeql_action_count" -ne 3 ]; then
+  printf '%s\n' "CodeQL must use exactly checkout, init, and analyze actions." >&2
+  exit 1
+fi
+
+sed -n 's/^[[:space:]]*-\{0,1\}[[:space:]]*uses:[[:space:]]*\([^[:space:]]*\).*/\1/p' \
+  "$ROOT_DIR/.github/workflows/codeql.yml" | while IFS= read -r action; do
+  case "$action" in
+    actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10|\
+    github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e|\
+    github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e)
+      ;;
+    *)
+      printf '%s\n' "CodeQL contains an unapproved action: $action" >&2
+      exit 1
+      ;;
+  esac
+done
+
 workflow_count=$(find "$ROOT_DIR/.github/workflows" -type f \( -name '*.yml' -o -name '*.yaml' \) | wc -l | tr -d ' ')
-if [ "$workflow_count" -ne 1 ]; then
-  printf '%s\n' ".github/workflows must contain only check.yml." >&2
+if [ "$workflow_count" -ne 2 ]; then
+  printf '%s\n' ".github/workflows must contain only check.yml and codeql.yml." >&2
   exit 1
 fi
 

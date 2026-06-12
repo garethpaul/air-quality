@@ -6,6 +6,8 @@ from air import AirQuality
 from geocode import GeoCode
 
 SEARCH_QUERY_MAX_LENGTH = 200
+INVALID_REQUEST_MESSAGE = "invalid request"
+SERVICE_UNAVAILABLE_MESSAGE = "service unavailable"
 
 try:
     from bottle import request, response, route, run
@@ -99,20 +101,20 @@ def show_data():
         return json_response(
             air_quality_payload(request.query.get("lat"), request.query.get("lng"))
         )
-    except ValueError as exc:
-        return json_error(str(exc), status=400)
-    except RuntimeError as exc:
-        return json_error(str(exc), status=503)
+    except ValueError:
+        return json_error(INVALID_REQUEST_MESSAGE, status=400)
+    except RuntimeError:
+        return json_error(SERVICE_UNAVAILABLE_MESSAGE, status=503)
 
 
 @route("/s")
 def search():
     try:
         return json_response(search_payload(request.query.get("query")))
-    except ValueError as exc:
-        return json_error(str(exc), status=400)
-    except RuntimeError as exc:
-        return json_error(str(exc), status=503)
+    except ValueError:
+        return json_error(INVALID_REQUEST_MESSAGE, status=400)
+    except RuntimeError:
+        return json_error(SERVICE_UNAVAILABLE_MESSAGE, status=503)
 
 
 def main():
