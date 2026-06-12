@@ -1,5 +1,30 @@
 # Changes
 
+## 2026-06-12
+
+- Closed streamed `AIRQUALITY_DATA` responses after successful reads and every
+  status, size, decoding, and JSON-validation failure path.
+- Added dependency-free regression coverage for exact response cleanup.
+
+## 2026-06-10
+
+- Updated PM2.5 scoring to the EPA breakpoints effective May 6, 2024, restored
+  valid readings below 5 µg/m³, rejected out-of-range sensor coordinates, and
+  versioned cache keys so superseded scores are not reused.
+- Moved the runtime baseline from Python 3.7 to `.python-version` 3.14 and a
+  CircleCI Python 3.12/3.14 matrix.
+- Added pinned, read-only GitHub Actions verification on Python 3.12 and 3.14.
+- Upgraded Bottle, Requests, Mapbox, Redis, and Ruff to current direct pins.
+- Removed redundant direct AWS SDK pins that Mapbox resolves transitively.
+- Added a completed runtime modernization plan and baseline contracts for the
+  selected runtime and CI matrix.
+- Streamed default sensor-data responses with a 1 MiB limit, HTTP status checks,
+  and controlled JSON decoding errors.
+- Pinned GitHub Actions to Ubuntu 24.04 with superseded-run cancellation and
+  made Make verification independent of the caller's working directory.
+- Disabled checkout credential persistence and added an external-directory CI
+  invocation guarded by an exact action allowlist.
+
 ## 2026-06-09
 
 - Validated cached air-quality response field types and finite non-negative

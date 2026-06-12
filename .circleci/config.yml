@@ -3,15 +3,18 @@ version: 2.1
 
 jobs:
   build:
+    parameters:
+      python-version:
+        type: string
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/python:<< parameters.python-version >>
     working_directory: ~/repo
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            - v2-dependencies-
+            - v3-<< parameters.python-version >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            - v3-<< parameters.python-version >>-dependencies-
       - run:
           name: Install dependencies
           command: |
@@ -37,12 +40,15 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: v3-<< parameters.python-version >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
 
 workflows:
   build:
     jobs:
-      - build
+      - build:
+          matrix:
+            parameters:
+              python-version: ["3.12", "3.14"]
   nightly:
     triggers:
       - schedule:
@@ -52,4 +58,7 @@ workflows:
               only:
                 - master
     jobs:
-      - build
+      - build:
+          matrix:
+            parameters:
+              python-version: ["3.12", "3.14"]

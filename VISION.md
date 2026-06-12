@@ -29,12 +29,16 @@ Priority:
 - Convert malformed provider response shapes into controlled route errors
   before serializing responses
 - Keep upstream HTTP calls bounded by default
+- Bound upstream sensor response bytes before JSON decoding
+- Keep PM2.5 AQI calculations aligned with current EPA breakpoints
+- Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Ignore corrupt cached air-quality payloads before returning API data
 - Keep cached air-quality responses limited to validated public response fields
 - Ignore corrupt cached geocode coordinates before search lookups
+- Keep current direct dependencies verified on Python 3.12 and 3.14
 
 Next priorities:
 
@@ -68,6 +72,9 @@ configuration and out of git.
 Network-facing changes should fail closed when required configuration is
 missing. Do not add request paths that expose raw credentials, Redis internals,
 or unvalidated upstream data.
+
+Streamed upstream responses should be closed deterministically on success and
+failure so repeated requests do not retain connection resources.
 
 ## What We Will Not Merge (For Now)
 

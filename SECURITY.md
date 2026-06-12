@@ -40,9 +40,20 @@ Cached upstream and geocode data should be validated before reuse. Corrupt
 geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 
+The default sensor-data client uses a timeout and a 1 MiB streamed response
+limit. HTTP failures, oversized bodies, and malformed JSON should fail before
+sensor payload processing. The response is closed after successful reads and
+all validation failures so pooled connections are not retained indefinitely.
+
 ## Dependency and Supply Chain Security
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
+
+The maintained dependency baseline uses exact direct pins and is exercised on
+Python 3.12 and 3.14 in immutable, read-only GitHub Actions jobs with checkout
+credential persistence disabled. AWS SDK
+packages are resolved through Mapbox instead of being duplicated as
+application-level pins.
 
 ## Safe Research Guidelines
 

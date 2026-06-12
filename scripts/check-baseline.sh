@@ -17,6 +17,8 @@ require_file() {
 
 for path in \
   ".circleci/config.yml" \
+  ".github/workflows/check.yml" \
+  ".python-version" \
   ".gitignore" \
   "CHANGES.md" \
   "Makefile" \
@@ -34,17 +36,29 @@ for path in \
   "requirements.txt" \
   "requirements-dev.txt" \
   "run_tests.py" \
-  "runtime.txt" \
   "test_helpers.py" \
   "docs/plans/2026-06-08-air-quality-engineering-bar.md" \
   "docs/plans/2026-06-09-air-quality-geocode-cache-validation.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
+  "docs/plans/2026-06-10-python-runtime-modernization.md" \
+  "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
+  "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
 
+if ! grep -Fq "response.close()" "$ROOT_DIR/air.py"; then
+  printf '%s\n' "Default upstream responses must be closed." >&2
+  exit 1
+fi
+
 if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   printf '%s\n' "Makefile must run scripts/check-baseline.sh from make check." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must resolve the repository root." >&2
   exit 1
 fi
 
@@ -114,11 +128,110 @@ fi
 
 for plan in \
   "$DOCS_PLANS/2026-06-09-air-quality-geocode-cache-validation.md" \
-  "$DOCS_PLANS/2026-06-09-scripted-baseline-check.md"; do
+  "$DOCS_PLANS/2026-06-09-scripted-baseline-check.md" \
+  "$DOCS_PLANS/2026-06-10-python-runtime-modernization.md"; do
   if ! grep -Fq "make check" "$plan"; then
     printf '%s\n' "$plan must document make check verification." >&2
     exit 1
   fi
 done
+
+if [ "$(cat "$ROOT_DIR/.python-version")" != "3.14" ]; then
+  printf '%s\n' ".python-version must select Python 3.14." >&2
+  exit 1
+fi
+
+if [ -e "$ROOT_DIR/runtime.txt" ]; then
+  printf '%s\n' "Deprecated runtime.txt must remain removed in favor of .python-version." >&2
+  exit 1
+fi
+
+for requirement in \
+  'bottle==0.13.4' \
+  'requests==2.34.2' \
+  'mapbox==0.18.1' \
+  'redis==8.0.0'; do
+  if ! grep -Fxq "$requirement" "$ROOT_DIR/requirements.txt"; then
+    printf '%s\n' "requirements.txt must keep exact direct pin: $requirement" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fxq 'ruff==0.15.15' "$ROOT_DIR/requirements-dev.txt"; then
+  printf '%s\n' "requirements-dev.txt must keep the exact Ruff pin." >&2
+  exit 1
+fi
+
+for ci_contract in \
+  'python-version: ["3.12", "3.14"]' \
+  'cimg/python:<< parameters.python-version >>'; do
+  if ! grep -Fq "$ci_contract" "$ROOT_DIR/.circleci/config.yml"; then
+    printf '%s\n' "CircleCI must keep contract: $ci_contract" >&2
+    exit 1
+  fi
+done
+
+for workflow_contract in \
+  'permissions:' \
+  'contents: read' \
+  'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10' \
+  'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405' \
+  'persist-credentials: false' \
+  'python-version: ["3.12", "3.14"]' \
+  'concurrency:' \
+  'cancel-in-progress: true' \
+  'runs-on: ubuntu-24.04' \
+  'run: make check' \
+  'make -f "$GITHUB_WORKSPACE/Makefile" check'; do
+  if ! grep -Fq "$workflow_contract" "$ROOT_DIR/.github/workflows/check.yml"; then
+    printf '%s\n' "GitHub Actions must keep contract: $workflow_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'ubuntu-latest' "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions must not use a floating Ubuntu runner." >&2
+  exit 1
+fi
+
+if grep -Fq 'pull_request_target' "$ROOT_DIR/.github/workflows/check.yml"; then
+  printf '%s\n' "GitHub Actions must not run pull-request code with target-branch privileges." >&2
+  exit 1
+fi
+
+action_count=$(grep -Ec '^[[:space:]]*(- )?uses: ' "$ROOT_DIR/.github/workflows/check.yml")
+if [ "$action_count" -ne 2 ]; then
+  printf '%s\n' "GitHub Actions must use exactly the approved checkout and setup-python actions." >&2
+  exit 1
+fi
+
+sed -n 's/^[[:space:]]*-\{0,1\}[[:space:]]*uses:[[:space:]]*\([^[:space:]]*\).*/\1/p' \
+  "$ROOT_DIR/.github/workflows/check.yml" | while IFS= read -r action; do
+  case "$action" in
+    actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10|\
+    actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405)
+      ;;
+    *)
+      printf '%s\n' "GitHub Actions contains an unapproved action: $action" >&2
+      exit 1
+      ;;
+  esac
+done
+
+workflow_count=$(find "$ROOT_DIR/.github/workflows" -type f \( -name '*.yml' -o -name '*.yaml' \) | wc -l | tr -d ' ')
+if [ "$workflow_count" -ne 1 ]; then
+  printf '%s\n' ".github/workflows must contain only check.yml." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'GitHub Actions uses credential-free checkout and runs `make check` from outside the repository directory.' "$README"; then
+  printf '%s\n' "README must document external-working-directory verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'credential persistence disabled' "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "SECURITY.md must document credential-free checkout." >&2
+  exit 1
+fi
 
 printf '%s\n' "air-quality baseline checks passed."
