@@ -14,12 +14,23 @@ MODERATE_12_PAYLOAD = {
 
 
 class AirQualityTest(unittest.TestCase):
+    class FakeRequestException(Exception):
+        pass
+
     class StreamingResponse(object):
-        def __init__(self, chunks, headers=None, encoding="utf-8", status_error=None):
+        def __init__(
+            self,
+            chunks,
+            headers=None,
+            encoding="utf-8",
+            status_error=None,
+            stream_error=None,
+        ):
             self.chunks = chunks
             self.headers = headers or {}
             self.encoding = encoding
             self.status_error = status_error
+            self.stream_error = stream_error
             self.status_checked = False
             self.close_calls = 0
 
@@ -30,10 +41,29 @@ class AirQualityTest(unittest.TestCase):
 
         def iter_content(self, chunk_size):
             self.chunk_size = chunk_size
+            if self.stream_error is not None:
+                raise self.stream_error
             return iter(self.chunks)
 
         def close(self):
             self.close_calls += 1
+
+    def requests_module(self, get):
+        return SimpleNamespace(
+            get=get,
+            exceptions=SimpleNamespace(RequestException=self.FakeRequestException),
+        )
+
+    def call_with_requests_module(self, requests_module):
+        original_requests = sys.modules.get("requests")
+        sys.modules["requests"] = requests_module
+        try:
+            return air._default_http_get("https://example.test/air.json")
+        finally:
+            if original_requests is None:
+                sys.modules.pop("requests", None)
+            else:
+                sys.modules["requests"] = original_requests
 
     def test_upstream_response_limit_is_one_mebibyte(self):
         self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)
@@ -47,8 +77,8 @@ class AirQualityTest(unittest.TestCase):
         calls = []
         streaming_response = self.StreamingResponse([b'{"results": []}'])
         original_requests = sys.modules.get("requests")
-        sys.modules["requests"] = SimpleNamespace(
-            get=lambda url, **kwargs: calls.append((url, kwargs)) or streaming_response
+        sys.modules["requests"] = self.requests_module(
+            lambda url, **kwargs: calls.append((url, kwargs)) or streaming_response
         )
 
         try:
@@ -78,7 +108,7 @@ class AirQualityTest(unittest.TestCase):
             [b"x" * air.UPSTREAM_RESPONSE_MAX_BYTES, b"x"]
         )
         original_requests = sys.modules.get("requests")
-        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+        sys.modules["requests"] = self.requests_module(lambda _url, **_kwargs: response)
 
         try:
             with self.assertRaisesRegex(RuntimeError, "response is too large"):
@@ -96,7 +126,7 @@ class AirQualityTest(unittest.TestCase):
             [], headers={"Content-Length": str(air.UPSTREAM_RESPONSE_MAX_BYTES + 1)}
         )
         original_requests = sys.modules.get("requests")
-        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+        sys.modules["requests"] = self.requests_module(lambda _url, **_kwargs: response)
 
         try:
             with self.assertRaisesRegex(RuntimeError, "response is too large"):
@@ -112,7 +142,7 @@ class AirQualityTest(unittest.TestCase):
     def test_default_http_get_closes_response_after_status_failure(self):
         response = self.StreamingResponse([], status_error=OSError("upstream failed"))
         original_requests = sys.modules.get("requests")
-        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+        sys.modules["requests"] = self.requests_module(lambda _url, **_kwargs: response)
 
         try:
             with self.assertRaisesRegex(OSError, "upstream failed"):
@@ -125,10 +155,47 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_normalizes_connection_failure(self):
+        def fail_connection(_url, **_kwargs):
+            raise self.FakeRequestException("https://secret.example/provider")
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA request failed$"
+        ) as raised:
+            self.call_with_requests_module(self.requests_module(fail_connection))
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertTrue(raised.exception.__suppress_context__)
+        self.assertNotIn("secret.example", str(raised.exception))
+
+    def test_default_http_get_normalizes_status_failure_and_closes_response(self):
+        response = self.StreamingResponse(
+            [], status_error=self.FakeRequestException("503 provider-secret")
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "^AIRQUALITY_DATA request failed$"):
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_normalizes_stream_failure_and_closes_response(self):
+        response = self.StreamingResponse(
+            [], stream_error=self.FakeRequestException("stream provider-secret")
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "^AIRQUALITY_DATA request failed$"):
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_closes_response_after_invalid_json(self):
         response = self.StreamingResponse([b"not-json"])
         original_requests = sys.modules.get("requests")
-        sys.modules["requests"] = SimpleNamespace(get=lambda _url, **_kwargs: response)
+        sys.modules["requests"] = self.requests_module(lambda _url, **_kwargs: response)
 
         try:
             with self.assertRaisesRegex(RuntimeError, "must be valid JSON"):

@@ -45,6 +45,7 @@ for path in \
   "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
   "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
+  "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -53,6 +54,22 @@ if ! grep -Fq "response.close()" "$ROOT_DIR/air.py"; then
   printf '%s\n' "Default upstream responses must be closed." >&2
   exit 1
 fi
+
+if [ "$(grep -Fc 'except requests.exceptions.RequestException:' "$ROOT_DIR/air.py")" -ne 2 ] ||
+   [ "$(grep -Fc 'raise RuntimeError("AIRQUALITY_DATA request failed") from None' "$ROOT_DIR/air.py")" -ne 2 ]; then
+  printf '%s\n' "Requests transport failures must use both unchained generic error boundaries." >&2
+  exit 1
+fi
+
+for transport_test_contract in \
+  "test_default_http_get_normalizes_connection_failure" \
+  "test_default_http_get_normalizes_status_failure_and_closes_response" \
+  "test_default_http_get_normalizes_stream_failure_and_closes_response"; do
+  if ! grep -Fq "$transport_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Transport regression tests must keep contract: $transport_test_contract" >&2
+    exit 1
+  fi
+done
 
 for route_error_contract in \
   'INVALID_REQUEST_MESSAGE = "invalid request"' \
@@ -117,6 +134,13 @@ for documented in \
   "scripts/check-baseline.sh"; do
   if ! grep -Fq "$documented" "$README"; then
     printf '%s\n' "README must document $documented." >&2
+    exit 1
+  fi
+done
+
+for reliability_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "Requests transport failures" "$reliability_document"; then
+    printf '%s\n' "$reliability_document must document Requests transport failures." >&2
     exit 1
   fi
 done

@@ -24,7 +24,11 @@ def _missing(value):
 def _default_http_get(url):
     import requests
 
-    response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS, stream=True)
+    try:
+        response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS, stream=True)
+    except requests.exceptions.RequestException:
+        raise RuntimeError("AIRQUALITY_DATA request failed") from None
+
     try:
         response.raise_for_status()
 
@@ -48,6 +52,8 @@ def _default_http_get(url):
             return json.loads(body.decode(response.encoding or "utf-8"))
         except (UnicodeDecodeError, ValueError):
             raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
+    except requests.exceptions.RequestException:
+        raise RuntimeError("AIRQUALITY_DATA request failed") from None
     finally:
         response.close()
 

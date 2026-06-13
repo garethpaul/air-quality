@@ -70,6 +70,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
 - The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
   JSON and HTTP failures, keeps the existing 10-second timeout, and closes the
   streamed response after both successful and failed reads.
+- Requests transport failures at connection, status, and streamed-read stages
+  become stable service errors without exposing provider exception details.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -133,6 +135,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   PM2.5 AQI calculation and cache-version contract.
 - See `docs/plans/2026-06-12-air-quality-response-cleanup.md` for deterministic
   upstream response cleanup.
+- See `docs/plans/2026-06-13-air-quality-upstream-transport-errors.md` for the
+  normalized Requests transport-failure boundary.
 
 ## Contributing
 

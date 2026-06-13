@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-13
+
+- Requests transport failures during connection, HTTP status validation, and
+  streamed reads now use the stable service-error boundary while preserving
+  exact response cleanup for every created response.
+- Added focused no-network regressions and portable contracts for generic,
+  unchained upstream request errors.
+
 ## 2026-06-12
 
 - Replaced exception-derived route responses with stable public JSON errors and
