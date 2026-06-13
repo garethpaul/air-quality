@@ -1,6 +1,8 @@
+import ipaddress
 import json
 import math
 import os
+import socket
 from math import cos, asin, sqrt
 from urllib.parse import urljoin, urlsplit
 
@@ -10,6 +12,7 @@ REQUEST_TIMEOUT_SECONDS = 10
 UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
 CACHE_ERROR_MESSAGE = "cache request failed"
 HTTPS_DATA_URL_ERROR = "AIRQUALITY_DATA URL must use HTTPS"
+PUBLIC_DATA_HOST_ERROR = "AIRQUALITY_DATA host must resolve to public addresses"
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -27,10 +30,40 @@ def _missing(value):
 def _require_https_data_url(url):
     try:
         parsed = urlsplit(url)
+        hostname = parsed.hostname
+        port = parsed.port if parsed.port is not None else 443
     except (AttributeError, TypeError, ValueError):
         raise RuntimeError(HTTPS_DATA_URL_ERROR) from None
-    if parsed.scheme.lower() != "https" or not parsed.netloc:
+    if (
+        parsed.scheme.lower() != "https"
+        or not parsed.netloc
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
         raise RuntimeError(HTTPS_DATA_URL_ERROR)
+    _require_public_data_host(hostname, port)
+
+
+def _require_public_data_host(hostname, port):
+    try:
+        addresses = [ipaddress.ip_address(hostname)]
+    except ValueError:
+        try:
+            results = socket.getaddrinfo(
+                hostname,
+                port,
+                family=socket.AF_UNSPEC,
+                type=socket.SOCK_STREAM,
+            )
+            addresses = [ipaddress.ip_address(result[4][0]) for result in results]
+        except (IndexError, OSError, TypeError, ValueError):
+            raise RuntimeError(PUBLIC_DATA_HOST_ERROR) from None
+
+    if not addresses or any(
+        not address.is_global or address.is_multicast for address in addresses
+    ):
+        raise RuntimeError(PUBLIC_DATA_HOST_ERROR)
 
 
 def _require_https_redirect(response, *args, **kwargs):

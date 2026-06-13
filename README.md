@@ -74,7 +74,10 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
   become stable service errors without exposing provider exception details.
 - The default client enforces an HTTPS-only data source before requesting,
   before following redirects, and on the final response URL without exposing
-  endpoint URLs.
+  endpoint URLs. Literal and DNS-resolved IPv4 and IPv6 targets must all be
+  globally reachable unicast addresses; private, loopback, link-local,
+  multicast, shared, reserved, unresolved, and mixed public/private results
+  fail closed.
 - Cache command failures become stable service errors before Redis URLs or
   dependency exception details can reach public route responses.
 
@@ -86,7 +89,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty text `query` value of 200 characters or fewer.
 - The configured `AIRQUALITY_DATA` endpoint must use HTTPS and return a JSON
   object with a `results` list of sensor readings; redirects must also remain
-  HTTPS, and malformed upstream payloads fail as service errors.
+  HTTPS, every resolved address must be globally reachable, and malformed
+  upstream payloads fail as service errors.
 - Upstream sensor readings with non-finite latitude, longitude, or PM2.5 values
   are ignored before distance and AQI calculations.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
@@ -150,6 +154,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   normalized Redis read/write failure boundary.
 - See `docs/plans/2026-06-13-air-quality-https-data-source.md` for direct and
   post-redirect HTTPS transport enforcement.
+- See `docs/plans/2026-06-13-air-quality-public-data-addresses.md` for the
+  public-address policy and its DNS-rebinding boundary.
 
 ## Contributing
 

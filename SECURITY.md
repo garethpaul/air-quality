@@ -53,7 +53,13 @@ exception details in the public error path.
 The default `AIRQUALITY_DATA` client enforces an HTTPS-only data source before
 the request, before each redirect is followed, and on the final response URL.
 Plaintext endpoints and redirect downgrades fail with a generic local error
-while created responses are still closed.
+while created responses are still closed. Credential-bearing URL authorities
+are rejected before DNS resolution. Literal and DNS-resolved targets also fail
+unless every IPv4 or IPv6 address is globally reachable. This policy
+additionally rejects multicast targets, which Python classifies as global but
+which are not valid unicast service endpoints. This preflight does not pin the
+subsequent Requests connection to a validated address, so deployment DNS
+remains part of the trusted infrastructure boundary.
 
 ## Dependency and Supply Chain Security
 

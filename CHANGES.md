@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Rejected private, loopback, link-local, multicast, shared, reserved,
+  unresolved, and mixed-address `AIRQUALITY_DATA` targets before initial and
+  redirected Requests dispatch, while retaining generic errors and response
+  cleanup.
 - Enforced an HTTPS-only data source before default sensor requests, before
   following redirects, and on final response URLs, with generic errors and
   deterministic response cleanup.

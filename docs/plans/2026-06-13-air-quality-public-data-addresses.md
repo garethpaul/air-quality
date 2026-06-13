@@ -6,13 +6,13 @@ type: implementation-plan
 
 # Air Quality Public Data Addresses
 
-Status: Planned
+Status: Completed
 
 ## Summary
 
 Require the default `AIRQUALITY_DATA` transport to resolve only globally
-reachable IPv4 or IPv6 addresses before the initial request and every redirect,
-without changing injected clients or public route behavior.
+reachable unicast IPv4 or IPv6 addresses before the initial request and every
+redirect, without changing injected clients or public route behavior.
 
 ## Problem Frame
 
@@ -24,7 +24,8 @@ to cross an unintended network boundary.
 ## Requirements
 
 - R1. Reject literal IP hosts unless Python classifies the address as globally
-  reachable.
+  reachable and non-multicast, and reject credential-bearing URL authorities
+  before host resolution.
 - R2. Resolve DNS hostnames before dispatch and reject the host if resolution
   fails, returns no addresses, or returns any non-global address.
 - R3. Apply the address policy before the initial request, before Requests
@@ -45,8 +46,8 @@ to cross an unintended network boundary.
   returned address is global avoids nondeterministically connecting to a
   private answer from a mixed result set.
 - **Use standard-library classification:** `socket.getaddrinfo` supplies IPv4
-  and IPv6 candidates and `ipaddress.ip_address(...).is_global` provides the
-  maintained reachability classification without a new dependency.
+  and IPv6 candidates; `ipaddress` supplies maintained global and multicast
+  classification without a new dependency.
 - **Keep injected clients unchanged:** the policy belongs to the repository's
   default network transport; deterministic callers that inject `http_get`
   retain their existing contract.
@@ -102,6 +103,24 @@ to cross an unintended network boundary.
 - Do not add a configurable host allowlist in this unit.
 - Do not exercise live Redis, Mapbox, or `AIRQUALITY_DATA` services without
   deployment credentials.
+
+## Verification Completed
+
+- Focused default-transport coverage passed 40 no-network tests, including
+  public literals and hostnames, credential-bearing authorities, private and
+  multicast IPv4/IPv6 literals, mixed and empty DNS results, resolver failures,
+  redirect rejection, final-URL ordering, and exact response cleanup.
+- The full behavior gate passed 57 tests; Ruff formatting and lint checks plus
+  Python compilation also passed.
+- The portable checker requires the public-address classifier, fail-closed DNS
+  handling, all three existing URL-validation positions, regression tests,
+  completed plan evidence, and documentation of the trusted-DNS boundary.
+- Thirteen isolated hostile mutations were rejected across the generic error,
+  any-answer quantifier, multicast exclusion, empty-result handling, resolver
+  exception boundary, validation call, userinfo rejection, required tests,
+  documentation, and completed plan status.
+- Live Redis, Mapbox, and `AIRQUALITY_DATA` integrations were not exercised;
+  resolver and Requests behavior used deterministic fakes without credentials.
 
 ## Sources
 

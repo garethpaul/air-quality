@@ -47,6 +47,7 @@ for path in \
   "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
   "docs/plans/2026-06-13-air-quality-cache-transport-errors.md" \
   "docs/plans/2026-06-13-air-quality-https-data-source.md" \
+  "docs/plans/2026-06-13-air-quality-public-data-addresses.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -79,8 +80,10 @@ if source.count("raise RuntimeError(HTTPS_DATA_URL_ERROR)") != 2:
 if not (
     "except (AttributeError, TypeError, ValueError):" in validator
     and "raise RuntimeError(HTTPS_DATA_URL_ERROR) from None" in validator
+    and "parsed.username is not None" in validator
+    and "parsed.password is not None" in validator
 ):
-    raise SystemExit("Malformed data URLs must use the unchained generic HTTPS error.")
+    raise SystemExit("Malformed or credential-bearing URLs must use the generic HTTPS error.")
 if not (
     "urljoin(response.url, response.headers[\"Location\"])" in redirect_hook
     and "_require_https_data_url(redirect_url)" in redirect_hook
@@ -105,11 +108,58 @@ PY
 for https_test_contract in \
   "test_default_http_get_rejects_plaintext_url_before_request" \
   "test_default_http_get_normalizes_malformed_url_without_request" \
+  "test_default_http_get_rejects_url_userinfo_before_resolution" \
   "test_default_http_get_allows_relative_https_redirect_target" \
   "test_default_http_get_rejects_plaintext_redirect_before_following" \
   "test_default_http_get_rejects_redirect_downgrade_and_closes_response"; do
   if ! grep -Fq "$https_test_contract" "$ROOT_DIR/air_tests.py"; then
     printf '%s\n' "HTTPS data source tests must keep contract: $https_test_contract" >&2
+    exit 1
+  fi
+done
+
+for public_address_source_contract in \
+  'PUBLIC_DATA_HOST_ERROR = "AIRQUALITY_DATA host must resolve to public addresses"' \
+  'socket.getaddrinfo(' \
+  'family=socket.AF_UNSPEC' \
+  'type=socket.SOCK_STREAM' \
+  'ipaddress.ip_address(result[4][0])' \
+  'except (IndexError, OSError, TypeError, ValueError):' \
+  'if not addresses or any(' \
+  'not address.is_global or address.is_multicast for address in addresses'; do
+  if ! grep -Fq "$public_address_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Public address enforcement must keep contract: $public_address_source_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Fc '_require_public_data_host(hostname, port)' "$ROOT_DIR/air.py")" -ne 2 ]; then
+  printf '%s\n' "Every accepted HTTPS data URL must enforce the public address policy." >&2
+  exit 1
+fi
+
+for public_address_test_contract in \
+  'test_default_http_get_rejects_private_literal_before_request' \
+  'test_default_http_get_rejects_private_ipv6_literal_before_request' \
+  'test_default_http_get_rejects_multicast_literals_before_request' \
+  'test_default_http_get_rejects_mixed_public_private_dns_answers' \
+  'test_default_http_get_rejects_empty_dns_answers' \
+  'test_default_http_get_normalizes_dns_resolution_failure' \
+  'test_default_http_get_rejects_private_redirect_before_following' \
+  'test_default_http_get_rejects_private_final_url_before_status' \
+  'test_default_http_get_resolves_hostname_for_stream_connections'; do
+  if ! grep -Fq "$public_address_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Public address tests must keep contract: $public_address_test_contract" >&2
+    exit 1
+  fi
+done
+
+for public_address_document in \
+  "$README" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "globally reachable" "$public_address_document"; then
+    printf '%s\n' "$public_address_document must document the globally reachable address policy." >&2
     exit 1
   fi
 done

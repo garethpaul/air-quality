@@ -25,7 +25,7 @@ class AirQualityTest(unittest.TestCase):
             chunks,
             headers=None,
             encoding="utf-8",
-            url="https://example.test/air.json",
+            url="https://93.184.216.34/air.json",
             is_redirect=False,
             status_error=None,
             stream_error=None,
@@ -60,13 +60,23 @@ class AirQualityTest(unittest.TestCase):
             exceptions=SimpleNamespace(RequestException=self.FakeRequestException),
         )
 
+    def address_results(self, *addresses):
+        return [(None, None, None, None, (address, 0)) for address in addresses]
+
     def call_with_requests_module(
-        self, requests_module, url="https://example.test/air.json"
+        self,
+        requests_module,
+        url="https://example.test/air.json",
+        resolver=None,
     ):
         original_requests = sys.modules.get("requests")
         sys.modules["requests"] = requests_module
         try:
-            return air._default_http_get(url)
+            resolver = resolver or (
+                lambda *_args, **_kwargs: self.address_results("93.184.216.34")
+            )
+            with patch.object(air.socket, "getaddrinfo", side_effect=resolver):
+                return air._default_http_get(url)
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -159,6 +169,26 @@ class AirQualityTest(unittest.TestCase):
         self.assertIsNone(raised.exception.__cause__)
         self.assertEqual(calls, [])
 
+    def test_default_http_get_rejects_url_userinfo_before_resolution(self):
+        request_calls = []
+        resolver_calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA URL must use HTTPS$"
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(
+                    lambda url, **kwargs: request_calls.append((url, kwargs))
+                ),
+                url="https://secret@example.test/air.json",
+                resolver=lambda *args, **kwargs: resolver_calls.append((args, kwargs)),
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(resolver_calls, [])
+        self.assertEqual(request_calls, [])
+
     def test_default_http_get_rejects_redirect_downgrade_and_closes_response(self):
         response = self.StreamingResponse(
             [b'{"results": []}'], url="http://secret.example/air.json"
@@ -204,8 +234,188 @@ class AirQualityTest(unittest.TestCase):
             is_redirect=True,
         )
 
-        self.assertIs(air._require_https_redirect(redirect_response), redirect_response)
+        with patch.object(
+            air.socket,
+            "getaddrinfo",
+            return_value=self.address_results("93.184.216.34"),
+        ):
+            self.assertIs(
+                air._require_https_redirect(redirect_response), redirect_response
+            )
         self.assertEqual(redirect_response.close_calls, 0)
+
+    def test_default_http_get_rejects_private_literal_before_request(self):
+        calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                url="https://127.0.0.1/air.json",
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_private_ipv6_literal_before_request(self):
+        calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ):
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                url="https://[::1]/air.json",
+            )
+
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_multicast_literals_before_request(self):
+        for url in ("https://224.0.0.1/air.json", "https://[ff02::1]/air.json"):
+            with self.subTest(url=url):
+                calls = []
+
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "^AIRQUALITY_DATA host must resolve to public addresses$",
+                ):
+                    self.call_with_requests_module(
+                        self.requests_module(
+                            lambda request_url, **kwargs: calls.append(
+                                (request_url, kwargs)
+                            )
+                        ),
+                        url=url,
+                    )
+
+                self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_mixed_public_private_dns_answers(self):
+        calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                resolver=lambda *_args, **_kwargs: self.address_results(
+                    "93.184.216.34", "10.0.0.8"
+                ),
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_empty_dns_answers(self):
+        calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ):
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                resolver=lambda *_args, **_kwargs: [],
+            )
+
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_normalizes_dns_resolution_failure(self):
+        calls = []
+
+        def resolver(*_args, **_kwargs):
+            raise OSError("secret resolver diagnostic")
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                resolver=resolver,
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_private_redirect_before_following(self):
+        redirect_response = self.StreamingResponse(
+            [],
+            headers={"Location": "https://internal.example/air.json"},
+            url="https://example.test/air.json",
+            is_redirect=True,
+        )
+
+        def resolver(hostname, *_args, **_kwargs):
+            address = "10.0.0.8" if hostname == "internal.example" else "93.184.216.34"
+            return self.address_results(address)
+
+        def get(_url, **kwargs):
+            return kwargs["hooks"]["response"](redirect_response)
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ) as raised:
+            self.call_with_requests_module(self.requests_module(get), resolver=resolver)
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("internal.example", str(raised.exception))
+        self.assertEqual(redirect_response.close_calls, 1)
+
+    def test_default_http_get_rejects_private_final_url_before_status(self):
+        response = self.StreamingResponse(
+            [b'{"results": []}'], url="https://internal.example/air.json"
+        )
+
+        def resolver(hostname, *_args, **_kwargs):
+            address = "10.0.0.8" if hostname == "internal.example" else "93.184.216.34"
+            return self.address_results(address)
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "^AIRQUALITY_DATA host must resolve to public addresses$",
+        ):
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response),
+                resolver=resolver,
+            )
+
+        self.assertFalse(response.status_checked)
+        self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_resolves_hostname_for_stream_connections(self):
+        resolver_calls = []
+        request_calls = []
+        response = self.StreamingResponse([b'{"results": []}'])
+
+        def resolver(*args, **kwargs):
+            resolver_calls.append((args, kwargs))
+            return self.address_results("93.184.216.34")
+
+        payload = self.call_with_requests_module(
+            self.requests_module(
+                lambda url, **kwargs: request_calls.append((url, kwargs)) or response
+            ),
+            resolver=resolver,
+        )
+
+        self.assertEqual(payload, {"results": []})
+        self.assertEqual(
+            resolver_calls,
+            [
+                (
+                    ("example.test", 443),
+                    {"family": air.socket.AF_UNSPEC, "type": air.socket.SOCK_STREAM},
+                )
+            ],
+        )
+        self.assertEqual(len(request_calls), 1)
 
     def test_cache_key_versions_current_epa_breakpoints(self):
         quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
@@ -221,7 +431,7 @@ class AirQualityTest(unittest.TestCase):
         )
 
         try:
-            payload = air._default_http_get("https://example.test/air.json")
+            payload = air._default_http_get("https://93.184.216.34/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -231,7 +441,7 @@ class AirQualityTest(unittest.TestCase):
         self.assertEqual(payload, {"results": []})
         self.assertEqual(len(calls), 1)
         requested_url, request_options = calls[0]
-        self.assertEqual(requested_url, "https://example.test/air.json")
+        self.assertEqual(requested_url, "https://93.184.216.34/air.json")
         self.assertEqual(request_options["timeout"], air.REQUEST_TIMEOUT_SECONDS)
         self.assertTrue(request_options["stream"])
         self.assertIs(request_options["hooks"]["response"], air._require_https_redirect)
@@ -248,7 +458,7 @@ class AirQualityTest(unittest.TestCase):
 
         try:
             with self.assertRaisesRegex(RuntimeError, "response is too large"):
-                air._default_http_get("https://example.test/air.json")
+                air._default_http_get("https://93.184.216.34/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -266,7 +476,7 @@ class AirQualityTest(unittest.TestCase):
 
         try:
             with self.assertRaisesRegex(RuntimeError, "response is too large"):
-                air._default_http_get("https://example.test/air.json")
+                air._default_http_get("https://93.184.216.34/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -282,7 +492,7 @@ class AirQualityTest(unittest.TestCase):
 
         try:
             with self.assertRaisesRegex(OSError, "upstream failed"):
-                air._default_http_get("https://example.test/air.json")
+                air._default_http_get("https://93.184.216.34/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -335,7 +545,7 @@ class AirQualityTest(unittest.TestCase):
 
         try:
             with self.assertRaisesRegex(RuntimeError, "must be valid JSON"):
-                air._default_http_get("https://example.test/air.json")
+                air._default_http_get("https://93.184.216.34/air.json")
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)

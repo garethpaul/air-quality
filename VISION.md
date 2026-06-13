@@ -79,6 +79,9 @@ failure so repeated requests do not retain connection resources.
 The default sensor client should retain an HTTPS-only data source boundary
 before requests, before following redirects, and on final response URLs so
 deployment configuration cannot silently downgrade transport security.
+It should also require globally reachable unicast literal and DNS-resolved
+targets while documenting that deployment DNS remains trusted between
+preflight and connect.
 
 ## What We Will Not Merge (For Now)
 
