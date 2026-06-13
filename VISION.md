@@ -33,6 +33,7 @@ Priority:
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup
+- Normalize geocoder transport failures without exposing provider details
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Ignore corrupt cached air-quality payloads before returning API data
@@ -45,7 +46,7 @@ Next priorities:
 - Continue improving data-source validation and error reporting
 - Add clearer deployment guidance for small hosted instances
 - Keep dependencies current enough to run on supported Python versions
-- Expand tests around empty datasets, invalid coordinates, and Mapbox failures
+- Expand tests around distinct empty datasets and invalid coordinate shapes
 
 Contribution rules:
 

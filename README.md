@@ -72,6 +72,9 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
   streamed response after both successful and failed reads.
 - Requests transport failures at connection, status, and streamed-read stages
   become stable service errors without exposing provider exception details.
+- Geocoder transport failures during Mapbox dispatch or JSON decoding become
+  stable service errors without exposing provider or credential details;
+  successful malformed payloads remain invalid requests.
 - The default client enforces an HTTPS-only data source before requesting,
   before following redirects, and on the final response URL without exposing
   endpoint URLs. Literal and DNS-resolved IPv4 and IPv6 targets must all be
@@ -152,6 +155,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   normalized Requests transport-failure boundary.
 - See `docs/plans/2026-06-13-air-quality-cache-transport-errors.md` for the
   normalized Redis read/write failure boundary.
+- See `docs/plans/2026-06-13-air-quality-geocoder-transport-errors.md` for the
+  normalized Mapbox request and JSON-decoding boundary.
 - See `docs/plans/2026-06-13-air-quality-https-data-source.md` for direct and
   post-redirect HTTPS transport enforcement.
 - See `docs/plans/2026-06-13-air-quality-public-data-addresses.md` for the

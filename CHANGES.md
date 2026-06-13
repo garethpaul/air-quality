@@ -2,6 +2,9 @@
 
 ## 2026-06-13
 
+- Geocoder transport failures during Mapbox dispatch and JSON decoding now use
+  a generic unchained service-error boundary while successful malformed
+  payloads retain their validation-error contract.
 - Rejected private, loopback, link-local, multicast, shared, reserved,
   unresolved, and mixed-address `AIRQUALITY_DATA` targets before initial and
   redirected Requests dispatch, while retaining generic errors and response

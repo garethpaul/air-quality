@@ -1,6 +1,6 @@
 # Air Quality Geocoder Transport Errors
 
-status: planned
+status: completed
 
 ## Context
 
@@ -31,14 +31,30 @@ raises `ConnectionError`: the raw exception and its message escape unchanged.
 - Retry, backoff, caching, query, or coordinate behavior changes.
 - Changes to AIRQUALITY_DATA, Redis, route payloads, or status codes.
 
-## Planned Verification
+## Work Completed
+
+- Added one unchained generic exception boundary around Mapbox client creation,
+  request dispatch, and response JSON decoding.
+- Kept feature and coordinate shape parsing outside that boundary so successful
+  malformed responses continue to raise `ValueError`.
+- Added offline request and decoding regressions with dispatch-order, message,
+  cause, and secret-redaction assertions.
+- Extended the portable baseline and project guidance with the completed
+  geocoder transport-error contract.
+
+## Verification Completed
 
 - `make lint`
 - `make test`
 - `make build`
 - `make check`
-- Mutation checks for a removed exception boundary, leaked exception chaining,
-  over-broad payload normalization, stale plan status, and missing evidence.
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest geocode_tests -v` (11 tests)
+- `test_geocoder_request_failure_is_normalized_without_detail`
+- `test_geocoder_json_failure_is_normalized_without_detail`
+- Full offline behavioral suite (59 tests)
+- Mutations for a removed exception boundary, leaked exception chaining,
+  over-broad payload normalization, stale plan status, and missing evidence
+  were rejected.
 - External-working-directory `make check`
 - `git diff --check`
-- Intended-path secret and generated-artifact inspection
+- Intended-path secret and generated-artifact inspection passed

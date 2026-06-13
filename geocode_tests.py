@@ -17,7 +17,63 @@ class FakeGeocoder(object):
         return JsonResponse(self.payload)
 
 
+class FailingGeocoder(object):
+    def __init__(self, error):
+        self.error = error
+        self.queries = []
+
+    def forward(self, query):
+        self.queries.append(query)
+        raise self.error
+
+
+class InvalidJsonGeocoder(object):
+    def __init__(self):
+        self.queries = []
+
+    def forward(self, query):
+        self.queries.append(query)
+
+        class InvalidJsonResponse(object):
+            def json(self):
+                raise ValueError("private Mapbox response detail")
+
+        return InvalidJsonResponse()
+
+
 class GeoCodeTest(unittest.TestCase):
+    def test_geocoder_request_failure_is_normalized_without_detail(self):
+        geocoder = FailingGeocoder(
+            ConnectionError("private Mapbox token and transport detail")
+        )
+        geo = GeoCode(
+            "San Francisco, CA", cache_client=MemoryCache(), geocoder=geocoder
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^geocoder request failed$"
+        ) as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("private", str(raised.exception))
+        self.assertEqual(geocoder.queries, ["San Francisco, CA"])
+
+    def test_geocoder_json_failure_is_normalized_without_detail(self):
+        geocoder = InvalidJsonGeocoder()
+        geo = GeoCode(
+            "San Francisco, CA", cache_client=MemoryCache(), geocoder=geocoder
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^geocoder request failed$"
+        ) as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("private", str(raised.exception))
+        self.assertEqual(geocoder.queries, ["San Francisco, CA"])
+
     def test_cache_read_failure_is_normalized_before_geocoder_request(self):
         cache = FailingCache("get")
         geocoder = FakeGeocoder({"features": [{"center": [-122.41143, 37.794678]}]})

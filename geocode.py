@@ -4,6 +4,7 @@ import os
 from collections.abc import Mapping
 
 CACHE_ERROR_MESSAGE = "cache request failed"
+GEOCODER_ERROR_MESSAGE = "geocoder request failed"
 
 
 class GeoCode(object):
@@ -18,8 +19,13 @@ class GeoCode(object):
         if data is not None:
             return data
 
-        response = self.geocoder_client().forward(self.query)
-        data = self.parse_first_feature_center(response.json())
+        try:
+            response = self.geocoder_client().forward(self.query)
+            payload = response.json()
+        except Exception:
+            raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None
+
+        data = self.parse_first_feature_center(payload)
         self.cache_set(key, json.dumps(data))
         return data
 

@@ -47,6 +47,9 @@ all validation failures so pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error
 without preserving provider URLs, status text, or exception details in the
 public error path.
+Geocoder transport failures during Mapbox client creation, request dispatch,
+or JSON decoding are normalized to a generic local service error without
+preserving provider, token, or exception details in the public error path.
 Cache command failures are normalized to the same generic service boundary
 without retrying, bypassing Redis, or preserving Redis URLs and dependency
 exception details in the public error path.

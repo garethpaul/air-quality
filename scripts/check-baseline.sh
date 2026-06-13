@@ -46,6 +46,7 @@ for path in \
   "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
   "docs/plans/2026-06-13-air-quality-cache-transport-errors.md" \
+  "docs/plans/2026-06-13-air-quality-geocoder-transport-errors.md" \
   "docs/plans/2026-06-13-air-quality-https-data-source.md" \
   "docs/plans/2026-06-13-air-quality-public-data-addresses.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
@@ -160,6 +161,47 @@ for public_address_document in \
   "$ROOT_DIR/VISION.md"; do
   if ! grep -Fq "globally reachable" "$public_address_document"; then
     printf '%s\n' "$public_address_document must document the globally reachable address policy." >&2
+    exit 1
+  fi
+done
+
+python - "$ROOT_DIR/geocode.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+function = source.split("    def getLatLng(self):", 1)[1].split(
+    "\n    def cached_data", 1
+)[0]
+
+if source.count('GEOCODER_ERROR_MESSAGE = "geocoder request failed"') != 1:
+    raise SystemExit("Geocoder failures must use one stable local message.")
+if function.count("except Exception:") != 1:
+    raise SystemExit("Geocoder request and JSON decoding must share one exception boundary.")
+if function.count("raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None") != 1:
+    raise SystemExit("Geocoder failures must use one unchained generic RuntimeError.")
+for contract in (
+    "response = self.geocoder_client().forward(self.query)",
+    "payload = response.json()",
+    "data = self.parse_first_feature_center(payload)",
+):
+    if contract not in function:
+        raise SystemExit(f"Geocoder handling must keep contract: {contract}")
+if not (
+    function.index("response = self.geocoder_client().forward(self.query)")
+    < function.index("payload = response.json()")
+    < function.index("except Exception:")
+    < function.index("data = self.parse_first_feature_center(payload)")
+):
+    raise SystemExit("Payload validation must remain outside the geocoder transport boundary.")
+PY
+
+for geocoder_transport_test_contract in \
+  "test_geocoder_request_failure_is_normalized_without_detail" \
+  "test_geocoder_json_failure_is_normalized_without_detail" \
+  "test_malformed_geocoder_payloads_raise_value_error"; do
+  if ! grep -Fq "$geocoder_transport_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Geocoder transport tests must keep contract: $geocoder_transport_test_contract" >&2
     exit 1
   fi
 done
@@ -307,8 +349,32 @@ for reliability_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES
     printf '%s\n' "$reliability_document must document Cache command failures." >&2
     exit 1
   fi
+  if ! grep -Fq "Geocoder transport failures" "$reliability_document"; then
+    printf '%s\n' "$reliability_document must document Geocoder transport failures." >&2
+    exit 1
+  fi
   if ! grep -Fq "HTTPS-only data source" "$reliability_document"; then
     printf '%s\n' "$reliability_document must document the HTTPS-only data source boundary." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "geocoder transport failures" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must document geocoder transport failures." >&2
+  exit 1
+fi
+
+GEOCODER_TRANSPORT_PLAN="$DOCS_PLANS/2026-06-13-air-quality-geocoder-transport-errors.md"
+for plan_contract in \
+  "status: completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "make check" \
+  "test_geocoder_request_failure_is_normalized_without_detail" \
+  "test_geocoder_json_failure_is_normalized_without_detail" \
+  'External-working-directory `make check`'; do
+  if ! grep -Fiq "$plan_contract" "$GEOCODER_TRANSPORT_PLAN"; then
+    printf '%s\n' "Geocoder transport plan must keep completed evidence: $plan_contract" >&2
     exit 1
   fi
 done
