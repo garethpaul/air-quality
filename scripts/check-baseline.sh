@@ -45,6 +45,7 @@ for path in \
   "docs/plans/2026-06-10-air-quality-upstream-size-limit.md" \
   "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
+  "docs/plans/2026-06-13-air-quality-cache-transport-errors.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -67,6 +68,52 @@ for transport_test_contract in \
   "test_default_http_get_normalizes_stream_failure_and_closes_response"; do
   if ! grep -Fq "$transport_test_contract" "$ROOT_DIR/air_tests.py"; then
     printf '%s\n' "Transport regression tests must keep contract: $transport_test_contract" >&2
+    exit 1
+  fi
+done
+
+for cache_source in "$ROOT_DIR/air.py" "$ROOT_DIR/geocode.py"; do
+  if ! grep -Fq 'CACHE_ERROR_MESSAGE = "cache request failed"' "$cache_source" ||
+     [ "$(grep -Fc 'raise RuntimeError(CACHE_ERROR_MESSAGE) from None' "$cache_source")" -ne 2 ]; then
+    printf '%s\n' "$cache_source must normalize cache commands to an unchained generic error." >&2
+    exit 1
+  fi
+done
+
+for cache_contract in \
+  'cache = self.cache_get(key)' \
+  'self.cache_setex(key, CACHE_TTL_SECONDS, json.dumps(data))'; do
+  if ! grep -Fq "$cache_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "AQI cache handling must keep contract: $cache_contract" >&2
+    exit 1
+  fi
+done
+
+for cache_contract in \
+  'cache = self.cache_get(key)' \
+  'self.cache_set(key, json.dumps(data))'; do
+  if ! grep -Fq "$cache_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Geocode cache handling must keep contract: $cache_contract" >&2
+    exit 1
+  fi
+done
+
+for cache_test_contract in \
+  'test_cache_read_failure_is_normalized_before_upstream_request' \
+  'test_missing_cache_configuration_remains_a_configuration_error' \
+  'test_cache_write_failure_is_normalized_after_valid_upstream_response'; do
+  if ! grep -Fq "$cache_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "AQI cache regression tests must keep contract: $cache_test_contract" >&2
+    exit 1
+  fi
+done
+
+for cache_test_contract in \
+  'test_cache_read_failure_is_normalized_before_geocoder_request' \
+  'test_missing_cache_configuration_remains_a_configuration_error' \
+  'test_cache_write_failure_is_normalized_after_valid_geocoder_response'; do
+  if ! grep -Fq "$cache_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Geocode cache regression tests must keep contract: $cache_test_contract" >&2
     exit 1
   fi
 done
@@ -143,6 +190,10 @@ for reliability_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES
     printf '%s\n' "$reliability_document must document Requests transport failures." >&2
     exit 1
   fi
+  if ! grep -Fq "Cache command failures" "$reliability_document"; then
+    printf '%s\n' "$reliability_document must document Cache command failures." >&2
+    exit 1
+  fi
 done
 
 for ignored in "__pycache__/" "*.py[cod]" ".venv/" "venv/" ".ruff_cache/" ".env" ".env.*" ".vscode/" ".idea/" "*.iml"; do
@@ -162,7 +213,7 @@ found_plan=0
 for plan in "$DOCS_PLANS"/*.md; do
   [ -e "$plan" ] || continue
   found_plan=1
-  if ! grep -iq "status" "$plan" || ! grep -iq "completed" "$plan"; then
+  if ! grep -Eiq '^(##[[:space:]]+)?status:[[:space:]]+completed[[:space:]]*$' "$plan"; then
     printf '%s\n' "$plan must record completed status." >&2
     exit 1
   fi

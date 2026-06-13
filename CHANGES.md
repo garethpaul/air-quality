@@ -2,6 +2,11 @@
 
 ## 2026-06-13
 
+- Cache command failures during AQI and geocode reads or writes now use a
+  generic unchained service-error boundary instead of leaking Redis exception
+  details through unexpected route failures.
+- Added no-network regressions and portable contracts for all four cache
+  command boundaries while preserving keys, TTLs, and corrupt-cache refreshes.
 - Requests transport failures during connection, HTTP status validation, and
   streamed reads now use the stable service-error boundary while preserving
   exact response cleanup for every created response.

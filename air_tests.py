@@ -1,10 +1,12 @@
 import json
+import os
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import air
-from test_helpers import JsonResponse, MemoryCache
+from test_helpers import FailingCache, JsonResponse, MemoryCache
 
 MODERATE_12_PAYLOAD = {
     "category": "Moderate",
@@ -64,6 +66,58 @@ class AirQualityTest(unittest.TestCase):
                 sys.modules.pop("requests", None)
             else:
                 sys.modules["requests"] = original_requests
+
+    def test_cache_read_failure_is_normalized_before_upstream_request(self):
+        requested_urls = []
+        cache = FailingCache("get")
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=cache,
+            data_url="https://example.test/air.json",
+            http_get=lambda url: requested_urls.append(url),
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            quality.getData()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(requested_urls, [])
+        self.assertEqual(cache.calls, [("get", (quality.cache_key(),))])
+
+    def test_missing_cache_configuration_remains_a_configuration_error(self):
+        quality = air.AirQuality(37.794678, -122.41143)
+
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(
+                RuntimeError, "^REDIS_URL must be set when data is not cached$"
+            ):
+                quality.getData()
+
+    def test_cache_write_failure_is_normalized_after_valid_upstream_response(self):
+        requested_urls = []
+        cache = FailingCache("setex")
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=cache,
+            data_url="https://example.test/air.json",
+            http_get=lambda url: (
+                requested_urls.append(url)
+                or JsonResponse(
+                    {"results": [{"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"}]}
+                )
+            ),
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            quality.getData()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(requested_urls, ["https://example.test/air.json"])
+        self.assertEqual([command for command, _args in cache.calls], ["get", "setex"])
 
     def test_upstream_response_limit_is_one_mebibyte(self):
         self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)

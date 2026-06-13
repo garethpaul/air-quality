@@ -1,8 +1,10 @@
 import unittest
 import json
+import os
+from unittest.mock import patch
 
 from geocode import GeoCode
-from test_helpers import JsonResponse, MemoryCache
+from test_helpers import FailingCache, JsonResponse, MemoryCache
 
 
 class FakeGeocoder(object):
@@ -16,6 +18,41 @@ class FakeGeocoder(object):
 
 
 class GeoCodeTest(unittest.TestCase):
+    def test_cache_read_failure_is_normalized_before_geocoder_request(self):
+        cache = FailingCache("get")
+        geocoder = FakeGeocoder({"features": [{"center": [-122.41143, 37.794678]}]})
+        geo = GeoCode("San Francisco, CA", cache_client=cache, geocoder=geocoder)
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(geocoder.queries, [])
+        self.assertEqual(cache.calls, [("get", ("geocode_query_1_San Francisco, CA",))])
+
+    def test_missing_cache_configuration_remains_a_configuration_error(self):
+        geo = GeoCode("San Francisco, CA")
+
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(
+                RuntimeError, "^REDIS_URL must be set when geocode is not cached$"
+            ):
+                geo.getLatLng()
+
+    def test_cache_write_failure_is_normalized_after_valid_geocoder_response(self):
+        cache = FailingCache("set")
+        geocoder = FakeGeocoder({"features": [{"center": [-122.41143, 37.794678]}]})
+        geo = GeoCode("San Francisco, CA", cache_client=cache, geocoder=geocoder)
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(geocoder.queries, ["San Francisco, CA"])
+        self.assertEqual([command for command, _args in cache.calls], ["get", "set"])
+
     def test_check_center_uses_first_mapbox_feature_and_caches_response(self):
         cache = MemoryCache()
         geocoder = FakeGeocoder({"features": [{"center": [-122.41143, 37.794678]}]})

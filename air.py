@@ -7,6 +7,7 @@ CACHE_TTL_SECONDS = 180
 AQI_CACHE_VERSION = 2
 REQUEST_TIMEOUT_SECONDS = 10
 UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
+CACHE_ERROR_MESSAGE = "cache request failed"
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -95,11 +96,11 @@ class AirQuality(object):
         reading = self.nearest_reading(results)
         pm25 = float(reading["PM2_5Value"])
         data = self.AQICategory(self.AQIPM25(pm25))
-        self.cache().setex(key, CACHE_TTL_SECONDS, json.dumps(data))
+        self.cache_setex(key, CACHE_TTL_SECONDS, json.dumps(data))
         return data
 
     def cached_data(self, key):
-        cache = self.cache().get(key)
+        cache = self.cache_get(key)
         if cache is None:
             return None
 
@@ -132,6 +133,20 @@ class AirQuality(object):
             return None
 
         return {"category": category, "caution": caution, "score": normalized_score}
+
+    def cache_get(self, key):
+        cache = self.cache()
+        try:
+            return cache.get(key)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
+
+    def cache_setex(self, key, ttl, value):
+        cache = self.cache()
+        try:
+            cache.setex(key, ttl, value)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
 
     def cache(self):
         if self.r is None:

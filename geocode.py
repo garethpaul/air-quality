@@ -3,6 +3,8 @@ import math
 import os
 from collections.abc import Mapping
 
+CACHE_ERROR_MESSAGE = "cache request failed"
+
 
 class GeoCode(object):
     def __init__(self, query, cache_client=None, geocoder=None):
@@ -18,11 +20,11 @@ class GeoCode(object):
 
         response = self.geocoder_client().forward(self.query)
         data = self.parse_first_feature_center(response.json())
-        self.cache().set(key, json.dumps(data))
+        self.cache_set(key, json.dumps(data))
         return data
 
     def cached_data(self, key):
-        cache = self.cache().get(key)
+        cache = self.cache_get(key)
         if cache is None:
             return None
 
@@ -47,6 +49,20 @@ class GeoCode(object):
             return None
 
         return {"lat": lat, "lng": lng}
+
+    def cache_get(self, key):
+        cache = self.cache()
+        try:
+            return cache.get(key)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
+
+    def cache_set(self, key, value):
+        cache = self.cache()
+        try:
+            cache.set(key, value)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
 
     @staticmethod
     def parse_first_feature_center(payload):

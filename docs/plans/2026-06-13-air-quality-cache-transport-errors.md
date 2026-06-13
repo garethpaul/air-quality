@@ -1,6 +1,6 @@
 # Air Quality Cache Transport Errors
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -78,4 +78,15 @@ operational guidance. Record actual verification after execution.
 
 ## Verification
 
-Pending implementation and execution.
+- Six focused no-network tests passed for AQI and geocode cache read/write
+  failures and missing-cache configuration, including exact generic messages,
+  suppressed exception chaining, provider-detail redaction, and upstream
+  sequencing.
+- The full 42-test suite passed with existing valid-cache, corrupt-cache,
+  upstream transport, AQI, geocoder, query, and route behavior unchanged.
+- Ruff formatting and linting, Python bytecode compilation, repository-root and
+  external-directory baseline checks, `git diff --check`, and nine hostile
+  contract mutations passed.
+- Live Redis, Mapbox, and sensor-provider validation was not run because this
+  change has no deployment credentials and the regression suite uses injected
+  no-network dependencies.
