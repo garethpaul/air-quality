@@ -25,12 +25,16 @@ class AirQualityTest(unittest.TestCase):
             chunks,
             headers=None,
             encoding="utf-8",
+            url="https://example.test/air.json",
+            is_redirect=False,
             status_error=None,
             stream_error=None,
         ):
             self.chunks = chunks
             self.headers = headers or {}
             self.encoding = encoding
+            self.url = url
+            self.is_redirect = is_redirect
             self.status_error = status_error
             self.stream_error = stream_error
             self.status_checked = False
@@ -56,11 +60,13 @@ class AirQualityTest(unittest.TestCase):
             exceptions=SimpleNamespace(RequestException=self.FakeRequestException),
         )
 
-    def call_with_requests_module(self, requests_module):
+    def call_with_requests_module(
+        self, requests_module, url="https://example.test/air.json"
+    ):
         original_requests = sys.modules.get("requests")
         sys.modules["requests"] = requests_module
         try:
-            return air._default_http_get("https://example.test/air.json")
+            return air._default_http_get(url)
         finally:
             if original_requests is None:
                 sys.modules.pop("requests", None)
@@ -122,6 +128,85 @@ class AirQualityTest(unittest.TestCase):
     def test_upstream_response_limit_is_one_mebibyte(self):
         self.assertEqual(air.UPSTREAM_RESPONSE_MAX_BYTES, 1024 * 1024)
 
+    def test_default_http_get_rejects_plaintext_url_before_request(self):
+        calls = []
+        requests_module = self.requests_module(
+            lambda url, **kwargs: calls.append((url, kwargs))
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA URL must use HTTPS$"
+        ) as raised:
+            self.call_with_requests_module(
+                requests_module, url="http://secret.example/air.json"
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret.example", str(raised.exception))
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_normalizes_malformed_url_without_request(self):
+        calls = []
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA URL must use HTTPS$"
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda url, **kwargs: calls.append((url, kwargs))),
+                url="https://[invalid",
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertEqual(calls, [])
+
+    def test_default_http_get_rejects_redirect_downgrade_and_closes_response(self):
+        response = self.StreamingResponse(
+            [b'{"results": []}'], url="http://secret.example/air.json"
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA URL must use HTTPS$"
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret.example", str(raised.exception))
+        self.assertFalse(response.status_checked)
+        self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_rejects_plaintext_redirect_before_following(self):
+        redirect_response = self.StreamingResponse(
+            [],
+            headers={"Location": "http://secret.example/air.json"},
+            url="https://example.test/air.json",
+            is_redirect=True,
+        )
+
+        def get(_url, **kwargs):
+            return kwargs["hooks"]["response"](redirect_response)
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA URL must use HTTPS$"
+        ) as raised:
+            self.call_with_requests_module(self.requests_module(get))
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret.example", str(raised.exception))
+        self.assertEqual(redirect_response.close_calls, 1)
+
+    def test_default_http_get_allows_relative_https_redirect_target(self):
+        redirect_response = self.StreamingResponse(
+            [],
+            headers={"Location": "/new-air.json"},
+            url="https://example.test/air.json",
+            is_redirect=True,
+        )
+
+        self.assertIs(air._require_https_redirect(redirect_response), redirect_response)
+        self.assertEqual(redirect_response.close_calls, 0)
+
     def test_cache_key_versions_current_epa_breakpoints(self):
         quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
 
@@ -144,15 +229,12 @@ class AirQualityTest(unittest.TestCase):
                 sys.modules["requests"] = original_requests
 
         self.assertEqual(payload, {"results": []})
-        self.assertEqual(
-            calls,
-            [
-                (
-                    "https://example.test/air.json",
-                    {"timeout": air.REQUEST_TIMEOUT_SECONDS, "stream": True},
-                )
-            ],
-        )
+        self.assertEqual(len(calls), 1)
+        requested_url, request_options = calls[0]
+        self.assertEqual(requested_url, "https://example.test/air.json")
+        self.assertEqual(request_options["timeout"], air.REQUEST_TIMEOUT_SECONDS)
+        self.assertTrue(request_options["stream"])
+        self.assertIs(request_options["hooks"]["response"], air._require_https_redirect)
         self.assertTrue(streaming_response.status_checked)
         self.assertEqual(streaming_response.chunk_size, 64 * 1024)
         self.assertEqual(streaming_response.close_calls, 1)

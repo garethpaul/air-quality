@@ -2,6 +2,11 @@
 
 ## 2026-06-13
 
+- Enforced an HTTPS-only data source before default sensor requests, before
+  following redirects, and on final response URLs, with generic errors and
+  deterministic response cleanup.
+- Added no-network direct-plaintext and redirect-downgrade regressions plus
+  mutation-sensitive portable contracts.
 - Cache command failures during AQI and geocode reads or writes now use a
   generic unchained service-error boundary instead of leaking Redis exception
   details through unexpected route failures.

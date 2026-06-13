@@ -50,6 +50,10 @@ public error path.
 Cache command failures are normalized to the same generic service boundary
 without retrying, bypassing Redis, or preserving Redis URLs and dependency
 exception details in the public error path.
+The default `AIRQUALITY_DATA` client enforces an HTTPS-only data source before
+the request, before each redirect is followed, and on the final response URL.
+Plaintext endpoints and redirect downgrades fail with a generic local error
+while created responses are still closed.
 
 ## Dependency and Supply Chain Security
 

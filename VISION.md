@@ -76,6 +76,10 @@ or unvalidated upstream data.
 Streamed upstream responses should be closed deterministically on success and
 failure so repeated requests do not retain connection resources.
 
+The default sensor client should retain an HTTPS-only data source boundary
+before requests, before following redirects, and on final response URLs so
+deployment configuration cannot silently downgrade transport security.
+
 ## What We Will Not Merge (For Now)
 
 - Large framework rewrites that do not preserve the existing endpoint behavior

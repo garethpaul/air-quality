@@ -46,9 +46,72 @@ for path in \
   "docs/plans/2026-06-12-air-quality-response-cleanup.md" \
   "docs/plans/2026-06-12-stable-route-errors-and-codeql.md" \
   "docs/plans/2026-06-13-air-quality-cache-transport-errors.md" \
+  "docs/plans/2026-06-13-air-quality-https-data-source.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+python - "$ROOT_DIR/air.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+validator = source.split("def _require_https_data_url(url):", 1)[1].split(
+    "\n\ndef _require_https_redirect", 1
+)[0]
+redirect_hook = source.split("def _require_https_redirect(response", 1)[1].split(
+    "\n\ndef _default_http_get", 1
+)[0]
+function = source.split("def _default_http_get(url):", 1)[1].split(
+    "\n\nclass AirQuality", 1
+)[0]
+precheck = "_require_https_data_url(url)"
+request = "response = requests.get("
+redirect_check = "_require_https_data_url(response.url)"
+status_check = "response.raise_for_status()"
+close = "response.close()"
+
+if source.count('HTTPS_DATA_URL_ERROR = "AIRQUALITY_DATA URL must use HTTPS"') != 1:
+    raise SystemExit("HTTPS data URL failures must use one generic local message.")
+if source.count("raise RuntimeError(HTTPS_DATA_URL_ERROR)") != 2:
+    raise SystemExit("Every HTTPS data URL rejection must use the generic error constant.")
+if not (
+    "except (AttributeError, TypeError, ValueError):" in validator
+    and "raise RuntimeError(HTTPS_DATA_URL_ERROR) from None" in validator
+):
+    raise SystemExit("Malformed data URLs must use the unchained generic HTTPS error.")
+if not (
+    "urljoin(response.url, response.headers[\"Location\"])" in redirect_hook
+    and "_require_https_data_url(redirect_url)" in redirect_hook
+    and redirect_hook.index("_require_https_data_url(redirect_url)")
+    < redirect_hook.index("response.close()")
+):
+    raise SystemExit("Redirect targets must be validated before Requests follows them.")
+if 'hooks={"response": _require_https_redirect}' not in function:
+    raise SystemExit("The default request must install the HTTPS redirect hook.")
+if not (precheck in function and request in function and function.index(precheck) < function.index(request)):
+    raise SystemExit("AIRQUALITY_DATA URLs must be validated before requests.get.")
+if not (
+    redirect_check in function
+    and status_check in function
+    and function.index(request) < function.index(redirect_check) < function.index(status_check)
+):
+    raise SystemExit("Final response URLs must be validated before status and body processing.")
+if close not in function:
+    raise SystemExit("Redirect downgrade rejection must retain response cleanup.")
+PY
+
+for https_test_contract in \
+  "test_default_http_get_rejects_plaintext_url_before_request" \
+  "test_default_http_get_normalizes_malformed_url_without_request" \
+  "test_default_http_get_allows_relative_https_redirect_target" \
+  "test_default_http_get_rejects_plaintext_redirect_before_following" \
+  "test_default_http_get_rejects_redirect_downgrade_and_closes_response"; do
+  if ! grep -Fq "$https_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "HTTPS data source tests must keep contract: $https_test_contract" >&2
+    exit 1
+  fi
 done
 
 if ! grep -Fq "response.close()" "$ROOT_DIR/air.py"; then
@@ -192,6 +255,10 @@ for reliability_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES
   fi
   if ! grep -Fq "Cache command failures" "$reliability_document"; then
     printf '%s\n' "$reliability_document must document Cache command failures." >&2
+    exit 1
+  fi
+  if ! grep -Fq "HTTPS-only data source" "$reliability_document"; then
+    printf '%s\n' "$reliability_document must document the HTTPS-only data source boundary." >&2
     exit 1
   fi
 done

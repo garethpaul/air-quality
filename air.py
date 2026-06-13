@@ -2,12 +2,14 @@ import json
 import math
 import os
 from math import cos, asin, sqrt
+from urllib.parse import urljoin, urlsplit
 
 CACHE_TTL_SECONDS = 180
 AQI_CACHE_VERSION = 2
 REQUEST_TIMEOUT_SECONDS = 10
 UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
 CACHE_ERROR_MESSAGE = "cache request failed"
+HTTPS_DATA_URL_ERROR = "AIRQUALITY_DATA URL must use HTTPS"
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -22,15 +24,43 @@ def _missing(value):
     return value is None or value == ""
 
 
+def _require_https_data_url(url):
+    try:
+        parsed = urlsplit(url)
+    except (AttributeError, TypeError, ValueError):
+        raise RuntimeError(HTTPS_DATA_URL_ERROR) from None
+    if parsed.scheme.lower() != "https" or not parsed.netloc:
+        raise RuntimeError(HTTPS_DATA_URL_ERROR)
+
+
+def _require_https_redirect(response, *args, **kwargs):
+    if response.is_redirect:
+        redirect_url = urljoin(response.url, response.headers["Location"])
+        try:
+            _require_https_data_url(redirect_url)
+        except RuntimeError:
+            response.close()
+            raise
+    return response
+
+
 def _default_http_get(url):
     import requests
 
+    _require_https_data_url(url)
+
     try:
-        response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS, stream=True)
+        response = requests.get(
+            url,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+            stream=True,
+            hooks={"response": _require_https_redirect},
+        )
     except requests.exceptions.RequestException:
         raise RuntimeError("AIRQUALITY_DATA request failed") from None
 
     try:
+        _require_https_data_url(response.url)
         response.raise_for_status()
 
         content_length = response.headers.get("Content-Length")
