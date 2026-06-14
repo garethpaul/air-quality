@@ -22,6 +22,7 @@ for path in \
   ".python-version" \
   ".gitignore" \
   "CHANGES.md" \
+  "DEPLOYMENT.md" \
   "Makefile" \
   "Procfile" \
   "README.md" \
@@ -56,8 +57,46 @@ for path in \
   "docs/plans/2026-06-14-air-quality-response-media-type.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
+  "docs/plans/2026-06-14-small-instance-deployment-guide.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for deployment_contract in \
+  'APP_LOCATION' \
+  'PORT' \
+  'REDIS_URL' \
+  'MAPBOX_ACCESS_TOKEN' \
+  'AIRQUALITY_DATA' \
+  'Never run the process as root.' \
+  'curl --fail --silent --show-error --max-time 15' \
+  'restore the previous release checkout' \
+  'do not prove a live Redis service'; do
+  if ! grep -Fq "$deployment_contract" "$ROOT_DIR/DEPLOYMENT.md"; then
+    printf '%s\n' "Deployment guide must keep contract: $deployment_contract" >&2
+    exit 1
+  fi
+done
+
+for deployment_doc_contract in \
+  'provider-neutral small-instance deployment runbook' \
+  'unprivileged service account'; do
+  if ! grep -Fq "$deployment_doc_contract" "$README"; then
+    printf '%s\n' "README must keep deployment contract: $deployment_doc_contract" >&2
+    exit 1
+  fi
+done
+
+for deployment_plan_contract in \
+  'Status: Completed' \
+  'make check' \
+  'hostile mutations' \
+  'No live Redis, Mapbox, sensor-feed, TLS-proxy, or deployed-instance verification is claimed.'; do
+  if ! grep -Fq "$deployment_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-14-small-instance-deployment-guide.md"; then
+    printf '%s\n' "Deployment plan must preserve completion evidence: $deployment_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for overflowing_geocoder_contract in \

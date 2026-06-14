@@ -127,6 +127,16 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching database, model, or persistence code; examples from the scan include CHANGES.md, air.py, docs/plans/2026-06-08-air-quality-engineering-bar.md, geocode.py, and 1 more.
 - Review changes touching infrastructure, proxy, cloud, or deployment configuration; examples from the scan include .circleci/config.yml, CHANGES.md, docs/plans/2026-06-08-air-quality-engineering-bar.md.
 
+## Deployment
+
+Use [`DEPLOYMENT.md`](DEPLOYMENT.md) for the provider-neutral small-instance deployment runbook.
+It defines the required runtime variables, TLS reverse-proxy boundary,
+fresh-checkout preflight, bounded health probe, secret handling, and rollback
+steps without treating repository checks as live infrastructure verification.
+
+The application must run as an unprivileged service account, and its Bottle
+listener must be reachable only by the reverse proxy or private network.
+
 ## Maintenance Notes
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

@@ -1,6 +1,6 @@
 # Small-Instance Deployment Guide
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -34,4 +34,12 @@ probe, and rollback procedure from source files.
 
 ## Verification
 
-- Pending implementation and bounded repository validation.
+- `sh -n scripts/check-baseline.sh`, `python run_tests.py`,
+  `python -m ruff format --check .`, and `python -m ruff check .` passed; the
+  runtime suite executed all 65 tests.
+- Repository-root and external-working-directory `make check` passed Ruff,
+  all 65 tests, bytecode compilation, and the portable baseline contracts.
+- Twelve hostile mutations were rejected for removing the guide, a required
+  runtime variable, non-root execution, the bounded health probe, rollback,
+  the live-verification boundary, README links, or completion evidence.
+- No live Redis, Mapbox, sensor-feed, TLS-proxy, or deployed-instance verification is claimed.

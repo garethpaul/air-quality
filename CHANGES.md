@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- Added a provider-neutral small-instance deployment runbook covering required
+  configuration, non-root execution, TLS proxying, bounded health probes,
+  secret handling, and rollback.
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Required final upstream sensor responses to declare `application/json` or a
   valid `application/*+json` media type before body streaming.

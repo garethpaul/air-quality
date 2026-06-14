@@ -21,6 +21,8 @@ Priority:
 - Keep the API behavior predictable for coordinate and search-query requests
 - Maintain clear local setup with Python, Redis, Mapbox credentials, and the
   `AIRQUALITY_DATA` source
+- Keep a provider-neutral small-instance deployment runbook with explicit
+  preflight, TLS proxy, health-probe, secret, and rollback boundaries
 - Preserve test, lint, and build commands that work in a fresh checkout
 - Keep `make check` and `scripts/check-baseline.sh` green before pushing
   changes
@@ -49,7 +51,8 @@ Priority:
 Next priorities:
 
 - Continue improving data-source validation and error reporting
-- Add clearer deployment guidance for small hosted instances
+- Exercise the deployment runbook on an authorized hosted instance without
+  committing provider-specific credentials or configuration
 - Keep dependencies current enough to run on supported Python versions
 - Expand tests around distinct empty datasets and invalid coordinate shapes
 
