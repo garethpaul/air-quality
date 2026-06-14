@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-14
+
+- Required final upstream sensor responses to declare `application/json` or a
+  valid `application/*+json` media type before body streaming.
+- Rejected missing, malformed, comma-joined, and non-JSON media types with a
+  stable local error while retaining deterministic response cleanup.
+
 ## 2026-06-13
 
 - Geocoder transport failures during Mapbox dispatch and JSON decoding now use

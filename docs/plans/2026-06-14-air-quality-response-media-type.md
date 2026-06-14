@@ -1,13 +1,13 @@
 ---
 title: Air Quality Response Media Type Validation
 type: security
-status: in_progress
+status: completed
 date: 2026-06-14
 ---
 
 # Air Quality Response Media Type Validation
 
-## Status: In Progress
+## Status: Completed
 
 ## Problem
 
@@ -47,3 +47,20 @@ retaining deterministic response cleanup and stable local errors.
   exceptions.
 - Do not change valid JSON payload semantics or route response schemas.
 - Do not merge or close any pull request without explicit authorization.
+
+## Verification Results
+
+Completed on 2026-06-14:
+
+- Focused accepted/rejected media-type tests passed and proved rejected
+  responses are closed before `iter_content` is entered.
+- `python run_tests.py` passed all 63 tests.
+- `python -m ruff format --check .`, `python -m ruff check .`, and Python
+  bytecode compilation passed.
+- `python -m pip_audit -r requirements.txt -r requirements-dev.txt` reported
+  no known vulnerabilities.
+- Root and external-working-directory `make check` passed after plan
+  completion.
+- Six isolated hostile mutations were rejected across validation invocation,
+  media-type policy, ordering, no-stream cleanup evidence, documentation, and
+  completed-plan status.

@@ -49,6 +49,8 @@
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
 - Upstream sensor readings with non-finite latitude, longitude, or PM2.5 values are ignored before distance and AQI calculations.
 - Cached air-quality payloads must decode to the expected response shape; corrupt entries are ignored and refreshed from the configured data source.
+- Upstream sensor responses must declare `application/json` or a valid
+  `application/*+json` media type before body streaming.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the timeout without live network access.
 - Checked-in binary libraries are present; do not replace them without documenting toolchain and checksums.
 

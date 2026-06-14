@@ -31,6 +31,7 @@ Priority:
 - Keep upstream HTTP calls bounded by default
 - Bound upstream sensor response bytes before JSON decoding
 - Require a non-negative Content-Length when the upstream supplies one
+- Require a final `application/json` or `application/*+json` response media type
 - Normalize unsupported response encodings before sensor payload processing
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates

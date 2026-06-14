@@ -2,6 +2,7 @@ import ipaddress
 import json
 import math
 import os
+import re
 import socket
 from math import cos, asin, sqrt
 from urllib.parse import urljoin, urlsplit
@@ -13,6 +14,8 @@ UPSTREAM_RESPONSE_MAX_BYTES = 1024 * 1024
 CACHE_ERROR_MESSAGE = "cache request failed"
 HTTPS_DATA_URL_ERROR = "AIRQUALITY_DATA URL must use HTTPS"
 PUBLIC_DATA_HOST_ERROR = "AIRQUALITY_DATA host must resolve to public addresses"
+JSON_MEDIA_TYPE_ERROR = "AIRQUALITY_DATA response must use a JSON media type"
+MEDIA_TYPE_TOKEN = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -77,6 +80,21 @@ def _require_https_redirect(response, *args, **kwargs):
     return response
 
 
+def _require_json_media_type(content_type):
+    if not isinstance(content_type, str) or "," in content_type:
+        raise RuntimeError(JSON_MEDIA_TYPE_ERROR)
+
+    media_type = content_type.split(";", 1)[0].strip().lower()
+    top_level, separator, subtype = media_type.partition("/")
+    if (
+        separator != "/"
+        or top_level != "application"
+        or not MEDIA_TYPE_TOKEN.fullmatch(subtype)
+        or (subtype != "json" and not (subtype.endswith("+json") and len(subtype) > 5))
+    ):
+        raise RuntimeError(JSON_MEDIA_TYPE_ERROR)
+
+
 def _default_http_get(url):
     import requests
 
@@ -95,6 +113,7 @@ def _default_http_get(url):
     try:
         _require_https_data_url(response.url)
         response.raise_for_status()
+        _require_json_media_type(response.headers.get("Content-Type"))
 
         content_length = response.headers.get("Content-Length")
         if content_length is not None:

@@ -31,7 +31,9 @@ class AirQualityTest(unittest.TestCase):
             stream_error=None,
         ):
             self.chunks = chunks
-            self.headers = headers or {}
+            self.headers = {"Content-Type": "application/json"}
+            if headers is not None:
+                self.headers.update(headers)
             self.encoding = encoding
             self.url = url
             self.is_redirect = is_redirect
@@ -448,6 +450,52 @@ class AirQualityTest(unittest.TestCase):
         self.assertTrue(streaming_response.status_checked)
         self.assertEqual(streaming_response.chunk_size, 64 * 1024)
         self.assertEqual(streaming_response.close_calls, 1)
+
+    def test_default_http_get_accepts_json_media_types_with_parameters(self):
+        for content_type in (
+            "application/json",
+            "Application/JSON; Charset=UTF-8",
+            "application/vnd.air-quality+json; version=1",
+        ):
+            with self.subTest(content_type=content_type):
+                response = self.StreamingResponse(
+                    [b'{"results": []}'], headers={"Content-Type": content_type}
+                )
+
+                payload = self.call_with_requests_module(
+                    self.requests_module(lambda _url, **_kwargs: response)
+                )
+
+                self.assertEqual(payload, {"results": []})
+                self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_rejects_non_json_media_types_before_streaming(self):
+        for content_type in (
+            None,
+            "text/json",
+            "application/xml",
+            "application/+json",
+            "application/json, text/html",
+            123,
+        ):
+            with self.subTest(content_type=content_type):
+                headers = {}
+                if content_type is not None:
+                    headers["Content-Type"] = content_type
+                response = self.StreamingResponse([b'{"results": []}'], headers=headers)
+                if content_type is None:
+                    response.headers.pop("Content-Type")
+
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "^AIRQUALITY_DATA response must use a JSON media type$",
+                ):
+                    self.call_with_requests_module(
+                        self.requests_module(lambda _url, **_kwargs: response)
+                    )
+
+                self.assertFalse(hasattr(response, "chunk_size"))
+                self.assertEqual(response.close_calls, 1)
 
     def test_default_http_get_rejects_oversized_streamed_responses(self):
         response = self.StreamingResponse(

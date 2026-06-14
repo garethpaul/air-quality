@@ -53,8 +53,60 @@ for path in \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
   "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
+  "docs/plans/2026-06-14-air-quality-response-media-type.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for media_type_source_contract in \
+  'JSON_MEDIA_TYPE_ERROR = "AIRQUALITY_DATA response must use a JSON media type"' \
+  'def _require_json_media_type(content_type):' \
+  'if not isinstance(content_type, str) or "," in content_type:' \
+  'top_level, separator, subtype = media_type.partition("/")' \
+  'top_level != "application"' \
+  'subtype.endswith("+json") and len(subtype) > 5' \
+  '_require_json_media_type(response.headers.get("Content-Type"))'; do
+  if ! grep -Fq "$media_type_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Response media-type validation must keep contract: $media_type_source_contract" >&2
+    exit 1
+  fi
+done
+
+for media_type_test_contract in \
+  'test_default_http_get_accepts_json_media_types_with_parameters' \
+  'test_default_http_get_rejects_non_json_media_types_before_streaming' \
+  'self.assertFalse(hasattr(response, "chunk_size"))'; do
+  if ! grep -Fq "$media_type_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Response media-type tests must keep contract: $media_type_test_contract" >&2
+    exit 1
+  fi
+done
+
+media_type_line=$(grep -n '_require_json_media_type(response.headers.get("Content-Type"))' "$ROOT_DIR/air.py" | cut -d: -f1)
+content_length_line=$(grep -n 'content_length = response.headers.get("Content-Length")' "$ROOT_DIR/air.py" | cut -d: -f1)
+stream_line=$(grep -n 'for chunk in response.iter_content' "$ROOT_DIR/air.py" | cut -d: -f1)
+if [ -z "$media_type_line" ] || [ -z "$content_length_line" ] || [ -z "$stream_line" ] || \
+   [ "$media_type_line" -ge "$content_length_line" ] || [ "$media_type_line" -ge "$stream_line" ]; then
+  printf '%s\n' "Response media type must be validated before length checks and streaming." >&2
+  exit 1
+fi
+
+for media_type_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/VISION.md" "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq 'application/*+json' "$media_type_document"; then
+    printf '%s\n' "$media_type_document must document the JSON response media-type boundary." >&2
+    exit 1
+  fi
+done
+
+for media_type_plan_contract in \
+  'status: completed' \
+  '## Status: Completed' \
+  'python run_tests.py` passed all 63 tests' \
+  'Six isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$media_type_plan_contract" "$ROOT_DIR/docs/plans/2026-06-14-air-quality-response-media-type.md"; then
+    printf '%s\n' "Response media-type plan must preserve completion evidence: $media_type_plan_contract" >&2
+    exit 1
+  fi
 done
 
 python - "$ROOT_DIR/air.py" <<'PY'

@@ -43,9 +43,10 @@ callers or used as coordinates.
 The default sensor-data client uses a timeout and a 1 MiB streamed response
 limit. HTTP failures, oversized bodies, malformed JSON, and values that violate
 the non-negative Content-Length requirement should fail before sensor payload
-processing, as should unsupported response encodings. The
-response is closed after successful reads and all validation failures so pooled
-connections are not retained indefinitely.
+processing, as should missing or non-JSON `application/json` or
+`application/*+json` response media types and unsupported response encodings.
+The response is closed after successful reads and all validation failures so
+pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error
 without preserving provider URLs, status text, or exception details in the
 public error path.
