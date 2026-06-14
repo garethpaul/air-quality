@@ -67,7 +67,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
 - Route failures return stable JSON messages instead of exposing caught
   exception details; hosted CodeQL analyzes actions and Python on every push
   and pull request and on a weekly schedule.
-- The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
+- The default `AIRQUALITY_DATA` fetch streams at most 1 MiB and rejects an
+  oversized chunk before extending the retained response buffer, rejects malformed
   JSON, missing or non-JSON `application/json` or `application/*+json`
   response media types, unsupported response encodings, and supplied values
   that violate non-negative Content-Length syntax (ASCII decimal digits only),

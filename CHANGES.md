@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Rejected oversized upstream chunks before extending the retained response
+  buffer.
 - Required supplied upstream `Content-Length` values to use only ASCII decimal
   digits before response streaming.
 - Added a provider-neutral small-instance deployment runbook covering required

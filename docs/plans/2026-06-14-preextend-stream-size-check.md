@@ -1,6 +1,6 @@
 # Pre-Extend Stream Size Check
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -32,6 +32,16 @@ mutating the response buffer.
   documentation, and plan status
 - Generated-artifact, credential-pattern, exact-diff, staged-path, and
   whitespace audits
+
+## Verification Results
+
+- Focused oversized-stream regressions passed and confirmed that the tracking
+  bytearray received zero `extend` calls on the oversized single-chunk path.
+- Repository and external-directory `make check` passed Ruff formatting and
+  lint, all 68 tests, tracked Python compilation, and baseline contracts.
+- Five isolated mutations were rejected across check ordering, prospective
+  size arithmetic, test observability, maintained documentation, and completed
+  plan evidence.
 
 ## Scope Boundary
 

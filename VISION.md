@@ -32,6 +32,7 @@ Priority:
   before serializing responses
 - Keep upstream HTTP calls bounded by default
 - Bound upstream sensor response bytes before JSON decoding
+- Reject oversized streamed chunks before extending the retained response buffer
 - Require non-negative Content-Length syntax using only ASCII decimal digits
 - Require a final `application/json` or `application/*+json` response media type
 - Normalize unsupported response encodings before sensor payload processing

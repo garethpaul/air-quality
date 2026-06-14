@@ -515,6 +515,28 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_rejects_oversized_chunk_before_buffer_extension(self):
+        class TrackingBytearray(bytearray):
+            extend_calls = 0
+
+            def extend(self, value):
+                type(self).extend_calls += 1
+                super().extend(value)
+
+        response = self.StreamingResponse(
+            [b"x" * (air.UPSTREAM_RESPONSE_MAX_BYTES + 1)]
+        )
+
+        with patch.object(air, "bytearray", TrackingBytearray, create=True):
+            with self.assertRaisesRegex(RuntimeError, "response is too large"):
+                self.call_with_requests_module(
+                    self.requests_module(lambda _url, **_kwargs: response),
+                    url="https://93.184.216.34/air.json",
+                )
+
+        self.assertEqual(TrackingBytearray.extend_calls, 0)
+        self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_rejects_oversized_content_length(self):
         response = self.StreamingResponse(
             [], headers={"Content-Length": str(air.UPSTREAM_RESPONSE_MAX_BYTES + 1)}

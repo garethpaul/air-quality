@@ -132,9 +132,9 @@ def _default_http_get(url):
         for chunk in response.iter_content(chunk_size=64 * 1024):
             if not chunk:
                 continue
-            body.extend(chunk)
-            if len(body) > UPSTREAM_RESPONSE_MAX_BYTES:
+            if len(body) + len(chunk) > UPSTREAM_RESPONSE_MAX_BYTES:
                 raise RuntimeError("AIRQUALITY_DATA response is too large")
+            body.extend(chunk)
 
         try:
             return json.loads(body.decode(response.encoding or "utf-8"))

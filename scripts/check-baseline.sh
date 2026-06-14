@@ -55,6 +55,7 @@ for path in \
   "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
   "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
   "docs/plans/2026-06-14-strict-content-length-syntax.md" \
+  "docs/plans/2026-06-14-preextend-stream-size-check.md" \
   "docs/plans/2026-06-14-air-quality-response-media-type.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
@@ -62,6 +63,46 @@ for path in \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+for preextend_size_source_contract in \
+  'if len(body) + len(chunk) > UPSTREAM_RESPONSE_MAX_BYTES:' \
+  'body.extend(chunk)'; do
+  if ! grep -Fq "$preextend_size_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Pre-extend stream limit must keep contract: $preextend_size_source_contract" >&2
+    exit 1
+  fi
+done
+
+preextend_check_line=$(grep -n 'if len(body) + len(chunk) > UPSTREAM_RESPONSE_MAX_BYTES:' "$ROOT_DIR/air.py" | cut -d: -f1)
+preextend_extend_line=$(grep -n 'body.extend(chunk)' "$ROOT_DIR/air.py" | cut -d: -f1)
+if [ "$preextend_check_line" -ge "$preextend_extend_line" ]; then
+  printf '%s\n' 'Stream size must be checked before extending the response buffer.' >&2
+  exit 1
+fi
+
+for preextend_size_test_contract in \
+  'test_default_http_get_rejects_oversized_chunk_before_buffer_extension' \
+  'self.assertEqual(TrackingBytearray.extend_calls, 0)'; do
+  if ! grep -Fq "$preextend_size_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Pre-extend stream limit tests must keep contract: $preextend_size_test_contract" >&2
+    exit 1
+  fi
+done
+
+for preextend_size_document in \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "before extending the retained response buffer" "$preextend_size_document"; then
+    printf '%s\n' "$preextend_size_document must document the pre-extension stream limit." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "before extending the retained response" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' 'CHANGES.md must record the pre-extension stream limit.' >&2
+  exit 1
+fi
 
 for deployment_contract in \
   'APP_LOCATION' \
