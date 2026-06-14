@@ -41,10 +41,11 @@ geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
-limit. HTTP failures, oversized bodies, malformed JSON, and values that violate
-the non-negative Content-Length requirement should fail before sensor payload
-processing, as should missing or non-JSON `application/json` or
-`application/*+json` response media types and unsupported response encodings.
+limit. HTTP failures, oversized bodies, malformed JSON, and supplied values
+that violate non-negative Content-Length syntax (ASCII decimal digits only)
+should fail before sensor payload processing, as should missing or non-JSON
+`application/json` or `application/*+json` response media types and
+unsupported response encodings.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
 Overflowing Mapbox center values are rejected before coordinate caching.

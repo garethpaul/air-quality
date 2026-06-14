@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Required supplied upstream `Content-Length` values to use only ASCII decimal
+  digits before response streaming.
 - Added a provider-neutral small-instance deployment runbook covering required
   configuration, non-root execution, TLS proxying, bounded health probes,
   secret handling, and rollback.

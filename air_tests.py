@@ -543,6 +543,53 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_rejects_non_decimal_content_length_before_streaming(self):
+        for content_length in (
+            "",
+            "+1",
+            " 1",
+            "1 ",
+            "1_0",
+            "1.0",
+            "1, 2",
+            "\u0661",
+            1,
+        ):
+            with self.subTest(content_length=content_length):
+                response = self.StreamingResponse(
+                    [], headers={"Content-Length": content_length}
+                )
+
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "^AIRQUALITY_DATA Content-Length must be a non-negative integer$",
+                ):
+                    self.call_with_requests_module(
+                        self.requests_module(lambda _url, **_kwargs: response)
+                    )
+
+                self.assertFalse(hasattr(response, "chunk_size"))
+                self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_accepts_ascii_decimal_content_length(self):
+        payload = b'{"results": []}'
+        for content_length in (
+            "0",
+            str(len(payload)),
+            str(air.UPSTREAM_RESPONSE_MAX_BYTES),
+        ):
+            with self.subTest(content_length=content_length):
+                response = self.StreamingResponse(
+                    [payload], headers={"Content-Length": content_length}
+                )
+
+                result = self.call_with_requests_module(
+                    self.requests_module(lambda _url, **_kwargs: response)
+                )
+
+                self.assertEqual(result, {"results": []})
+                self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_closes_response_after_status_failure(self):
         response = self.StreamingResponse([], status_error=OSError("upstream failed"))
         original_requests = sys.modules.get("requests")

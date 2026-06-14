@@ -54,6 +54,7 @@ for path in \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
   "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
+  "docs/plans/2026-06-14-strict-content-length-syntax.md" \
   "docs/plans/2026-06-14-air-quality-response-media-type.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
@@ -300,8 +301,9 @@ if ! grep -Fq \
 fi
 
 for content_length_source_contract in \
+  'CONTENT_LENGTH_DIGITS = re.compile(r"^[0-9]+$")' \
+  'not CONTENT_LENGTH_DIGITS.fullmatch(' \
   'parsed_content_length = int(content_length)' \
-  'if parsed_content_length < 0:' \
   'AIRQUALITY_DATA Content-Length must be a non-negative integer'; do
   if ! grep -Fq "$content_length_source_contract" "$ROOT_DIR/air.py"; then
     printf '%s\n' "Content-Length validation must keep source contract: $content_length_source_contract" >&2
@@ -316,6 +318,19 @@ if ! grep -Fq \
   exit 1
 fi
 
+for strict_content_length_test_contract in \
+  'test_default_http_get_rejects_non_decimal_content_length_before_streaming' \
+  'test_default_http_get_accepts_ascii_decimal_content_length' \
+  '"1_0"' \
+  '"1, 2"' \
+  '"\u0661"' \
+  'str(air.UPSTREAM_RESPONSE_MAX_BYTES)'; do
+  if ! grep -Fq "$strict_content_length_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Strict Content-Length tests must keep contract: $strict_content_length_test_contract" >&2
+    exit 1
+  fi
+done
+
 for content_length_document in \
   "$ROOT_DIR/README.md" \
   "$ROOT_DIR/SECURITY.md" \
@@ -326,12 +341,33 @@ for content_length_document in \
   fi
 done
 
+for strict_content_length_document in \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "ASCII decimal digits" "$strict_content_length_document"; then
+    printf '%s\n' "$strict_content_length_document must document strict Content-Length syntax." >&2
+    exit 1
+  fi
+done
+
 if ! grep -Fq \
   'Status: Completed' \
   "$ROOT_DIR/docs/plans/2026-06-14-air-quality-content-length-validation.md"; then
   printf '%s\n' 'Content-Length validation plan must record completed status.' >&2
   exit 1
 fi
+
+for strict_content_length_plan_contract in \
+  'Status: Completed' \
+  'Full `make check` passed' \
+  'isolated mutations were rejected'; do
+  if ! grep -Fq "$strict_content_length_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-14-strict-content-length-syntax.md"; then
+    printf '%s\n' "Strict Content-Length plan must preserve completion evidence: $strict_content_length_plan_contract" >&2
+    exit 1
+  fi
+done
 
 for response_encoding_document in \
   "$ROOT_DIR/README.md" \

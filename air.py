@@ -16,6 +16,7 @@ HTTPS_DATA_URL_ERROR = "AIRQUALITY_DATA URL must use HTTPS"
 PUBLIC_DATA_HOST_ERROR = "AIRQUALITY_DATA host must resolve to public addresses"
 JSON_MEDIA_TYPE_ERROR = "AIRQUALITY_DATA response must use a JSON media type"
 MEDIA_TYPE_TOKEN = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
+CONTENT_LENGTH_DIGITS = re.compile(r"^[0-9]+$")
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -117,18 +118,15 @@ def _default_http_get(url):
 
         content_length = response.headers.get("Content-Length")
         if content_length is not None:
-            try:
-                parsed_content_length = int(content_length)
-                if parsed_content_length < 0:
-                    raise RuntimeError(
-                        "AIRQUALITY_DATA Content-Length must be a non-negative integer"
-                    )
-                if parsed_content_length > UPSTREAM_RESPONSE_MAX_BYTES:
-                    raise RuntimeError("AIRQUALITY_DATA response is too large")
-            except ValueError:
+            if not isinstance(
+                content_length, str
+            ) or not CONTENT_LENGTH_DIGITS.fullmatch(content_length):
                 raise RuntimeError(
                     "AIRQUALITY_DATA Content-Length must be a non-negative integer"
                 )
+            parsed_content_length = int(content_length)
+            if parsed_content_length > UPSTREAM_RESPONSE_MAX_BYTES:
+                raise RuntimeError("AIRQUALITY_DATA response is too large")
 
         body = bytearray()
         for chunk in response.iter_content(chunk_size=64 * 1024):

@@ -1,6 +1,6 @@
 # Strict Content-Length Syntax
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -58,12 +58,19 @@ evidence in the dependency-free baseline checker.
 
 ## Verification
 
-To be recorded after implementation:
+Completed on 2026-06-14:
 
-- Focused strict-header regressions.
-- Full runtime, formatting, lint, compilation, and baseline checks.
-- Repository-root and external-directory `make check` invocations.
-- Isolated mutations of parser, tests, documentation, and plan status.
+- Four focused header regressions passed, covering strict syntax, negative and
+  oversized values, valid ASCII decimal input, pre-stream rejection, and exact
+  response cleanup.
+- The dependency-free runtime suite passed all 67 tests.
+- Ruff formatting and lint checks passed across all Python files, and tracked
+  Python compilation passed.
+- Full `make check` passed from the repository root and from `/tmp` through the
+  absolute Makefile path with a hostile `ROOT=/tmp` override.
+- Five isolated mutations were rejected when they removed strict parser use,
+  removed malformed-value coverage, removed documentation, or changed this
+  plan back to `Status: Planned`.
 
 ## Risks
 
