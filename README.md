@@ -68,7 +68,9 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
   exception details; hosted CodeQL analyzes actions and Python on every push
   and pull request and on a weekly schedule.
 - The default `AIRQUALITY_DATA` fetch streams at most 1 MiB, rejects malformed
-  JSON, unsupported response encodings, and HTTP failures, keeps the existing
+  JSON, unsupported response encodings, negative or malformed upstream
+  lengths through non-negative Content-Length validation, and HTTP failures,
+  keeps the existing
   10-second timeout, and closes the streamed response after both successful and
   failed reads.
 - Requests transport failures at connection, status, and streamed-read stages

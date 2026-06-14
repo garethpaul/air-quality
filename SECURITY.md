@@ -41,8 +41,9 @@ geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
-limit. HTTP failures, oversized bodies, and malformed JSON should fail before
-sensor payload processing, as should unsupported response encodings. The
+limit. HTTP failures, oversized bodies, malformed JSON, and values that violate
+the non-negative Content-Length requirement should fail before sensor payload
+processing, as should unsupported response encodings. The
 response is closed after successful reads and all validation failures so pooled
 connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error

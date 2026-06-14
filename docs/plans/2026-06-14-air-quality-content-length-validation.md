@@ -1,6 +1,6 @@
 # Air Quality Content-Length Validation
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -54,15 +54,17 @@ plan evidence in the dependency-free baseline checker.
 
 ## Verification
 
-Planned:
+Completed on 2026-06-14:
 
-- Run the focused negative-header regression and the full runtime suite.
-- Run the complete `make check` gate from the repository root and an unrelated
-  working directory.
-- Reject focused mutations that remove the lower bound, regression, security
-  wording, or completed plan status.
-- Audit the exact diff, generated artifacts, whitespace, and credential-shaped
-  additions before committing.
+- The focused negative-header regression passed and proved response cleanup.
+- The dependency-free runtime suite passed all 61 tests.
+- Ruff formatting and lint checks passed across all Python files.
+- Full `make check` passed from the repository root and from `/tmp` through the
+  absolute Makefile path with a hostile `ROOT=/tmp` override; both runs passed
+  formatting, lint, all 61 tests, compilation, and the baseline checker.
+- Four isolated mutations were rejected when they removed the lower-bound
+  comparison, renamed the regression, removed the security wording, or changed
+  this plan back to `Status: Planned`.
 
 ## Risks
 

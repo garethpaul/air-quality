@@ -99,10 +99,17 @@ def _default_http_get(url):
         content_length = response.headers.get("Content-Length")
         if content_length is not None:
             try:
-                if int(content_length) > UPSTREAM_RESPONSE_MAX_BYTES:
+                parsed_content_length = int(content_length)
+                if parsed_content_length < 0:
+                    raise RuntimeError(
+                        "AIRQUALITY_DATA Content-Length must be a non-negative integer"
+                    )
+                if parsed_content_length > UPSTREAM_RESPONSE_MAX_BYTES:
                     raise RuntimeError("AIRQUALITY_DATA response is too large")
             except ValueError:
-                raise RuntimeError("AIRQUALITY_DATA Content-Length must be an integer")
+                raise RuntimeError(
+                    "AIRQUALITY_DATA Content-Length must be a non-negative integer"
+                )
 
         body = bytearray()
         for chunk in response.iter_content(chunk_size=64 * 1024):

@@ -52,6 +52,7 @@ for path in \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
+  "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -134,6 +135,40 @@ if ! grep -Fq \
   'test_default_http_get_normalizes_unknown_encoding_and_closes_response' \
   "$ROOT_DIR/air_tests.py"; then
   printf '%s\n' 'Upstream response encoding regression must remain covered.' >&2
+  exit 1
+fi
+
+for content_length_source_contract in \
+  'parsed_content_length = int(content_length)' \
+  'if parsed_content_length < 0:' \
+  'AIRQUALITY_DATA Content-Length must be a non-negative integer'; do
+  if ! grep -Fq "$content_length_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Content-Length validation must keep source contract: $content_length_source_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq \
+  'test_default_http_get_rejects_negative_content_length' \
+  "$ROOT_DIR/air_tests.py"; then
+  printf '%s\n' 'Negative Content-Length regression must remain covered.' >&2
+  exit 1
+fi
+
+for content_length_document in \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "non-negative Content-Length" "$content_length_document"; then
+    printf '%s\n' "$content_length_document must document non-negative Content-Length validation." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq \
+  'Status: Completed' \
+  "$ROOT_DIR/docs/plans/2026-06-14-air-quality-content-length-validation.md"; then
+  printf '%s\n' 'Content-Length validation plan must record completed status.' >&2
   exit 1
 fi
 

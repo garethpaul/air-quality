@@ -485,6 +485,16 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_rejects_negative_content_length(self):
+        response = self.StreamingResponse([], headers={"Content-Length": "-1"})
+
+        with self.assertRaisesRegex(RuntimeError, "non-negative integer"):
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_closes_response_after_status_failure(self):
         response = self.StreamingResponse([], status_error=OSError("upstream failed"))
         original_requests = sys.modules.get("requests")
