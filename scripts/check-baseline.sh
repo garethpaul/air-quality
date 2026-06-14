@@ -55,8 +55,43 @@ for path in \
   "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
   "docs/plans/2026-06-14-air-quality-response-media-type.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
+  "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for overflowing_geocoder_contract in \
+  'except (OverflowError, TypeError, ValueError):' \
+  'test_overflowing_geocoder_center_values_raise_value_error' \
+  'huge_integer = 10**400' \
+  '[huge_integer, "37.794678"]' \
+  '["-122.41143", huge_integer]' \
+  'ValueError, "^geocoder center values must be numeric$"'; do
+  if ! grep -Fq "$overflowing_geocoder_contract" "$ROOT_DIR/geocode.py" && \
+     ! grep -Fq "$overflowing_geocoder_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Overflowing geocoder center handling must keep contract: $overflowing_geocoder_contract" >&2
+    exit 1
+  fi
+done
+
+for overflowing_geocoder_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Overflowing Mapbox center values are rejected before coordinate caching." \
+    "$ROOT_DIR/$overflowing_geocoder_doc"; then
+    printf '%s\n' "$overflowing_geocoder_doc must document overflowing Mapbox center rejection." >&2
+    exit 1
+  fi
+done
+
+for overflowing_geocoder_plan_contract in \
+  "Status: Completed" \
+  "test_overflowing_geocoder_center_values_raise_value_error" \
+  "make check" \
+  "hostile mutations"; do
+  if ! grep -Fq "$overflowing_geocoder_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md"; then
+    printf '%s\n' "Overflowing geocoder center plan must preserve completion evidence: $overflowing_geocoder_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for overflowing_reading_contract in \

@@ -90,7 +90,7 @@ class GeoCode(object):
         try:
             lng = float(center[0])
             lat = float(center[1])
-        except (TypeError, ValueError):
+        except (OverflowError, TypeError, ValueError):
             raise ValueError("geocoder center values must be numeric")
 
         if not math.isfinite(lat) or not math.isfinite(lng):

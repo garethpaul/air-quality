@@ -40,6 +40,7 @@ Priority:
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Ignore overflowing upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching
+- Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data
 - Keep cached air-quality responses limited to validated public response fields
 - Ignore corrupt cached geocode coordinates before search lookups

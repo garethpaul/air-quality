@@ -2,6 +2,7 @@
 
 ## 2026-06-14
 
+- Overflowing Mapbox center values are rejected before coordinate caching.
 - Required final upstream sensor responses to declare `application/json` or a
   valid `application/*+json` media type before body streaming.
 - Rejected missing, malformed, comma-joined, and non-JSON media types with a

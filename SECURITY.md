@@ -47,6 +47,7 @@ processing, as should missing or non-JSON `application/json` or
 `application/*+json` response media types and unsupported response encodings.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
+Overflowing Mapbox center values are rejected before coordinate caching.
 The response is closed after successful reads and all validation failures so
 pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error

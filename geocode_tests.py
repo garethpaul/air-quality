@@ -176,6 +176,26 @@ class GeoCodeTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     geo.getLatLng()
 
+    def test_overflowing_geocoder_center_values_raise_value_error(self):
+        huge_integer = 10**400
+        invalid_centers = [
+            [huge_integer, "37.794678"],
+            ["-122.41143", huge_integer],
+        ]
+
+        for center in invalid_centers:
+            with self.subTest(center=center):
+                geo = GeoCode(
+                    "Overflowing coordinates",
+                    cache_client=MemoryCache(),
+                    geocoder=FakeGeocoder({"features": [{"center": center}]}),
+                )
+
+                with self.assertRaisesRegex(
+                    ValueError, "^geocoder center values must be numeric$"
+                ):
+                    geo.getLatLng()
+
     def test_missing_geocoder_results_raise_value_error(self):
         geo = GeoCode(
             "Not a real place",
