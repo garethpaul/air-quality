@@ -1,6 +1,6 @@
 # Air Quality Response Encoding Validation
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -60,14 +60,24 @@ public API contract.
 
 ## Verification
 
-- Run the focused unsupported-encoding regression first.
-- Run the dependency-free runtime suite and `make check` from the repository
-  root and from an external working directory.
-- Run focused hostile mutations for the `LookupError` boundary, regression
-  name, documentation, and completed plan status.
-- Run Python, shell, JSON, and YAML syntax checks plus `git diff --check`.
-- Inspect only the intended paths for secrets and generated artifacts before
-  committing.
+Completed on 2026-06-14:
+
+- The focused unsupported-encoding regression passed.
+- The dependency-free runtime suite passed all 60 tests.
+- Ruff formatting and lint checks passed, and the intended Python files
+  compiled successfully.
+- Shell syntax, TOML and workflow YAML parsing, and `git diff --check` passed.
+- The baseline checker passed against an unmodified disposable copy with this
+  plan marked complete.
+- Full `make check` passed from the repository root and from `/tmp` while a
+  hostile `ROOT=/tmp` command-line override was supplied; both runs kept the
+  repository root protected and passed Ruff, all 60 tests, compilation, and
+  the baseline checker.
+- Four focused hostile mutations were rejected: removing `LookupError`,
+  renaming the regression, removing the security documentation phrase, and
+  reverting this plan to `Status: Planned`.
+- Generated Python caches were removed by explicit paths; no disposable
+  mutation directories remained before the final repository gates.
 
 ## Risks
 

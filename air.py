@@ -114,7 +114,7 @@ def _default_http_get(url):
 
         try:
             return json.loads(body.decode(response.encoding or "utf-8"))
-        except (UnicodeDecodeError, ValueError):
+        except (LookupError, UnicodeDecodeError, ValueError):
             raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
     except requests.exceptions.RequestException:
         raise RuntimeError("AIRQUALITY_DATA request failed") from None

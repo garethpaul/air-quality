@@ -30,6 +30,7 @@ Priority:
   before serializing responses
 - Keep upstream HTTP calls bounded by default
 - Bound upstream sensor response bytes before JSON decoding
+- Normalize unsupported response encodings before sensor payload processing
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup

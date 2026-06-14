@@ -51,6 +51,7 @@ for path in \
   "docs/plans/2026-06-13-air-quality-public-data-addresses.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
+  "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -116,6 +117,32 @@ for https_test_contract in \
   "test_default_http_get_rejects_redirect_downgrade_and_closes_response"; do
   if ! grep -Fq "$https_test_contract" "$ROOT_DIR/air_tests.py"; then
     printf '%s\n' "HTTPS data source tests must keep contract: $https_test_contract" >&2
+    exit 1
+  fi
+done
+
+for response_encoding_source_contract in \
+  'except (LookupError, UnicodeDecodeError, ValueError):' \
+  'raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")'; do
+  if ! grep -Fq "$response_encoding_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Upstream response encoding must keep source contract: $response_encoding_source_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq \
+  'test_default_http_get_normalizes_unknown_encoding_and_closes_response' \
+  "$ROOT_DIR/air_tests.py"; then
+  printf '%s\n' 'Upstream response encoding regression must remain covered.' >&2
+  exit 1
+fi
+
+for response_encoding_document in \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "unsupported response encodings" "$response_encoding_document"; then
+    printf '%s\n' "$response_encoding_document must document unsupported response encodings." >&2
     exit 1
   fi
 done

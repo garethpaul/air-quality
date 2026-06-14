@@ -554,6 +554,18 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_normalizes_unknown_encoding_and_closes_response(self):
+        response = self.StreamingResponse(
+            [b'{"results": []}'], encoding="unknown-provider-charset"
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "must be valid JSON"):
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertEqual(response.close_calls, 1)
+
     def test_getting_data_uses_nearest_valid_sensor_and_caches_it(self):
         cache = MemoryCache()
         requested_urls = []
