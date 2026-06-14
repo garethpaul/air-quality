@@ -54,8 +54,43 @@ for path in \
   "docs/plans/2026-06-14-air-quality-response-encoding-validation.md" \
   "docs/plans/2026-06-14-air-quality-content-length-validation.md" \
   "docs/plans/2026-06-14-air-quality-response-media-type.md" \
+  "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for overflowing_reading_contract in \
+  'except (OverflowError, TypeError, ValueError):' \
+  'test_overflowing_sensor_values_are_ignored' \
+  'huge_integer = 10**400'; do
+  if ! grep -Fq "$overflowing_reading_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$overflowing_reading_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Overflowing sensor reading handling must keep contract: $overflowing_reading_contract" >&2
+    exit 1
+  fi
+done
+
+for overflowing_reading_document in \
+  "$README" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md" \
+  "$ROOT_DIR/AGENTS.md"; do
+  if ! grep -Fq "overflowing upstream sensor values" "$overflowing_reading_document"; then
+    printf '%s\n' "$overflowing_reading_document must document overflowing sensor value handling." >&2
+    exit 1
+  fi
+done
+
+for overflowing_reading_plan_contract in \
+  'status: completed' \
+  '## Status: Completed' \
+  'python run_tests.py` passed all 64 tests' \
+  'Three isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$overflowing_reading_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-14-air-quality-overflowing-reading-values.md"; then
+    printf '%s\n' "Overflowing sensor reading plan must preserve completion evidence: $overflowing_reading_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for media_type_source_contract in \

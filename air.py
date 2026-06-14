@@ -270,7 +270,7 @@ class AirQuality(object):
                 pm25 = float(item["PM2_5Value"])
                 lat = float(item["Lat"])
                 lon = float(item["Lon"])
-            except (TypeError, ValueError):
+            except (OverflowError, TypeError, ValueError):
                 continue
 
             if not all(math.isfinite(value) for value in (pm25, lat, lon)):

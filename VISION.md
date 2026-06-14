@@ -38,6 +38,7 @@ Priority:
 - Bound search-query inputs before cache-key construction or Mapbox lookup
 - Normalize geocoder transport failures without exposing provider details
 - Ignore non-finite upstream sensor values before distance and AQI calculations
+- Ignore overflowing upstream sensor values before distance and AQI calculations
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Ignore corrupt cached air-quality payloads before returning API data
 - Keep cached air-quality responses limited to validated public response fields

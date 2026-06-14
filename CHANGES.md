@@ -6,6 +6,8 @@
   valid `application/*+json` media type before body streaming.
 - Rejected missing, malformed, comma-joined, and non-JSON media types with a
   stable local error while retaining deterministic response cleanup.
+- Ignored overflowing upstream sensor latitude, longitude, and PM2.5 values
+  before distance and AQI calculations instead of raising conversion errors.
 
 ## 2026-06-13
 

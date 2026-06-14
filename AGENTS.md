@@ -47,7 +47,7 @@
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty text `query` value of 200 characters or fewer.
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
-- Upstream sensor readings with non-finite latitude, longitude, or PM2.5 values are ignored before distance and AQI calculations.
+- Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Cached air-quality payloads must decode to the expected response shape; corrupt entries are ignored and refreshed from the configured data source.
 - Upstream sensor responses must declare `application/json` or a valid
   `application/*+json` media type before body streaming.

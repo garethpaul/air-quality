@@ -45,6 +45,8 @@ limit. HTTP failures, oversized bodies, malformed JSON, and values that violate
 the non-negative Content-Length requirement should fail before sensor payload
 processing, as should missing or non-JSON `application/json` or
 `application/*+json` response media types and unsupported response encodings.
+Non-finite and overflowing upstream sensor values are ignored before distance
+or AQI calculations.
 The response is closed after successful reads and all validation failures so
 pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error

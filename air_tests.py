@@ -856,6 +856,39 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
 
+    def test_overflowing_sensor_values_are_ignored(self):
+        huge_integer = 10**400
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: JsonResponse(
+                {
+                    "results": [
+                        {
+                            "Lat": huge_integer,
+                            "Lon": -122.41,
+                            "PM2_5Value": "12.0",
+                        },
+                        {
+                            "Lat": 37.8,
+                            "Lon": huge_integer,
+                            "PM2_5Value": "12.0",
+                        },
+                        {
+                            "Lat": 37.8,
+                            "Lon": -122.41,
+                            "PM2_5Value": huge_integer,
+                        },
+                        {"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"},
+                    ]
+                }
+            ),
+        )
+
+        self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
+
 
 if __name__ == "__main__":
     unittest.main()
