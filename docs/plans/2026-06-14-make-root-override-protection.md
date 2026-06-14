@@ -1,6 +1,6 @@
 # Make Root Override Protection
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -35,3 +35,23 @@ from the reviewed checkout.
 - Do not change API behavior, dependencies, provider configuration, workflows,
   or public response formats.
 - Do not merge or close any pull request without explicit owner authorization.
+
+## Work Completed
+
+- Protected the Makefile-derived root while preserving every existing package
+  and baseline command.
+- Added exact shell contracts for the protected root, rooted Python file list,
+  four rooted package commands, rooted baseline script, and this completed
+  plan.
+
+## Verification Completed
+
+- The focused shell baseline contract passed.
+- Local, external-working-directory, and hostile `ROOT` full `make check`
+  gates each passed Ruff formatting/lint, 59 runtime tests, Python compilation,
+  and the shell baseline contracts under the exact dependency set.
+- `uv pip check` passed for 20 installed packages, and `pip-audit==2.10.0`
+  reported no known vulnerabilities in either requirements file.
+- Eight focused root, command-path, and plan-status mutations were rejected.
+- Workflow/config, whitespace, explicit-artifact, exact-diff, and changed-line
+  credential audits passed before shipment.

@@ -50,6 +50,7 @@ for path in \
   "docs/plans/2026-06-13-air-quality-https-data-source.md" \
   "docs/plans/2026-06-13-air-quality-public-data-addresses.md" \
   "docs/plans/2026-06-13-air-quality-upstream-transport-errors.md" \
+  "docs/plans/2026-06-14-make-root-override-protection.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -303,8 +304,24 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   exit 1
 fi
 
-if ! grep -Fq 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE"; then
-  printf '%s\n' "Makefile must resolve the repository root." >&2
+if ! grep -Fxq 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must protect the repository root." >&2
+  exit 1
+fi
+
+if ! grep -Fxq 'PYTHON_FILES := $(shell git -C "$(ROOT)" ls-files '\''*.py'\'')' "$MAKEFILE"; then
+  printf '%s\n' "Makefile must derive Python files from the repository root." >&2
+  exit 1
+fi
+
+if [ "$(grep -Fc 'cd "$(ROOT)" &&' "$MAKEFILE")" -ne 4 ]; then
+  printf '%s\n' "All four package commands must execute from the repository root." >&2
+  exit 1
+fi
+
+make_tab=$(printf '\t')
+if ! grep -Fxq "${make_tab}\"\$(ROOT)/scripts/check-baseline.sh\"" "$MAKEFILE"; then
+  printf '%s\n' "Makefile must execute the rooted baseline script." >&2
   exit 1
 fi
 
