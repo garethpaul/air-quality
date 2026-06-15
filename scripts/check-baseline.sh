@@ -491,6 +491,47 @@ for zero_width_linear_plan_contract in \
   fi
 done
 
+for descending_linear_source_contract in \
+  'if Conchigh < Conclow:' \
+  'AQI interpolation concentration range must be ascending'; do
+  if ! grep -Fq "$descending_linear_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Descending AQI interpolation source must keep contract: $descending_linear_source_contract" >&2
+    exit 1
+  fi
+done
+
+for descending_linear_test_contract in \
+  'test_linear_rejects_descending_concentration_range' \
+  '("0.0", "9.0")' \
+  'quality.Linear(50, 0, 9.0, 0.0, "9.0")'; do
+  if ! grep -Fq "$descending_linear_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Descending AQI interpolation tests must keep contract: $descending_linear_test_contract" >&2
+    exit 1
+  fi
+done
+
+for descending_linear_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Descending AQI interpolation ranges are rejected before division." \
+    "$ROOT_DIR/$descending_linear_doc"; then
+    printf '%s\n' "$descending_linear_doc must document descending AQI interpolation rejection." >&2
+    exit 1
+  fi
+done
+
+for descending_linear_plan_contract in \
+  'status: completed' \
+  'test_linear_rejects_descending_concentration_range' \
+  '76 tests' \
+  'make check' \
+  'isolated hostile mutations' \
+  'credential-like value audits'; do
+  if ! grep -Fq "$descending_linear_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-descending-linear-range.md"; then
+    printf '%s\n' "Descending AQI interpolation plan must preserve completion evidence: $descending_linear_plan_contract" >&2
+    exit 1
+  fi
+done
+
 for negative_aqi_category_contract in \
   'if 0 <= AQI <= 50:' \
   'test_category_handles_negative_out_of_range_score' \

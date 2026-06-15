@@ -361,6 +361,8 @@ class AirQuality(object):
             raise ValueError(
                 "AQI interpolation concentration range must not be zero-width"
             )
+        if Conchigh < Conclow:
+            raise ValueError("AQI interpolation concentration range must be ascending")
 
         a = ((Conc - Conclow) / (Conchigh - Conclow)) * (AQIhigh - AQIlow) + AQIlow
         linear = round(a)

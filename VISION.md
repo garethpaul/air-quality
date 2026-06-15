@@ -48,6 +48,7 @@ Priority:
 - Reject non-finite scoring helper inputs before interpolation or category
   construction.
 - Zero-width AQI interpolation ranges are rejected before division.
+- Descending AQI interpolation ranges are rejected before division.
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data

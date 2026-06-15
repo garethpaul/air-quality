@@ -1,6 +1,6 @@
 # Air Quality Descending Linear Range
 
-status: planned
+status: completed
 
 ## Problem
 
@@ -31,3 +31,24 @@ error.
 - Reject isolated hostile mutations for the source guard and evidence.
 - Audit generated artifacts, file modes, whitespace, conflict markers, and
   added credential-like values.
+
+## Work Completed
+
+- Added an explicit normalized `Conchigh < Conclow` guard with a stable
+  ascending-range validation error.
+- Added numeric and numeric-string regressions while retaining the existing
+  valid ascending interpolation control.
+- Added source, test, documentation, and completed-plan baseline contracts and
+  synchronized maintainer guidance.
+
+## Verification Completed
+
+- `test_linear_rejects_descending_concentration_range` passed with adjacent
+  boolean, non-finite, zero-width, and valid interpolation coverage.
+- The complete suite passed with 76 tests.
+- Repository-root and external-directory `make check` passed Ruff formatting
+  and lint, all tests, Python compilation, and the baseline checker.
+- Isolated hostile mutations were rejected for the source guard, stable error,
+  focused test, numeric-string case, documentation, and completed plan.
+- Exact intended-path, generated-artifact, mode, whitespace, conflict-marker,
+  and credential-like value audits passed.
