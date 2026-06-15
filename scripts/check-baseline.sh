@@ -356,6 +356,23 @@ for constructor_coordinate_plan_contract in \
   fi
 done
 
+for constructor_reconciliation_contract in \
+  'Status: Completed' \
+  '35881343ba155428aafa41374f01267df80c1bb8' \
+  '4f56e528394ec731ceb06eb679efa8c45009444b' \
+  'test_constructor_rejects_invalid_coordinates' \
+  'test_scoring_helpers_reject_nonfinite_values' \
+  'test_linear_rejects_zero_width_concentration_range' \
+  'test_linear_rejects_descending_concentration_range' \
+  'all 78 tests' \
+  'hostile mutations'; do
+  if ! grep -Fq "$constructor_reconciliation_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-constructor-validation-stack-reconciliation.md"; then
+    printf '%s\n' "Constructor stack reconciliation plan must preserve evidence: $constructor_reconciliation_contract" >&2
+    exit 1
+  fi
+done
+
 for overflowing_reading_contract in \
   'except (OverflowError, TypeError, ValueError):' \
   'test_overflowing_sensor_values_are_ignored' \

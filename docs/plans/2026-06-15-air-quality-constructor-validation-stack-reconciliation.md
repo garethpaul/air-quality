@@ -1,6 +1,6 @@
 # Air Quality Constructor Validation Stack Reconciliation
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -95,11 +95,22 @@ remain green.
 - The current integration base is PR #33 head
   `4f56e528394ec731ceb06eb679efa8c45009444b`.
 
-## Verification To Record
+## Verification Completed
 
-- Focused constructor and current-stack scoring/interpolation regressions.
-- Repository-root and external-directory `make check`.
-- Mutation-sensitive constructor and reconciliation-plan contracts.
-- Exact diff, generated-artifact, dependency/workflow preservation, whitespace,
-  conflict-marker, and credential-pattern audits.
-- Local, tracking, remote, pull-request, and hosted exact-head state after push.
+- The pre-integration probe reproduced acceptance of boolean, NaN, out-of-range
+  latitude, and out-of-range longitude constructor inputs on PR #33.
+- `test_constructor_rejects_invalid_coordinates` and
+  `test_constructor_normalizes_boundary_coordinates_and_numeric_strings`
+  passed with the current `test_scoring_helpers_reject_nonfinite_values`,
+  `test_linear_rejects_zero_width_concentration_range`, and
+  `test_linear_rejects_descending_concentration_range` regressions after
+  reconciliation.
+- Repository-root `make check` passed Ruff, all 78 tests, Python compilation,
+  and the portable baseline once this completed plan evidence was present.
+- The complete `make check` gate also passed from `/tmp` through the absolute
+  Makefile path.
+- Four isolated hostile mutations were rejected for constructor integration,
+  boolean rejection, preservation of the descending-range guard, and completed
+  reconciliation-plan evidence.
+- Final audits and hosted exact-head state are recorded by the shipping
+  evidence for this branch.
