@@ -276,6 +276,12 @@ class AirQuality(object):
             ):
                 continue
 
+            if any(
+                isinstance(item.get(field), bool)
+                for field in ("Lat", "Lon", "PM2_5Value")
+            ):
+                continue
+
             try:
                 pm25 = float(item["PM2_5Value"])
                 lat = float(item["Lat"])

@@ -330,6 +330,42 @@ for overflowing_reading_plan_contract in \
   fi
 done
 
+for boolean_sensor_contract in \
+  'for field in ("Lat", "Lon", "PM2_5Value")' \
+  'test_boolean_sensor_values_are_ignored' \
+  '{"Lat": True, "Lon": 1, "PM2_5Value": "1.0"}' \
+  '{"Lat": 1, "Lon": False, "PM2_5Value": "2.0"}' \
+  '{"Lat": 1, "Lon": 1, "PM2_5Value": True}' \
+  'self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)'; do
+  if ! grep -Fq "$boolean_sensor_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$boolean_sensor_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Boolean sensor handling must keep contract: $boolean_sensor_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_sensor_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Boolean upstream sensor values are ignored before distance and AQI calculations." \
+    "$ROOT_DIR/$boolean_sensor_doc"; then
+    printf '%s\n' "$boolean_sensor_doc must document boolean upstream sensor rejection." >&2
+    exit 1
+  fi
+done
+
+for boolean_sensor_plan_contract in \
+  'status: completed' \
+  'test_boolean_sensor_values_are_ignored' \
+  '70 tests' \
+  'make check' \
+  'Six isolated hostile mutations' \
+  'suspicious-secret audits'; do
+  if ! grep -Fq "$boolean_sensor_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-sensor-values.md"; then
+    printf '%s\n' "Boolean sensor plan must preserve completion evidence: $boolean_sensor_plan_contract" >&2
+    exit 1
+  fi
+done
+
 for media_type_source_contract in \
   'JSON_MEDIA_TYPE_ERROR = "AIRQUALITY_DATA response must use a JSON media type"' \
   'def _require_json_media_type(content_type):' \

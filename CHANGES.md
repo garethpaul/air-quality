@@ -2,6 +2,7 @@
 
 ## 2026-06-15
 
+- Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.
 - Cached AQI guidance is accepted only when its 0-500 score, category, and

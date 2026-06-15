@@ -1,6 +1,6 @@
 # Air Quality Boolean Sensor Values
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -36,8 +36,8 @@ selection.
 `nearest_reading`. Extend the malformed-reading regression with boolean
 latitude, longitude, and PM2.5 rows plus one valid fallback reading.
 
-**Verification:** The focused regression proves each malformed row is ignored
-and the valid fallback is selected and cached.
+**Verification:** `test_boolean_sensor_values_are_ignored` proves each malformed
+row is ignored and the valid fallback is selected and cached.
 
 ### U2: Keep the portable baseline fail closed
 
@@ -64,8 +64,22 @@ field regression, remove guidance, or regress completed-plan evidence fail.
 
 ## Work Completed
 
-Pending implementation.
+- Added a pre-conversion guard that ignores upstream sensor rows containing
+  boolean latitude, longitude, or PM2.5 values.
+- Added `test_boolean_sensor_values_are_ignored` with three malformed exact-hit
+  rows and one valid fallback reading.
+- Registered source, test, guidance, and completed-plan contracts in the
+  dependency-free baseline checker and maintained repository guidance.
 
 ## Verification Completed
 
-Pending implementation and verification.
+- `python run_tests.py` passed all 70 tests.
+- Ruff formatting, Ruff lint, and Python compilation passed.
+- The focused `test_boolean_sensor_values_are_ignored` regression passed.
+- `make check` passed from the repository root and through the absolute
+  Makefile path from an external directory.
+- Six isolated hostile mutations covering the runtime guard, latitude case,
+  longitude case, PM2.5 case, guidance, and plan evidence were rejected.
+- No live Redis, Mapbox, or sensor-provider request was made.
+- The exact diff, generated-artifact, file-mode, whitespace, and
+  suspicious-secret audits are completed before commit.
