@@ -877,6 +877,18 @@ class AirQualityTest(unittest.TestCase):
             {"category": "Out of Range", "caution": "None", "score": 501},
         )
 
+    def test_category_handles_negative_out_of_range_score(self):
+        for score in (-1, -0.5):
+            with self.subTest(score=score):
+                self.assertEqual(
+                    air.AirQuality.AQICategory(score),
+                    {
+                        "category": "Out of Range",
+                        "caution": "None",
+                        "score": int(score),
+                    },
+                )
+
     def test_no_valid_sensor_raises_value_error(self):
         quality = air.AirQuality(
             37.794678,

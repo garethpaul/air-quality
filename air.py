@@ -359,7 +359,7 @@ class AirQuality(object):
             raise ValueError("AQI score must be numeric")
 
         AQI = float(AQIndex)
-        if AQI <= 50:
+        if 0 <= AQI <= 50:
             AQICategory = "Good"
             C = "None"
         elif AQI > 50 and AQI <= 100:

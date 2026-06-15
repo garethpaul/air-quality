@@ -104,6 +104,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean scoring helper inputs are rejected before numeric conversion.
+- Negative AQI scores are classified as Out of Range instead of Good.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
   35.5-55.4 Unhealthy for Sensitive Groups, 55.5-125.4 Unhealthy,
   125.5-225.4 Very Unhealthy, and 225.5+ Hazardous breakpoints. Scores above

@@ -50,6 +50,7 @@
 - Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean scoring helper inputs are rejected before numeric conversion.
+- Negative AQI scores are classified as Out of Range instead of Good.
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.

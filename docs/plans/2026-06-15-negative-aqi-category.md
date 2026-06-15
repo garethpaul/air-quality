@@ -1,6 +1,6 @@
 # Negative AQI Category Classification
 
-status: planned
+status: completed
 
 ## Context
 
@@ -14,7 +14,7 @@ negative score should never produce a healthy-looking category response.
 ## Requirements
 
 - Classify finite negative AQI scores as `Out of Range` with `None` caution.
-- Preserve the original numeric score in the response.
+- Preserve the helper's existing integer-normalized `score` field.
 - Preserve all existing 0-500 category thresholds and guidance text.
 - Preserve the existing above-500 `Out of Range` behavior.
 - Preserve boolean rejection and representative numeric-string support.
@@ -68,3 +68,26 @@ guidance, or completed-plan evidence are rejected.
   now receive the repository's existing `Out of Range` category.
 - Non-finite helper inputs remain outside this narrow change and retain their
   current behavior.
+
+## Work Completed
+
+- Required the `Good` branch to start at zero so negative finite scores reach
+  the existing `Out of Range` fallback.
+- Added `test_category_handles_negative_out_of_range_score` for negative
+  integer and fractional inputs while preserving integer score normalization.
+- Added fail-closed source, regression, guidance, and plan contracts to the
+  dependency-free checker and synchronized maintenance documentation.
+
+## Verification Completed
+
+- The focused category and scoring-helper tests passed.
+- `python run_tests.py` passed all 72 tests.
+- Ruff formatting, Ruff linting, and Python compilation passed.
+- Five isolated hostile mutations covering the lower bound, regression,
+  guidance, plan status, and completed evidence were rejected in initialized
+  temporary repositories.
+- `make check` passed from the repository root and through the absolute
+  Makefile path from an external working directory.
+- No live Redis, Mapbox, or sensor-provider request was made.
+- The exact diff, generated-artifact, file-mode, whitespace, and
+  suspicious-secret audits passed before commit.

@@ -63,6 +63,7 @@ for path in \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
   "docs/plans/2026-06-15-air-quality-boolean-scoring-inputs.md" \
+  "docs/plans/2026-06-15-negative-aqi-category.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -401,6 +402,42 @@ for boolean_scoring_plan_contract in \
   if ! grep -Fq "$boolean_scoring_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-scoring-inputs.md"; then
     printf '%s\n' "Boolean scoring input plan must preserve completion evidence: $boolean_scoring_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for negative_aqi_category_contract in \
+  'if 0 <= AQI <= 50:' \
+  'test_category_handles_negative_out_of_range_score' \
+  'for score in (-1, -0.5):' \
+  '"category": "Out of Range"' \
+  '"caution": "None"' \
+  '"score": int(score)'; do
+  if ! grep -Fq "$negative_aqi_category_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$negative_aqi_category_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Negative AQI category handling must keep contract: $negative_aqi_category_contract" >&2
+    exit 1
+  fi
+done
+
+for negative_aqi_category_doc in AGENTS.md README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq "Negative AQI scores are classified as Out of Range instead of Good." \
+    "$ROOT_DIR/$negative_aqi_category_doc"; then
+    printf '%s\n' "$negative_aqi_category_doc must document negative AQI category handling." >&2
+    exit 1
+  fi
+done
+
+for negative_aqi_category_plan_contract in \
+  'status: completed' \
+  'test_category_handles_negative_out_of_range_score' \
+  '72 tests' \
+  'make check' \
+  'Five isolated hostile mutations' \
+  'suspicious-secret audits'; do
+  if ! grep -Fq "$negative_aqi_category_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-negative-aqi-category.md"; then
+    printf '%s\n' "Negative AQI category plan must preserve completion evidence: $negative_aqi_category_plan_contract" >&2
     exit 1
   fi
 done
