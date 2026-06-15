@@ -62,6 +62,7 @@ Descending AQI interpolation ranges are rejected before division.
 Negative AQI scores are classified as Out of Range instead of Good.
 Near-antipodal sensor distances clamp floating-point drift to the haversine
 domain instead of turning valid coordinates into a service failure.
+Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 Overflowing Mapbox center values are rejected before coordinate caching.
 Boolean Mapbox and cached geocoder coordinates are rejected instead of being
 normalized to numeric locations.

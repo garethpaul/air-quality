@@ -424,6 +424,45 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(quality.cache_key(), "a_q_2_37.794678_-122.41143")
 
+    def test_constructor_rejects_invalid_coordinates(self):
+        invalid_coordinates = (
+            (True, 0),
+            (0, False),
+            ("north", 0),
+            (0, "west"),
+            (float("nan"), 0),
+            (0, float("nan")),
+            (float("inf"), 0),
+            (0, float("-inf")),
+            (10**400, 0),
+            (0, -(10**400)),
+            (-90.1, 0),
+            (90.1, 0),
+            (0, -180.1),
+            (0, 180.1),
+        )
+
+        for latitude, longitude in invalid_coordinates:
+            with self.subTest(latitude=latitude, longitude=longitude):
+                with self.assertRaises(ValueError):
+                    air.AirQuality(latitude, longitude, cache_client=MemoryCache())
+
+    def test_constructor_normalizes_boundary_coordinates_and_numeric_strings(self):
+        cases = (
+            (-90, -180, -90.0, -180.0),
+            (90, 180, 90.0, 180.0),
+            ("37.794678", "-122.41143", 37.794678, -122.41143),
+        )
+
+        for latitude, longitude, expected_latitude, expected_longitude in cases:
+            with self.subTest(latitude=latitude, longitude=longitude):
+                quality = air.AirQuality(
+                    latitude, longitude, cache_client=MemoryCache()
+                )
+
+                self.assertEqual(quality.lat, expected_latitude)
+                self.assertEqual(quality.lng, expected_longitude)
+
     def test_default_http_get_uses_timeout(self):
         calls = []
         streaming_response = self.StreamingResponse([b'{"results": []}'])
