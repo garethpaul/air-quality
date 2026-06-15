@@ -54,6 +54,7 @@ unsupported response encodings.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
 Boolean upstream sensor values are ignored before distance and AQI calculations.
+Boolean scoring helper inputs are rejected before numeric conversion.
 Overflowing Mapbox center values are rejected before coordinate caching.
 Boolean Mapbox and cached geocoder coordinates are rejected instead of being
 normalized to numeric locations.

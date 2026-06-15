@@ -62,6 +62,7 @@ for path in \
   "docs/plans/2026-06-14-small-instance-deployment-guide.md" \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
+  "docs/plans/2026-06-15-air-quality-boolean-scoring-inputs.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -362,6 +363,44 @@ for boolean_sensor_plan_contract in \
   if ! grep -Fq "$boolean_sensor_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-sensor-values.md"; then
     printf '%s\n' "Boolean sensor plan must preserve completion evidence: $boolean_sensor_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_scoring_contract in \
+  'if isinstance(raw_value, bool):' \
+  'for value in (AQIhigh, AQIlow, Conchigh, Conclow, Concentration)' \
+  'if isinstance(AQIndex, bool):' \
+  'test_scoring_helpers_reject_boolean_values' \
+  '"Linear AQI high"' \
+  '"Linear concentration"' \
+  'quality.AQIPM25("9.1")' \
+  'quality.AQICategory("120")'; do
+  if ! grep -Fq "$boolean_scoring_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$boolean_scoring_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Boolean scoring helpers must keep contract: $boolean_scoring_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_scoring_doc in AGENTS.md README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq "Boolean scoring helper inputs are rejected before numeric conversion." \
+    "$ROOT_DIR/$boolean_scoring_doc"; then
+    printf '%s\n' "$boolean_scoring_doc must document boolean scoring input rejection." >&2
+    exit 1
+  fi
+done
+
+for boolean_scoring_plan_contract in \
+  'status: completed' \
+  'test_scoring_helpers_reject_boolean_values' \
+  '71 tests' \
+  'make check' \
+  'Seven isolated hostile mutations' \
+  'suspicious-secret audits'; do
+  if ! grep -Fq "$boolean_scoring_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-scoring-inputs.md"; then
+    printf '%s\n' "Boolean scoring input plan must preserve completion evidence: $boolean_scoring_plan_contract" >&2
     exit 1
   fi
 done

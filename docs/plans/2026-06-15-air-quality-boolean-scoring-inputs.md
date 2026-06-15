@@ -1,6 +1,6 @@
 # Air Quality Boolean Scoring Inputs
 
-status: planned
+status: completed
 
 ## Context
 
@@ -64,8 +64,22 @@ guidance, or completed-plan evidence are rejected.
 
 ## Work Completed
 
-Pending implementation.
+- Added pre-conversion boolean guards to `AQIPM25`, all five numeric `Linear`
+  arguments, and `AQICategory`.
+- Added `test_scoring_helpers_reject_boolean_values` across both boolean values
+  and all seven scoring input positions while preserving numeric strings.
+- Registered source, test, guidance, and completed-plan contracts in the
+  dependency-free baseline checker and maintained repository guidance.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- `python run_tests.py` passed all 71 tests.
+- Ruff formatting, Ruff lint, and Python compilation passed.
+- The focused `test_scoring_helpers_reject_boolean_values` regression passed.
+- `make check` passed from the repository root and through the absolute
+  Makefile path from an external directory.
+- Seven isolated hostile mutations covering each runtime guard, the focused
+  regression, guidance, plan status, and completion evidence were rejected.
+- No live Redis, Mapbox, or sensor-provider request was made.
+- The exact diff, generated-artifact, file-mode, whitespace, and
+  suspicious-secret audits passed before commit.

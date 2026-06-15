@@ -315,6 +315,9 @@ class AirQuality(object):
         return 12742 * asin(sqrt(a))
 
     def AQIPM25(self, raw_value):
+        if isinstance(raw_value, bool):
+            raise ValueError("PM2.5 concentration must be a finite non-negative number")
+
         conc = float(raw_value)
         if not math.isfinite(conc) or conc < 0:
             raise ValueError("PM2.5 concentration must be a finite non-negative number")
@@ -339,6 +342,12 @@ class AirQuality(object):
 
     @staticmethod
     def Linear(AQIhigh, AQIlow, Conchigh, Conclow, Concentration):
+        if any(
+            isinstance(value, bool)
+            for value in (AQIhigh, AQIlow, Conchigh, Conclow, Concentration)
+        ):
+            raise ValueError("AQI interpolation values must be numeric")
+
         Conc = float(Concentration)
         a = ((Conc - Conclow) / (Conchigh - Conclow)) * (AQIhigh - AQIlow) + AQIlow
         linear = round(a)
@@ -346,6 +355,9 @@ class AirQuality(object):
 
     @staticmethod
     def AQICategory(AQIndex):
+        if isinstance(AQIndex, bool):
+            raise ValueError("AQI score must be numeric")
+
         AQI = float(AQIndex)
         if AQI <= 50:
             AQICategory = "Good"
