@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Upgraded the exactly pinned Ruff 0.15.16 development toolchain while
+  retaining the complete formatting, lint, test, build, and baseline gates.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Boolean upstream sensor fields are ignored before numeric conversion.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
