@@ -45,6 +45,8 @@ Priority:
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data
+- Overflowing cached numeric values are ignored and refreshed through the
+  existing validated upstream paths
 - Keep cached air-quality responses limited to validated public response fields
 - Ignore corrupt cached geocode coordinates before search lookups
 - Keep current direct dependencies verified on Python 3.12 and 3.14

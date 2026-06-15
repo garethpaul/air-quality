@@ -45,7 +45,7 @@ class GeoCode(object):
         try:
             lat = float(data["lat"])
             lng = float(data["lng"])
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, OverflowError, TypeError, ValueError):
             return None
 
         if not math.isfinite(lat) or not math.isfinite(lng):

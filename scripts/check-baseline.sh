@@ -60,6 +60,7 @@ for path in \
   "docs/plans/2026-06-14-air-quality-overflowing-reading-values.md" \
   "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
   "docs/plans/2026-06-14-small-instance-deployment-guide.md" \
+  "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -103,6 +104,47 @@ if ! grep -Fq "before extending the retained response" "$ROOT_DIR/CHANGES.md"; t
   printf '%s\n' 'CHANGES.md must record the pre-extension stream limit.' >&2
   exit 1
 fi
+
+for overflowing_cache_contract in \
+  'except OverflowError:' \
+  'except (KeyError, OverflowError, TypeError, ValueError):' \
+  '"score": 10**400' \
+  '"lat": 10**400' \
+  '"lng": 10**400'; do
+  if ! grep -Fq "$overflowing_cache_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$overflowing_cache_contract" "$ROOT_DIR/geocode.py" && \
+     ! grep -Fq "$overflowing_cache_contract" "$ROOT_DIR/air_tests.py" && \
+     ! grep -Fq "$overflowing_cache_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Overflowing cached numeric handling must keep contract: $overflowing_cache_contract" >&2
+    exit 1
+  fi
+done
+
+for overflowing_cache_document in \
+  "$README" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md" \
+  "$ROOT_DIR/AGENTS.md" \
+  "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "Overflowing cached numeric values are ignored and refreshed" "$overflowing_cache_document"; then
+    printf '%s\n' "$overflowing_cache_document must document overflowing cached numeric handling." >&2
+    exit 1
+  fi
+done
+
+for overflowing_cache_plan_contract in \
+  'status: completed' \
+  '68 tests' \
+  'make check' \
+  'external working directory' \
+  'hostile mutations' \
+  'secret and generated-artifact scan'; do
+  if ! grep -Fq "$overflowing_cache_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-overflowing-cached-numeric-values.md"; then
+    printf '%s\n' "Overflowing cached numeric plan must preserve completion evidence: $overflowing_cache_plan_contract" >&2
+    exit 1
+  fi
+done
 
 for deployment_contract in \
   'APP_LOCATION' \

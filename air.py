@@ -212,7 +212,12 @@ class AirQuality(object):
         if isinstance(score, bool) or not isinstance(score, (int, float)):
             return None
 
-        if not math.isfinite(float(score)):
+        try:
+            finite_score = math.isfinite(float(score))
+        except OverflowError:
+            return None
+
+        if not finite_score:
             return None
 
         normalized_score = int(score)

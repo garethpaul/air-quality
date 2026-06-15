@@ -108,6 +108,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   the published 325.4 µg/m³ AQI-500 boundary are capped at 500.
 - Cached air-quality payloads must decode to the expected response shape;
   corrupt entries are ignored and refreshed from the configured data source.
+- Overflowing cached numeric values are ignored and refreshed instead of
+  turning corrupt Redis entries into route failures.
 - Cached air-quality hits return only the public `category`, `caution`, and
   finite non-negative integer `score` fields.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the

@@ -39,6 +39,8 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 Cached upstream and geocode data should be validated before reuse. Corrupt
 geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
+Overflowing cached numeric values are ignored and refreshed before conversion
+errors can escape the cache validation boundary.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
 limit, checked before extending the retained response buffer. HTTP failures,

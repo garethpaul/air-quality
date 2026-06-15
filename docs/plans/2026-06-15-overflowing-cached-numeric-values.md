@@ -1,6 +1,6 @@
 # Overflowing Cached Numeric Values
 
-status: planned
+status: completed
 
 ## Context
 
@@ -34,3 +34,22 @@ upstream.
   documentation, and completed plan evidence.
 - Audit the intended diff, secrets, generated artifacts, and whitespace before
   committing.
+
+## Work Completed
+
+- Made cached AQI score normalization treat `float()` overflow as an invalid
+  cache entry.
+- Extended cached geocoder coordinate normalization to treat oversized numeric
+  values as invalid cache entries.
+- Added both oversized cases to the existing cache-refresh tests and enforced
+  the behavior through the static checker and maintained documentation.
+
+## Verification Completed
+
+- The focused AQI and geocoder cache-refresh tests passed.
+- `python3 run_tests.py` and every standard Make alias passed with 68 tests.
+- `make check` passed through the absolute Makefile path from an external working directory.
+- Focused hostile mutations to both exception guards, both regression cases,
+  documentation, and completed plan evidence were rejected.
+- `git diff --check` and the intended-path secret and generated-artifact scan
+  passed.

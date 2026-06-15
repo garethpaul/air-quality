@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-15
+
+- Overflowing cached numeric values are ignored and refreshed for both AQI
+  scores and geocoder coordinates.
+
 ## 2026-06-14
 
 - Rejected oversized upstream chunks before extending the retained response

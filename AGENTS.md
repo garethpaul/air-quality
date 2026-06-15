@@ -50,6 +50,8 @@
 - Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Cached air-quality payloads must decode to the expected response shape; corrupt entries are ignored and refreshed from the configured data source.
+- Overflowing cached numeric values are ignored and refreshed rather than
+  surfacing conversion failures from Redis data.
 - Upstream sensor responses must declare `application/json` or a valid
   `application/*+json` media type before body streaming.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the timeout without live network access.
