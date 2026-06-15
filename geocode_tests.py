@@ -139,6 +139,8 @@ class GeoCodeTest(unittest.TestCase):
             json.dumps({"lat": 91, "lng": -122.41143}),
             json.dumps({"lat": 10**400, "lng": -122.41143}),
             json.dumps({"lat": 37.794678, "lng": 10**400}),
+            json.dumps({"lat": True, "lng": -122.41143}),
+            json.dumps({"lat": 37.794678, "lng": False}),
         ]
 
         for cached_value in invalid_cached_values:
@@ -189,6 +191,25 @@ class GeoCodeTest(unittest.TestCase):
             with self.subTest(center=center):
                 geo = GeoCode(
                     "Overflowing coordinates",
+                    cache_client=MemoryCache(),
+                    geocoder=FakeGeocoder({"features": [{"center": center}]}),
+                )
+
+                with self.assertRaisesRegex(
+                    ValueError, "^geocoder center values must be numeric$"
+                ):
+                    geo.getLatLng()
+
+    def test_boolean_geocoder_center_values_raise_value_error(self):
+        invalid_centers = [
+            [True, "37.794678"],
+            ["-122.41143", False],
+        ]
+
+        for center in invalid_centers:
+            with self.subTest(center=center):
+                geo = GeoCode(
+                    "Boolean coordinates",
                     cache_client=MemoryCache(),
                     geocoder=FakeGeocoder({"features": [{"center": center}]}),
                 )

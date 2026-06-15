@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+  normalized to numeric locations.
 - Cached AQI guidance is accepted only when its 0-500 score, category, and
   caution match the canonical response.
 - Overflowing cached numeric values are ignored and refreshed for both AQI

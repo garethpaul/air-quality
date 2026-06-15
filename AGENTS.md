@@ -49,6 +49,8 @@
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
 - Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Overflowing Mapbox center values are rejected before coordinate caching.
+- Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+  normalized to numeric locations.
 - Cached air-quality payloads must decode to the expected response shape; corrupt entries are ignored and refreshed from the configured data source.
 - Overflowing cached numeric values are ignored and refreshed rather than
   surfacing conversion failures from Redis data.

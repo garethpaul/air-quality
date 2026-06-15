@@ -54,6 +54,8 @@ unsupported response encodings.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
 Overflowing Mapbox center values are rejected before coordinate caching.
+Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+normalized to numeric locations.
 The response is closed after successful reads and all validation failures so
 pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error

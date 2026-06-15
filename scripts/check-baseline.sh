@@ -259,6 +259,43 @@ for overflowing_geocoder_plan_contract in \
   fi
 done
 
+for boolean_geocoder_contract in \
+  'isinstance(data.get("lat"), bool)' \
+  'isinstance(data.get("lng"), bool)' \
+  'isinstance(center[0], bool)' \
+  'isinstance(center[1], bool)' \
+  'json.dumps({"lat": True, "lng": -122.41143})' \
+  'json.dumps({"lat": 37.794678, "lng": False})' \
+  'test_boolean_geocoder_center_values_raise_value_error' \
+  '[True, "37.794678"]' \
+  '["-122.41143", False]'; do
+  if ! grep -Fq "$boolean_geocoder_contract" "$ROOT_DIR/geocode.py" && \
+     ! grep -Fq "$boolean_geocoder_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Boolean geocoder coordinate handling must keep contract: $boolean_geocoder_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_geocoder_doc in AGENTS.md README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq "Boolean Mapbox and cached geocoder coordinates are rejected" \
+    "$ROOT_DIR/$boolean_geocoder_doc"; then
+    printf '%s\n' "$boolean_geocoder_doc must document boolean geocoder coordinate rejection." >&2
+    exit 1
+  fi
+done
+
+for boolean_geocoder_plan_contract in \
+  "status: completed" \
+  "test_boolean_geocoder_center_values_raise_value_error" \
+  "make check" \
+  "hostile mutations"; do
+  if ! grep -Fq "$boolean_geocoder_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-geocoder-coordinates.md"; then
+    printf '%s\n' "Boolean geocoder coordinate plan must preserve completion evidence: $boolean_geocoder_plan_contract" >&2
+    exit 1
+  fi
+done
+
 for overflowing_reading_contract in \
   'except (OverflowError, TypeError, ValueError):' \
   'test_overflowing_sensor_values_are_ignored' \

@@ -120,6 +120,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   finite numeric `center` in valid coordinate bounds; malformed geocoder
   payloads fail with a controlled route error before caching.
 - Overflowing Mapbox center values are rejected before coordinate caching.
+- Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+  normalized to `1.0` or `0.0`.
 - Cached geocode payloads must decode to finite in-range `lat` and `lng`
   values; corrupt entries are ignored and refreshed from Mapbox.
 - Cache command failures stop request processing instead of bypassing Redis or

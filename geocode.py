@@ -42,6 +42,9 @@ class GeoCode(object):
         if not isinstance(data, Mapping):
             return None
 
+        if isinstance(data.get("lat"), bool) or isinstance(data.get("lng"), bool):
+            return None
+
         try:
             lat = float(data["lat"])
             lng = float(data["lng"])
@@ -86,6 +89,9 @@ class GeoCode(object):
         center = first_feature.get("center")
         if not isinstance(center, list) or len(center) < 2:
             raise ValueError("geocoder feature must include lng/lat center")
+
+        if isinstance(center[0], bool) or isinstance(center[1], bool):
+            raise ValueError("geocoder center values must be numeric")
 
         try:
             lng = float(center[0])

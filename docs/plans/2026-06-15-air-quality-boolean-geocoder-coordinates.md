@@ -1,6 +1,6 @@
 # Air Quality Boolean Geocoder Coordinates
 
-status: planned
+status: completed
 
 ## Context
 
@@ -38,8 +38,10 @@ boolean cases while preserving positive numeric-string coverage.
 
 **Execution note:** Test-first using the existing table-driven regressions.
 
-**Verification:** Focused geocoder tests prove cached booleans refresh through
-the validated upstream path and upstream booleans fail before caching.
+**Verification:** The corrupt-cache regression and
+`test_boolean_geocoder_center_values_raise_value_error` prove cached booleans
+refresh through the validated upstream path and upstream booleans fail before
+caching.
 
 ### U2: Keep the portable baseline fail closed
 
@@ -61,3 +63,26 @@ regression family, documentation, or completed-plan status are rejected.
   documentation, and completed-plan evidence.
 - Audit the exact intended diff, generated artifacts, suspicious secret
   patterns, and whitespace before committing.
+
+## Work Completed
+
+- Rejected boolean cached latitude and longitude values as cache misses before
+  numeric conversion.
+- Rejected boolean Mapbox longitude and latitude center values with the
+  existing stable numeric-validation error before caching.
+- Added both-coordinate regressions while preserving numeric-string centers.
+- Registered runtime, test, documentation, and completed-plan contracts in the
+  dependency-free baseline checker and maintained guidance.
+
+## Verification Completed
+
+- Focused cached and upstream boolean-coordinate regressions passed together
+  with the numeric-string compatibility case.
+- `make lint`, `make test`, and `make build` passed all 69 tests with Ruff and
+  Python compilation checks.
+- `make check` passed from the repository root and through the absolute
+  Makefile path from an external directory.
+- Six isolated hostile mutations covering both runtime guards, both regression
+  families, documentation, and completed-plan evidence were rejected.
+- The exact intended diff, whitespace, generated-artifact, conflict-marker,
+  and suspicious-secret audits passed before commit.
