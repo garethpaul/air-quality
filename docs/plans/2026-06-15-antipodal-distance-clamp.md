@@ -1,6 +1,6 @@
 # Clamp Antipodal Distance Rounding
 
-status: planned
+status: completed
 
 ## Context
 
@@ -65,3 +65,25 @@ regression, guidance, or completed evidence are rejected.
 - Clamping hides only representational drift at a mathematically bounded
   intermediate; existing coordinate validation remains responsible for
   rejecting invalid inputs.
+
+## Work Completed
+
+- Clamped the haversine intermediate to its mathematical `[0.0, 1.0]` domain
+  immediately before the square root and inverse sine.
+- Added `test_near_antipodal_sensor_distance_clamps_rounding_drift` using a
+  valid deterministic coordinate pair that raised a math-domain error before
+  the correction.
+- Added fail-closed source, regression, guidance, and completed-plan contracts
+  to the dependency-free baseline checker and synchronized maintenance docs.
+
+## Verification Completed
+
+- The focused near-antipodal regression and complete Python suite passed.
+- Ruff formatting, Ruff linting, and Python compilation passed.
+- Five isolated hostile mutations covering the lower clamp, upper clamp,
+  regression, guidance, and completed evidence were rejected.
+- `make check` passed from the repository and through the absolute Makefile
+  path from an external working directory.
+- No live Redis, Mapbox, or sensor-provider request was made.
+- The exact diff, file-mode, whitespace, secret and generated-artifact audits
+  passed before commit.

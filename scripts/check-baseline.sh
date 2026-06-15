@@ -1067,6 +1067,41 @@ if grep -Fq 'pull_request_target' "$ROOT_DIR/.github/workflows/codeql.yml"; then
   exit 1
 fi
 
+for antipodal_source_contract in \
+  'a = max(0.0, min(1.0, a))' \
+  'return 12742 * asin(sqrt(a))'; do
+  if ! grep -Fq "$antipodal_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Antipodal distance handling must keep contract: $antipodal_source_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq 'test_near_antipodal_sensor_distance_clamps_rounding_drift' "$ROOT_DIR/air_tests.py"; then
+  printf '%s\n' "Air tests must cover near-antipodal distance rounding." >&2
+  exit 1
+fi
+
+for antipodal_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq 'Near-antipodal sensor distances clamp floating-point drift' \
+    "$ROOT_DIR/$antipodal_doc"; then
+    printf '%s\n' "$antipodal_doc must document near-antipodal distance clamping." >&2
+    exit 1
+  fi
+done
+
+for antipodal_plan_contract in \
+  'status: completed' \
+  'test_near_antipodal_sensor_distance_clamps_rounding_drift' \
+  'make check' \
+  'hostile mutations' \
+  'secret and generated-artifact audits'; do
+  if ! grep -Fq "$antipodal_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-antipodal-distance-clamp.md"; then
+    printf '%s\n' "Antipodal distance plan must preserve completion evidence: $antipodal_plan_contract" >&2
+    exit 1
+  fi
+done
+
 action_count=$(grep -Ec '^[[:space:]]*(- )?uses: ' "$ROOT_DIR/.github/workflows/check.yml")
 if [ "$action_count" -ne 2 ]; then
   printf '%s\n' "GitHub Actions must use exactly the approved checkout and setup-python actions." >&2

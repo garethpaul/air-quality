@@ -312,6 +312,7 @@ class AirQuality(object):
             - cos((lat2 - lat1) * p) / 2
             + cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2
         )
+        a = max(0.0, min(1.0, a))
         return 12742 * asin(sqrt(a))
 
     def AQIPM25(self, raw_value):

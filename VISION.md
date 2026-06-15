@@ -42,6 +42,8 @@ Priority:
 - Normalize geocoder transport failures without exposing provider details
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Ignore overflowing upstream sensor values before distance and AQI calculations
+- Near-antipodal sensor distances clamp floating-point drift to the haversine
+  domain instead of failing valid location comparisons.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.

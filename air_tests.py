@@ -1035,6 +1035,24 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
 
+    def test_near_antipodal_sensor_distance_clamps_rounding_drift(self):
+        quality = air.AirQuality(
+            58.38473355304356,
+            -114.00513984238154,
+            cache_client=MemoryCache(),
+        )
+        reading = {
+            "Lat": -58.384733569713255,
+            "Lon": 65.9948601649641,
+            "PM2_5Value": "12.0",
+        }
+
+        self.assertIs(quality.nearest_reading([reading]), reading)
+        self.assertAlmostEqual(
+            quality.distance(quality.lat, quality.lng, reading["Lat"], reading["Lon"]),
+            20015.086796020572,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

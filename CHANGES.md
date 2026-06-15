@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Near-antipodal sensor distances clamp floating-point drift to the haversine
+  domain instead of raising a math-domain error.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean scoring helper inputs are rejected before numeric conversion.
 - Negative AQI scores are classified as Out of Range instead of Good.

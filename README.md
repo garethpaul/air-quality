@@ -125,6 +125,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to `1.0` or `0.0`.
+- Near-antipodal sensor distances clamp floating-point drift to the haversine
+  domain instead of failing with a math-domain error.
 - Cached geocode payloads must decode to finite in-range `lat` and `lng`
   values; corrupt entries are ignored and refreshed from Mapbox.
 - Cache command failures stop request processing instead of bypassing Redis or
@@ -187,6 +189,8 @@ listener must be reachable only by the reverse proxy or private network.
   post-redirect HTTPS transport enforcement.
 - See `docs/plans/2026-06-13-air-quality-public-data-addresses.md` for the
   public-address policy and its DNS-rebinding boundary.
+- See `docs/plans/2026-06-15-antipodal-distance-clamp.md` for the bounded
+  haversine intermediate and near-antipodal regression.
 
 ## Contributing
 
