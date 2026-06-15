@@ -57,6 +57,7 @@ Boolean upstream sensor values are ignored before distance and AQI calculations.
 Boolean scoring helper inputs are rejected before numeric conversion.
 Non-finite scoring helper inputs are rejected before interpolation or category
 construction.
+Zero-width AQI interpolation ranges are rejected before division.
 Negative AQI scores are classified as Out of Range instead of Good.
 Near-antipodal sensor distances clamp floating-point drift to the haversine
 domain instead of turning valid coordinates into a service failure.

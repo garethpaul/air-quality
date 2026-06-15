@@ -357,6 +357,11 @@ class AirQuality(object):
             raise ValueError("AQI interpolation values must be finite")
 
         AQIhigh, AQIlow, Conchigh, Conclow, Conc = normalized_values
+        if Conchigh == Conclow:
+            raise ValueError(
+                "AQI interpolation concentration range must not be zero-width"
+            )
+
         a = ((Conc - Conclow) / (Conchigh - Conclow)) * (AQIhigh - AQIlow) + AQIlow
         linear = round(a)
         return linear

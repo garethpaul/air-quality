@@ -8,6 +8,7 @@
 - Boolean scoring helper inputs are rejected before numeric conversion.
 - Non-finite scoring helper inputs are rejected before interpolation or
   category construction.
+- Zero-width AQI interpolation ranges are rejected before division.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.

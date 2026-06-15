@@ -106,6 +106,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Boolean scoring helper inputs are rejected before numeric conversion.
 - Non-finite scoring helper inputs are rejected before interpolation or
   category construction.
+- Zero-width AQI interpolation ranges are rejected before division.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
   35.5-55.4 Unhealthy for Sensitive Groups, 55.5-125.4 Unhealthy,

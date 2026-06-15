@@ -1,6 +1,6 @@
 # Reject Zero-Width AQI Interpolation Ranges
 
-status: planned
+status: completed
 
 ## Context
 
@@ -66,3 +66,25 @@ guidance, or completed-plan evidence are rejected.
   helper's deliberate `ValueError` contract.
 - Live Redis, Mapbox, and provider integration remain outside this
   deterministic scoring change.
+
+## Work Completed
+
+- Rejected equal normalized concentration endpoints before interpolation.
+- Added `test_linear_rejects_zero_width_concentration_range` for numeric and
+  numeric-string endpoints while preserving valid numeric-string scoring.
+- Added fail-closed source, test, guidance, and plan contracts to the baseline
+  checker and synchronized maintained documentation.
+
+## Verification Completed
+
+- The focused zero-width, non-finite, and boolean scoring tests passed.
+- `python run_tests.py` and `make test` passed all 75 tests.
+- Ruff formatting, Ruff linting, Python compilation, and `sh -n` passed.
+- Repository-root and external-directory `make check` passed Ruff, all 75
+  tests, Python compilation, and the dependency-free baseline checker.
+- Six isolated hostile mutations covering the source guard, stable error,
+  focused test, numeric-string case, maintained guidance, and completed-plan
+  status were rejected. The source/test checker boundary was tightened after
+  the first error-message mutation exposed an overly broad cross-file match.
+- Exact nine-path, generated-artifact, file-mode, conflict-marker, whitespace,
+  and suspicious-secret audits passed before commit.

@@ -63,6 +63,7 @@ for path in \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
   "docs/plans/2026-06-15-air-quality-boolean-scoring-inputs.md" \
+  "docs/plans/2026-06-15-air-quality-zero-width-linear-range.md" \
   "docs/plans/2026-06-15-negative-aqi-category.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -445,6 +446,47 @@ for nonfinite_scoring_plan_contract in \
   if ! grep -Fq "$nonfinite_scoring_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-nonfinite-scoring-inputs.md"; then
     printf '%s\n' "Non-finite scoring input plan must preserve completion evidence: $nonfinite_scoring_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for zero_width_linear_source_contract in \
+  'if Conchigh == Conclow:' \
+  'AQI interpolation concentration range must not be zero-width'; do
+  if ! grep -Fq "$zero_width_linear_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Zero-width AQI interpolation source must keep contract: $zero_width_linear_source_contract" >&2
+    exit 1
+  fi
+done
+
+for zero_width_linear_test_contract in \
+  'test_linear_rejects_zero_width_concentration_range' \
+  '("1.0", "1.0")' \
+  'quality.Linear(50, 0, 9.0, 0.0, "9.0")'; do
+  if ! grep -Fq "$zero_width_linear_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Zero-width AQI interpolation tests must keep contract: $zero_width_linear_test_contract" >&2
+    exit 1
+  fi
+done
+
+for zero_width_linear_doc in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Zero-width AQI interpolation ranges are rejected before division." \
+    "$ROOT_DIR/$zero_width_linear_doc"; then
+    printf '%s\n' "$zero_width_linear_doc must document zero-width AQI interpolation rejection." >&2
+    exit 1
+  fi
+done
+
+for zero_width_linear_plan_contract in \
+  'status: completed' \
+  'test_linear_rejects_zero_width_concentration_range' \
+  '75 tests' \
+  'make check' \
+  'isolated hostile mutations' \
+  'suspicious-secret audits'; do
+  if ! grep -Fq "$zero_width_linear_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-zero-width-linear-range.md"; then
+    printf '%s\n' "Zero-width AQI interpolation plan must preserve completion evidence: $zero_width_linear_plan_contract" >&2
     exit 1
   fi
 done

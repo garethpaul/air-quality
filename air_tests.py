@@ -888,6 +888,28 @@ class AirQualityTest(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         helper_call(nonfinite_value)
 
+    def test_linear_rejects_zero_width_concentration_range(self):
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
+
+        for concentration_high, concentration_low in ((1.0, 1.0), ("1.0", "1.0")):
+            with self.subTest(
+                concentration_high=concentration_high,
+                concentration_low=concentration_low,
+            ):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "^AQI interpolation concentration range must not be zero-width$",
+                ):
+                    quality.Linear(
+                        50,
+                        0,
+                        concentration_high,
+                        concentration_low,
+                        1.0,
+                    )
+
+        self.assertEqual(quality.Linear(50, 0, 9.0, 0.0, "9.0"), 50)
+
     def test_category(self):
         d = air.AirQuality.AQICategory(120)
         self.assertIsNotNone(d)
