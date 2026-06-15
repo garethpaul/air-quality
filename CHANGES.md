@@ -2,6 +2,7 @@
 
 ## 2026-06-15
 
+- Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Boolean upstream sensor fields are ignored before numeric conversion.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.

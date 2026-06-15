@@ -54,6 +54,7 @@ unsupported response encodings.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
 Boolean upstream sensor fields are ignored before numeric conversion.
+Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 Overflowing Mapbox center values are rejected before coordinate caching.
 Boolean Mapbox and cached geocoder coordinates are rejected instead of being
 normalized to numeric locations.

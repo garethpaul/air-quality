@@ -1,6 +1,6 @@
 # Air Quality Constructor Coordinate Validation
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -74,11 +74,19 @@ guidance, completed status, and verification evidence.
   dependency, workflow, or deployment behavior.
 - Live Redis and provider integration remain outside local validation.
 
-## Verification
+## Completed Verification
 
-- Focused constructor tests for all negative and positive controls.
-- Full `make check` from the repository and an external working directory.
-- Isolated hostile mutations for boolean, finite, range, axis, test,
-  documentation, and plan-completion contracts.
+- The completion status: completed.
+- The focused
+  `test_constructor_rejects_invalid_coordinates` and boundary-normalization
+  tests failed before the implementation and passed afterward, including
+  booleans, nonnumeric values, NaN, infinities, overflowing integers, both
+  coordinate ranges, exact boundaries, and numeric strings.
+- Repository and external-directory `make check` passed Ruff formatting and
+  lint, all 72 tests, Python compilation, and portable baseline contracts.
+- Eleven isolated hostile mutations were rejected for boolean, finite, range,
+  latitude and longitude bounds, constructor integration, tests,
+  documentation, helper-scoped exception handling, and plan-completion drift.
 - Exact diff, whitespace, generated-artifact, conflict-marker, dependency and
-  workflow drift, and credential-shaped addition audits.
+  workflow drift, and credential-shaped addition audits are required before
+  commit and push; live Redis and provider behavior remain unclaimed.

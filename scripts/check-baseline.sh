@@ -63,6 +63,7 @@ for path in \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
   "docs/plans/2026-06-15-air-quality-boolean-sensor-readings.md" \
+  "docs/plans/2026-06-15-air-quality-constructor-coordinate-validation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -327,6 +328,61 @@ for boolean_sensor_plan_contract in \
   if ! grep -Fq "$boolean_sensor_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-sensor-readings.md"; then
     printf '%s\n' "Boolean sensor plan must preserve completion evidence: $boolean_sensor_plan_contract" >&2
+    exit 1
+  fi
+done
+
+constructor_coordinate_helper=$(awk '
+  /^def _normalize_coordinate\(value, name\):$/ { capture = 1 }
+  /^def _require_https_data_url\(url\):$/ { capture = 0 }
+  capture { print }
+' "$ROOT_DIR/air.py")
+
+for constructor_coordinate_helper_contract in \
+  'def _normalize_coordinate(value, name):' \
+  'if isinstance(value, bool):' \
+  'except (OverflowError, TypeError, ValueError):' \
+  'if not math.isfinite(coordinate):' \
+  'lower, upper = COORDINATE_BOUNDS[name]'; do
+  if ! printf '%s\n' "$constructor_coordinate_helper" | \
+    grep -Fq "$constructor_coordinate_helper_contract"; then
+    printf '%s\n' "AirQuality coordinate helper must keep contract: $constructor_coordinate_helper_contract" >&2
+    exit 1
+  fi
+done
+
+for constructor_coordinate_contract in \
+  'self.lat = _normalize_coordinate(lat, "lat")' \
+  'self.lng = _normalize_coordinate(lng, "lng")' \
+  'test_constructor_rejects_invalid_coordinates' \
+  'test_constructor_normalizes_boundary_coordinates_and_numeric_strings' \
+  '(True, 0)' \
+  '(0, False)' \
+  '(-90.1, 0)' \
+  '(0, 180.1)'; do
+  if ! grep -Fq "$constructor_coordinate_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$constructor_coordinate_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "AirQuality constructor validation must keep contract: $constructor_coordinate_contract" >&2
+    exit 1
+  fi
+done
+
+for constructor_coordinate_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates." \
+    "$ROOT_DIR/$constructor_coordinate_document"; then
+    printf '%s\n' "$constructor_coordinate_document must document direct constructor coordinate validation." >&2
+    exit 1
+  fi
+done
+
+for constructor_coordinate_plan_contract in \
+  "status: completed" \
+  "test_constructor_rejects_invalid_coordinates" \
+  "make check" \
+  "hostile mutations"; do
+  if ! grep -Fq "$constructor_coordinate_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-constructor-coordinate-validation.md"; then
+    printf '%s\n' "Constructor coordinate plan must preserve completion evidence: $constructor_coordinate_plan_contract" >&2
     exit 1
   fi
 done

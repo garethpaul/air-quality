@@ -42,6 +42,7 @@ Priority:
 - Normalize geocoder transport failures without exposing provider details
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Ignore overflowing upstream sensor values before distance and AQI calculations
+- Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data

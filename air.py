@@ -17,6 +17,10 @@ PUBLIC_DATA_HOST_ERROR = "AIRQUALITY_DATA host must resolve to public addresses"
 JSON_MEDIA_TYPE_ERROR = "AIRQUALITY_DATA response must use a JSON media type"
 MEDIA_TYPE_TOKEN = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 CONTENT_LENGTH_DIGITS = re.compile(r"^[0-9]+$")
+COORDINATE_BOUNDS = {
+    "lat": (-90.0, 90.0),
+    "lng": (-180.0, 180.0),
+}
 PM25_AQI_BREAKPOINTS = (
     (0.0, 9.0, 0, 50),
     (9.1, 35.4, 51, 100),
@@ -29,6 +33,25 @@ PM25_AQI_BREAKPOINTS = (
 
 def _missing(value):
     return value is None or value == ""
+
+
+def _normalize_coordinate(value, name):
+    if isinstance(value, bool):
+        raise ValueError("{0} must be a number".format(name))
+
+    try:
+        coordinate = float(value)
+    except (OverflowError, TypeError, ValueError):
+        raise ValueError("{0} must be a number".format(name)) from None
+
+    if not math.isfinite(coordinate):
+        raise ValueError("{0} must be a finite number".format(name))
+
+    lower, upper = COORDINATE_BOUNDS[name]
+    if coordinate < lower or coordinate > upper:
+        raise ValueError("{0} must be between {1} and {2}".format(name, lower, upper))
+
+    return coordinate
 
 
 def _require_https_data_url(url):
@@ -156,8 +179,8 @@ class AirQuality(object):
 
     def __init__(self, lat, lng, cache_client=None, data_url=None, http_get=None):
         """Return a new AirQuality object."""
-        self.lat = float(lat)
-        self.lng = float(lng)
+        self.lat = _normalize_coordinate(lat, "lat")
+        self.lng = _normalize_coordinate(lng, "lng")
         self.r = cache_client
         self.data_url = data_url
         self.http_get = http_get or _default_http_get
