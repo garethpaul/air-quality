@@ -349,7 +349,14 @@ class AirQuality(object):
         ):
             raise ValueError("AQI interpolation values must be numeric")
 
-        Conc = float(Concentration)
+        normalized_values = tuple(
+            float(value)
+            for value in (AQIhigh, AQIlow, Conchigh, Conclow, Concentration)
+        )
+        if not all(math.isfinite(value) for value in normalized_values):
+            raise ValueError("AQI interpolation values must be finite")
+
+        AQIhigh, AQIlow, Conchigh, Conclow, Conc = normalized_values
         a = ((Conc - Conclow) / (Conchigh - Conclow)) * (AQIhigh - AQIlow) + AQIlow
         linear = round(a)
         return linear
@@ -360,6 +367,9 @@ class AirQuality(object):
             raise ValueError("AQI score must be numeric")
 
         AQI = float(AQIndex)
+        if not math.isfinite(AQI):
+            raise ValueError("AQI score must be finite")
+
         if 0 <= AQI <= 50:
             AQICategory = "Good"
             C = "None"

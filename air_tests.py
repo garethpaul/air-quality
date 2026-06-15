@@ -865,6 +865,29 @@ class AirQualityTest(unittest.TestCase):
             },
         )
 
+    def test_scoring_helpers_reject_nonfinite_values(self):
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
+        helper_calls = {
+            "Linear AQI high": lambda value: quality.Linear(value, 0, 9.0, 0.0, 1.0),
+            "Linear AQI low": lambda value: quality.Linear(50, value, 9.0, 0.0, 1.0),
+            "Linear concentration high": lambda value: quality.Linear(
+                50, 0, value, 0.0, 1.0
+            ),
+            "Linear concentration low": lambda value: quality.Linear(
+                50, 0, 9.0, value, 1.0
+            ),
+            "Linear concentration": lambda value: quality.Linear(
+                50, 0, 9.0, 0.0, value
+            ),
+            "AQICategory": quality.AQICategory,
+        }
+
+        for helper_name, helper_call in helper_calls.items():
+            for nonfinite_value in (float("nan"), float("inf"), float("-inf")):
+                with self.subTest(helper=helper_name, value=nonfinite_value):
+                    with self.assertRaises(ValueError):
+                        helper_call(nonfinite_value)
+
     def test_category(self):
         d = air.AirQuality.AQICategory(120)
         self.assertIsNotNone(d)

@@ -406,6 +406,49 @@ for boolean_scoring_plan_contract in \
   fi
 done
 
+for nonfinite_scoring_contract in \
+  'normalized_values = tuple(' \
+  'if not all(math.isfinite(value) for value in normalized_values):' \
+  'raise ValueError("AQI interpolation values must be finite")' \
+  'if not math.isfinite(AQI):' \
+  'raise ValueError("AQI score must be finite")' \
+  'test_scoring_helpers_reject_nonfinite_values' \
+  'float("-inf")'; do
+  if ! grep -Fq "$nonfinite_scoring_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$nonfinite_scoring_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Non-finite scoring helpers must keep contract: $nonfinite_scoring_contract" >&2
+    exit 1
+  fi
+done
+
+for nonfinite_scoring_doc in AGENTS.md README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq "Non-finite scoring helper inputs are rejected before interpolation or" \
+    "$ROOT_DIR/$nonfinite_scoring_doc"; then
+    printf '%s\n' "$nonfinite_scoring_doc must document non-finite scoring input rejection." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Reject non-finite scoring helper inputs before interpolation or category" \
+  "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' 'VISION.md must document non-finite scoring input rejection.' >&2
+  exit 1
+fi
+
+for nonfinite_scoring_plan_contract in \
+  'status: completed' \
+  'test_scoring_helpers_reject_nonfinite_values' \
+  '74 tests' \
+  'make check' \
+  'isolated hostile mutations' \
+  'suspicious-secret audits'; do
+  if ! grep -Fq "$nonfinite_scoring_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-nonfinite-scoring-inputs.md"; then
+    printf '%s\n' "Non-finite scoring input plan must preserve completion evidence: $nonfinite_scoring_plan_contract" >&2
+    exit 1
+  fi
+done
+
 for negative_aqi_category_contract in \
   'if 0 <= AQI <= 50:' \
   'test_category_handles_negative_out_of_range_score' \

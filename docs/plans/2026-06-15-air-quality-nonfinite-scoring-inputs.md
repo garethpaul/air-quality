@@ -1,6 +1,6 @@
 # Reject Non-Finite AQI Scoring Inputs
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -74,3 +74,30 @@ the test matrix, guidance, or completed-plan evidence are rejected.
   failures will now receive a deliberate `ValueError` at the helper boundary.
 - Live Redis, Mapbox, and sensor-provider integration remain outside this
   deterministic scoring change.
+
+## Work Completed
+
+- Normalized all five `Linear` arguments and rejected any non-finite value
+  before interpolation.
+- Rejected non-finite `AQICategory` scores before category selection and
+  integer response normalization.
+- Added `test_scoring_helpers_reject_nonfinite_values`, a table-driven
+  regression across every interpolation position, `AQICategory`, `NaN`,
+  positive infinity, and negative infinity.
+- Added fail-closed source, test, guidance, and plan contracts to the baseline
+  checker and synchronized maintained documentation.
+
+## Verification Completed
+
+- The focused non-finite, boolean, and negative-category tests passed.
+- `python3 run_tests.py` and `make test` passed all 74 tests.
+- Ruff formatting, Ruff linting, and Python compilation passed.
+- Repository-root `make check` passed Ruff, all 74 tests, Python compilation,
+  and the dependency-free baseline checker.
+- Six isolated hostile mutations covering both finite predicates, the focused
+  regression, maintained guidance, plan status, and mutation evidence were
+  rejected.
+- The external-directory gate passed the same full check through the absolute
+  Makefile path.
+- Exact nine-path, generated-artifact, file-mode, whitespace, conflict-marker,
+  and suspicious-secret audits passed before commit.
