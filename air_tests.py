@@ -725,6 +725,30 @@ class AirQualityTest(unittest.TestCase):
         self.assertEqual(second, first)
         self.assertEqual(requested_urls, ["https://example.test/air.json"])
 
+    def test_boolean_sensor_fields_are_ignored_before_selection_and_caching(self):
+        cache = MemoryCache()
+        quality = air.AirQuality(
+            0.0,
+            0.0,
+            cache_client=cache,
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: JsonResponse(
+                {
+                    "results": [
+                        {"Lat": 0.0, "Lon": 0.0, "PM2_5Value": True},
+                        {"Lat": False, "Lon": 0.0, "PM2_5Value": "1.0"},
+                        {"Lat": 0.0, "Lon": False, "PM2_5Value": "1.0"},
+                        {"Lat": 0.1, "Lon": 0.1, "PM2_5Value": "12.0"},
+                    ]
+                }
+            ),
+        )
+
+        result = quality.getData()
+
+        self.assertEqual(result, MODERATE_12_PAYLOAD)
+        self.assertEqual(cache.decoded(quality.cache_key()), result)
+
     def test_corrupt_cached_data_is_ignored_and_refreshed(self):
         invalid_cached_values = [
             "not-json",

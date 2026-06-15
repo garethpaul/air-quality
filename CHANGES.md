@@ -2,6 +2,7 @@
 
 ## 2026-06-15
 
+- Boolean upstream sensor fields are ignored before numeric conversion.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.
 - Cached AQI guidance is accepted only when its 0-500 score, category, and

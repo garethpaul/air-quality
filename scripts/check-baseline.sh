@@ -62,6 +62,7 @@ for path in \
   "docs/plans/2026-06-14-small-instance-deployment-guide.md" \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
   "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
+  "docs/plans/2026-06-15-air-quality-boolean-sensor-readings.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -292,6 +293,40 @@ for boolean_geocoder_plan_contract in \
   if ! grep -Fq "$boolean_geocoder_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-geocoder-coordinates.md"; then
     printf '%s\n' "Boolean geocoder coordinate plan must preserve completion evidence: $boolean_geocoder_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_sensor_contract in \
+  'isinstance(item[field], bool)' \
+  'for field in ("PM2_5Value", "Lat", "Lon")' \
+  'test_boolean_sensor_fields_are_ignored_before_selection_and_caching' \
+  '{"Lat": 0.0, "Lon": 0.0, "PM2_5Value": True}' \
+  '{"Lat": False, "Lon": 0.0, "PM2_5Value": "1.0"}' \
+  '{"Lat": 0.0, "Lon": False, "PM2_5Value": "1.0"}'; do
+  if ! grep -Fq "$boolean_sensor_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$boolean_sensor_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Boolean sensor handling must keep contract: $boolean_sensor_contract" >&2
+    exit 1
+  fi
+done
+
+for boolean_sensor_document in AGENTS.md README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq "Boolean upstream sensor fields are ignored before numeric conversion." \
+    "$ROOT_DIR/$boolean_sensor_document"; then
+    printf '%s\n' "$boolean_sensor_document must document boolean sensor rejection." >&2
+    exit 1
+  fi
+done
+
+for boolean_sensor_plan_contract in \
+  "status: completed" \
+  "test_boolean_sensor_fields_are_ignored_before_selection_and_caching" \
+  "make check" \
+  "hostile mutations"; do
+  if ! grep -Fq "$boolean_sensor_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-sensor-readings.md"; then
+    printf '%s\n' "Boolean sensor plan must preserve completion evidence: $boolean_sensor_plan_contract" >&2
     exit 1
   fi
 done

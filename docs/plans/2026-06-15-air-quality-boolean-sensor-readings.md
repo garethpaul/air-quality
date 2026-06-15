@@ -1,6 +1,6 @@
 # Air Quality Boolean Sensor Readings
 
-status: in progress
+status: completed
 
 ## Context
 
@@ -88,8 +88,27 @@ gate.
 
 ## Work Completed
 
-Pending implementation.
+- Added a pre-conversion boolean guard covering `PM2_5Value`, `Lat`, and `Lon`
+  in upstream sensor readings.
+- Added a regression where each malformed boolean reading is closer than the
+  valid fallback, proving all three fields are ignored before selection and
+  only the fallback response reaches the cache.
+- Added fail-closed source, fixture, documentation, and completed-plan
+  contracts to the portable baseline checker.
+- Updated maintained contributor, user, security, and change guidance.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- `test_boolean_sensor_fields_are_ignored_before_selection_and_caching` and
+  the existing nearest-valid-sensor test passed.
+- `python3 run_tests.py`, `make lint`, `make test`, and `make build` passed all
+  70 tests with Ruff formatting, Ruff lint, and Python compilation checks.
+- `make check` passed from the repository root and through the absolute
+  Makefile path from an external working directory.
+- Seven isolated hostile mutations covering the runtime predicate, protected
+  field tuple, all three regression fixtures, maintained guidance, and plan
+  completion were rejected for their intended contracts.
+- The simplification pass retained the single pre-conversion guard and combined
+  mutation-sensitive regression as the clearest implementation.
+- The exact eight-file diff, whitespace, generated-artifact, conflict-marker,
+  dependency/workflow drift, and credential-shaped addition audits passed.
