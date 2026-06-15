@@ -61,8 +61,50 @@ for path in \
   "docs/plans/2026-06-14-air-quality-overflowing-geocoder-center.md" \
   "docs/plans/2026-06-14-small-instance-deployment-guide.md" \
   "docs/plans/2026-06-15-overflowing-cached-numeric-values.md" \
+  "docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for cached_guidance_contract in \
+  'if normalized_score != score or normalized_score < 0 or normalized_score > 500:' \
+  'normalized_data = self.AQICategory(normalized_score)' \
+  'category != normalized_data["category"]' \
+  'caution != normalized_data["caution"]' \
+  '"category": "Out of Range", "caution": "None", "score": 501' \
+  '"category": "Hazardous", "caution": "None", "score": 50' \
+  '"caution": "Everyone should remain indoors."'; do
+  if ! grep -Fq "$cached_guidance_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$cached_guidance_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Cached AQI guidance must keep contract: $cached_guidance_contract" >&2
+    exit 1
+  fi
+done
+
+for cached_guidance_document in \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/AGENTS.md" \
+  "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "Cached AQI guidance is accepted only when its 0-500 score" \
+    "$cached_guidance_document"; then
+    printf '%s\n' "$cached_guidance_document must document canonical cached AQI guidance." >&2
+    exit 1
+  fi
+done
+
+for cached_guidance_plan_contract in \
+  'status: completed' \
+  '68 tests' \
+  'make check' \
+  'external working directory' \
+  'hostile mutations' \
+  'secret and generated-artifact scan'; do
+  if ! grep -Fq "$cached_guidance_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-cache-guidance-consistency.md"; then
+    printf '%s\n' "Cached AQI guidance plan must preserve completion evidence: $cached_guidance_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for preextend_size_source_contract in \

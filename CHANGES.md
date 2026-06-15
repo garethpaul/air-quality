@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Cached AQI guidance is accepted only when its 0-500 score, category, and
+  caution match the canonical response.
 - Overflowing cached numeric values are ignored and refreshed for both AQI
   scores and geocoder coordinates.
 

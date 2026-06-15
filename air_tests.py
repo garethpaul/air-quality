@@ -738,6 +738,15 @@ class AirQualityTest(unittest.TestCase):
             json.dumps({"category": "Good", "caution": "None", "score": -1}),
             json.dumps({"category": "Good", "caution": "None", "score": 50.5}),
             json.dumps({"category": "Good", "caution": "None", "score": 10**400}),
+            json.dumps({"category": "Out of Range", "caution": "None", "score": 501}),
+            json.dumps({"category": "Hazardous", "caution": "None", "score": 50}),
+            json.dumps(
+                {
+                    "category": "Good",
+                    "caution": "Everyone should remain indoors.",
+                    "score": 50,
+                }
+            ),
         ]
 
         for cached_value in invalid_cached_values:

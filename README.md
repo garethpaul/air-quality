@@ -110,6 +110,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   corrupt entries are ignored and refreshed from the configured data source.
 - Overflowing cached numeric values are ignored and refreshed instead of
   turning corrupt Redis entries into route failures.
+- Cached AQI guidance is accepted only when its 0-500 score, category, and
+  caution match the canonical response.
 - Cached air-quality hits return only the public `category`, `caution`, and
   finite non-negative integer `score` fields.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the

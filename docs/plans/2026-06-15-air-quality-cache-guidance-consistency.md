@@ -1,6 +1,6 @@
 # Air Quality Cache Guidance Consistency
 
-status: planned
+status: completed
 
 ## Context
 
@@ -68,3 +68,28 @@ rejected by the focused checker or full gate.
   regression cases, documentation, and completed-plan evidence.
 - Audit the exact intended diff, generated artifacts, suspicious secret
   patterns, and whitespace before committing.
+
+## Work Completed
+
+- Rejected cached AQI scores above 500 before returning a cache hit.
+- Derived the canonical public response from the normalized score and treated
+  mismatched category or caution text as a cache miss.
+- Added above-range score and independent category/caution corruption cases to
+  the existing upstream-refresh regression table while preserving canonical
+  cache-hit normalization.
+- Registered source, fixture, documentation, and completed-plan contracts in
+  the dependency-free baseline checker and updated maintained guidance.
+
+## Verification Completed
+
+- The focused corrupt-cache refresh and valid-hit tests passed without Redis,
+  Mapbox, or sensor-provider access.
+- `python3 run_tests.py` and the standard lint, test, and build aliases passed
+  all 68 tests with Ruff and Python compilation checks.
+- `make check` passed from the repository and through the absolute Makefile
+  path from an external working directory.
+- Eight isolated hostile mutations covering the score ceiling, category and
+  caution guards, all three fixtures, documentation, and plan completion were
+  rejected; the restored checker passed.
+- The exact diff, whitespace, suspicious-secret, and
+  secret and generated-artifact scan passed.

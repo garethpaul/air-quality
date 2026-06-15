@@ -221,10 +221,17 @@ class AirQuality(object):
             return None
 
         normalized_score = int(score)
-        if normalized_score != score or normalized_score < 0:
+        if normalized_score != score or normalized_score < 0 or normalized_score > 500:
             return None
 
-        return {"category": category, "caution": caution, "score": normalized_score}
+        normalized_data = self.AQICategory(normalized_score)
+        if (
+            category != normalized_data["category"]
+            or caution != normalized_data["caution"]
+        ):
+            return None
+
+        return normalized_data
 
     def cache_get(self, key):
         cache = self.cache()

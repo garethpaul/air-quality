@@ -41,6 +41,8 @@ geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 Overflowing cached numeric values are ignored and refreshed before conversion
 errors can escape the cache validation boundary.
+Cached AQI guidance is accepted only when its 0-500 score, category, and
+caution match the canonical response.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
 limit, checked before extending the retained response buffer. HTTP failures,
