@@ -61,6 +61,38 @@ class AppRouteHelperTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     parse_coordinate(value, name)
 
+    def test_parse_coordinate_rejects_boolean_and_overflowing_numeric_values(self):
+        invalid_values = [
+            (True, "lat"),
+            (False, "lat"),
+            (True, "lng"),
+            (False, "lng"),
+            (10**400, "lat"),
+            (-(10**400), "lng"),
+        ]
+
+        for value, name in invalid_values:
+            with self.subTest(value=value, name=name):
+                with self.assertRaisesRegex(
+                    ValueError, "^{0} must be a number$".format(name)
+                ):
+                    parse_coordinate(value, name)
+
+    def test_rejected_coordinate_types_do_not_construct_air_quality(self):
+        invalid_coordinates = [
+            (True, "-122.4194"),
+            ("37.7749", False),
+            (10**400, "-122.4194"),
+            ("37.7749", -(10**400)),
+        ]
+
+        for lat, lng in invalid_coordinates:
+            with self.subTest(lat=lat, lng=lng):
+                with self.assertRaises(ValueError):
+                    air_quality_payload(lat, lng, air_quality_factory=FakeAirQuality)
+
+        self.assertEqual(FakeAirQuality.calls, [])
+
     def test_air_quality_payload_uses_validated_coordinates(self):
         payload = air_quality_payload(
             "37.7749", "-122.4194", air_quality_factory=FakeAirQuality

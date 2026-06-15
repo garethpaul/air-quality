@@ -50,6 +50,7 @@ Priority:
 - Zero-width AQI interpolation ranges are rejected before division.
 - Descending AQI interpolation ranges are rejected before division.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+- Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data

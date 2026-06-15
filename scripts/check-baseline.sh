@@ -67,6 +67,7 @@ for path in \
   "docs/plans/2026-06-15-negative-aqi-category.md" \
   "docs/plans/2026-06-15-air-quality-constructor-coordinate-validation.md" \
   "docs/plans/2026-06-15-air-quality-constructor-validation-stack-reconciliation.md" \
+  "docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -297,6 +298,56 @@ for boolean_geocoder_plan_contract in \
   if ! grep -Fq "$boolean_geocoder_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-15-air-quality-boolean-geocoder-coordinates.md"; then
     printf '%s\n' "Boolean geocoder coordinate plan must preserve completion evidence: $boolean_geocoder_plan_contract" >&2
+    exit 1
+  fi
+done
+
+route_coordinate_helper=$(awk '
+  /^def parse_coordinate\(value, name\):$/ { capture = 1 }
+  /^def air_quality_payload\(lat, lng, air_quality_factory=AirQuality\):$/ { capture = 0 }
+  capture { print }
+' "$ROOT_DIR/app.py")
+
+for route_coordinate_helper_contract in \
+  'def parse_coordinate(value, name):' \
+  'if isinstance(value, bool):' \
+  'except (OverflowError, TypeError, ValueError):'; do
+  if ! printf '%s\n' "$route_coordinate_helper" | \
+    grep -Fq "$route_coordinate_helper_contract"; then
+    printf '%s\n' "Route coordinate helper must keep contract: $route_coordinate_helper_contract" >&2
+    exit 1
+  fi
+done
+
+for route_coordinate_test_contract in \
+  'test_parse_coordinate_rejects_boolean_and_overflowing_numeric_values' \
+  'test_rejected_coordinate_types_do_not_construct_air_quality' \
+  '(True, "lat")' \
+  '(False, "lng")' \
+  '(10**400, "lat")' \
+  'self.assertEqual(FakeAirQuality.calls, [])'; do
+  if ! grep -Fq "$route_coordinate_test_contract" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "Route coordinate tests must keep contract: $route_coordinate_test_contract" >&2
+    exit 1
+  fi
+done
+
+for route_coordinate_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction." \
+    "$ROOT_DIR/$route_coordinate_document"; then
+    printf '%s\n' "$route_coordinate_document must document route coordinate type guards." >&2
+    exit 1
+  fi
+done
+
+for route_coordinate_plan_contract in \
+  'Status: Completed' \
+  'test_parse_coordinate_rejects_boolean_and_overflowing_numeric_values' \
+  'repository and external-directory `make check` passed' \
+  'hostile mutations were rejected'; do
+  if ! grep -Fq "$route_coordinate_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md"; then
+    printf '%s\n' "Route coordinate plan must preserve completion evidence: $route_coordinate_plan_contract" >&2
     exit 1
   fi
 done

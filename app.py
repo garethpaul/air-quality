@@ -27,9 +27,12 @@ def parse_coordinate(value, name):
     if value is None or str(value).strip() == "":
         raise ValueError("{0} is required".format(name))
 
+    if isinstance(value, bool):
+        raise ValueError("{0} must be a number".format(name))
+
     try:
         coordinate = float(value)
-    except (TypeError, ValueError):
+    except (OverflowError, TypeError, ValueError):
         raise ValueError("{0} must be a number".format(name))
 
     if not math.isfinite(coordinate):

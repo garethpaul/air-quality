@@ -110,6 +110,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Descending AQI interpolation ranges are rejected before division.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+- Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
   35.5-55.4 Unhealthy for Sensitive Groups, 55.5-125.4 Unhealthy,
   125.5-225.4 Very Unhealthy, and 225.5+ Hazardous breakpoints. Scores above

@@ -1,6 +1,6 @@
 # Air Quality Route Coordinate Type Guards
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -84,7 +84,10 @@ verification evidence.
 
 ## Verification
 
-- Run focused helper and route tests before the complete suite.
+- Run
+  `test_parse_coordinate_rejects_boolean_and_overflowing_numeric_values` and
+  `test_rejected_coordinate_types_do_not_construct_air_quality` before the
+  complete suite.
 - Run repository and external-directory `make check` using the pinned project
   environment.
 - Reject isolated mutations that remove the boolean guard, remove
@@ -92,3 +95,21 @@ verification evidence.
   evidence.
 - Audit the exact diff, generated artifacts, dependency/workflow drift,
   credential-shaped additions, and whitespace before commit.
+
+## Completed Verification
+
+- The focused
+  `test_parse_coordinate_rejects_boolean_and_overflowing_numeric_values` and
+  `test_rejected_coordinate_types_do_not_construct_air_quality` regressions
+  passed, and `python run_tests.py` passed all 80 tests.
+- Ruff formatting and lint checks passed.
+- The repository and external-directory `make check` passed in an isolated
+  snapshot containing the complete intended change before this completion
+  record was written, and both authoritative worktree reruns also passed.
+- Five isolated hostile mutations were rejected for the boolean guard,
+  overflow normalization, focused test contract, maintained guidance, and
+  plan completion status.
+- Final exact-diff, generated-artifact, dependency and workflow drift,
+  credential-shaped addition, conflict-marker, and whitespace audits remain
+  required before commit and push. Live Redis and provider behavior remain
+  unclaimed.

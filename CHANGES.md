@@ -12,6 +12,7 @@
 - Descending AQI interpolation ranges are rejected before division.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+- Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.
 - Cached AQI guidance is accepted only when its 0-500 score, category, and
