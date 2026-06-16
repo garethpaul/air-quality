@@ -103,6 +103,9 @@ subsequent Requests connection to a validated address, so deployment DNS
 remains part of the trusted infrastructure boundary.
 Bottle debug mode is disabled by default for every repository launch path so
 provider-neutral deployment cannot expose debug responses accidentally.
+Heroku listener ports are validated as decimal values from 1 through 65535
+before Bottle launch, preventing malformed or out-of-range configuration from
+reaching the server launcher.
 
 ## Dependency and Supply Chain Security
 

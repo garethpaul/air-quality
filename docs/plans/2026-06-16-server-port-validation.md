@@ -1,6 +1,6 @@
 # Server Port Validation
 
-status: planned
+status: completed
 
 ## Problem
 
@@ -62,3 +62,30 @@ Test scenarios:
   instead of relying on Bottle or socket-layer behavior.
 - No live reverse proxy, Heroku runtime, or bound socket is exercised.
 - This change is stacked on PR #42, which must remain open and merge first.
+
+## Work Completed
+
+- Added a private Heroku listener-port parser that preserves the absent-value
+  default, accepts only ASCII decimal text, and enforces ports 1 through 65535.
+- Kept the local startup path unchanged and validated Heroku configuration
+  before calling the Bottle server launcher.
+- Added focused runtime regressions, dependency-free static contracts, and
+  synchronized operator, security, contributor, vision, and changelog guidance.
+
+## Verification Completed
+
+- Focused startup coverage passed all 18 route/helper tests, including the
+  missing configuration, valid boundaries, stable invalid error, and no-launch
+  assertions.
+- The complete `python run_tests.py` suite passed all 99 tests.
+- Ruff formatting and lint checks passed, and Python compilation completed
+  successfully.
+- Repository and external-directory `make check` passed with explicit
+  timeouts.
+- Eight isolated hostile mutations were rejected: bypassing the parser call,
+  changing the absent-value default, weakening either range bound, removing
+  the invalid-port test contract, removing the no-launch assertion, deleting
+  maintained guidance, and reopening plan status.
+- Exact diff, generated-artifact, dependency/workflow drift,
+  credential-shaped addition, conflict-marker, file-mode, and whitespace
+  audits passed.

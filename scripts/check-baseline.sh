@@ -74,6 +74,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md" \
   "docs/plans/2026-06-16-disable-bottle-debug-default.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md" \
+  "docs/plans/2026-06-16-server-port-validation.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -1660,6 +1661,74 @@ for bottle_startup_plan_contract in \
   if ! grep -Fq "$bottle_startup_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-16-disable-bottle-debug-default.md"; then
     printf '%s\n' "Bottle startup plan must preserve completion evidence: $bottle_startup_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for server_port_source_contract in \
+  'SERVER_PORT_ERROR_MESSAGE = "invalid server port configuration"' \
+  'port_text = value.strip()' \
+  'not port_text.isascii()' \
+  'not port_text.isdecimal()' \
+  'port < 1 or port > 65535' \
+  'port = _parse_server_port(os.environ.get("PORT"))'; do
+  if ! grep -Fq "$server_port_source_contract" "$ROOT_DIR/app.py"; then
+    printf '%s\n' "Server port validation must keep contract: $server_port_source_contract" >&2
+    exit 1
+  fi
+done
+
+python - "$ROOT_DIR/app.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+parser = source.split("def _parse_server_port(value):", 1)[1].split("\n\n@route", 1)[0]
+main = source.split("def main():", 1)[1].split('\n\nif __name__ == "__main__":', 1)[0]
+
+for token in (
+    "if value is None:",
+    "return 5000",
+    "raise RuntimeError(SERVER_PORT_ERROR_MESSAGE)",
+    "port < 1 or port > 65535",
+):
+    if token not in parser:
+        raise SystemExit("Server port parser must retain default, error, and bounds handling.")
+
+parse_call = 'port = _parse_server_port(os.environ.get("PORT"))'
+launch_call = "run(host=host, port=port, debug=False)"
+if parse_call not in main or launch_call not in main or main.index(parse_call) >= main.index(launch_call):
+    raise SystemExit("Server port validation must complete before Bottle launch.")
+PY
+
+for server_port_test_contract in \
+  'test_main_uses_default_heroku_port_when_unconfigured' \
+  'test_main_accepts_heroku_port_boundaries' \
+  'test_main_rejects_invalid_heroku_ports_before_launch' \
+  'self.assertEqual(calls, [])'; do
+  if ! grep -Fq "$server_port_test_contract" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "App tests must preserve server port validation: $server_port_test_contract" >&2
+    exit 1
+  fi
+done
+
+for server_port_document in AGENTS.md README.md DEPLOYMENT.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq 'Heroku listener ports are validated' "$ROOT_DIR/$server_port_document"; then
+    printf '%s\n' "$server_port_document must document Heroku listener port validation." >&2
+    exit 1
+  fi
+done
+
+for server_port_plan_contract in \
+  'status: completed' \
+  'all 99 tests' \
+  'Ruff formatting and lint checks passed' \
+  'Python compilation completed' \
+  'Repository and external-directory `make check`' \
+  'Eight isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$server_port_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-server-port-validation.md"; then
+    printf '%s\n' "Server port validation plan must preserve completion evidence: $server_port_plan_contract" >&2
     exit 1
   fi
 done

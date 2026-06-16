@@ -83,6 +83,8 @@
 - Bottle debug mode is disabled by default for every repository launch path;
   preserve the local and Heroku startup regressions when changing process
   configuration.
+- Heroku listener ports are validated as decimal values from 1 through 65535
+  before Bottle launch; an absent `PORT` retains the 5000 default.
 - Checked-in binary libraries are present; do not replace them without documenting toolchain and checksums.
 
 ## Agent workflow

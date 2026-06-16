@@ -167,6 +167,8 @@ The application must run as an unprivileged service account, and its Bottle
 listener must be reachable only by the reverse proxy or private network.
 Bottle debug mode is disabled by default for every repository launch path and
 must remain disabled in deployed process configuration.
+Heroku listener ports are validated as decimal values from 1 through 65535
+before Bottle launch; an absent `PORT` retains the 5000 default.
 
 ## Maintenance Notes
 

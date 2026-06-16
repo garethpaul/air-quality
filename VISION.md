@@ -24,6 +24,8 @@ Priority:
 - Keep a provider-neutral small-instance deployment runbook with explicit
   preflight, TLS proxy, health-probe, secret, and rollback boundaries
 - Bottle debug mode is disabled by default for every repository launch path
+- Heroku listener ports are validated before Bottle launch, with only decimal
+  values from 1 through 65535 accepted
 - Preserve test, lint, and build commands that work in a fresh checkout
 - Keep `make check` and `scripts/check-baseline.sh` green before pushing
   changes

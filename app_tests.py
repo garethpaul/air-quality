@@ -233,6 +233,65 @@ class AppRouteHelperTest(unittest.TestCase):
             [{"host": "0.0.0.0", "port": 4321, "debug": False}],
         )
 
+    def test_main_uses_default_heroku_port_when_unconfigured(self):
+        calls = []
+
+        with (
+            patch.object(
+                app_module, "run", side_effect=lambda **kwargs: calls.append(kwargs)
+            ),
+            patch.dict(app_module.os.environ, {"APP_LOCATION": "heroku"}, clear=True),
+        ):
+            app_module.main()
+
+        self.assertEqual(
+            calls,
+            [{"host": "0.0.0.0", "port": 5000, "debug": False}],
+        )
+
+    def test_main_accepts_heroku_port_boundaries(self):
+        for configured_port in ("1", "65535"):
+            calls = []
+            with (
+                self.subTest(configured_port=configured_port),
+                patch.object(
+                    app_module, "run", side_effect=lambda **kwargs: calls.append(kwargs)
+                ),
+                patch.dict(
+                    app_module.os.environ,
+                    {"APP_LOCATION": "heroku", "PORT": configured_port},
+                    clear=True,
+                ),
+            ):
+                app_module.main()
+
+            self.assertEqual(
+                calls,
+                [{"host": "0.0.0.0", "port": int(configured_port), "debug": False}],
+            )
+
+    def test_main_rejects_invalid_heroku_ports_before_launch(self):
+        for configured_port in ("", "not-a-port", "0", "-1", "65536"):
+            calls = []
+            with (
+                self.subTest(configured_port=configured_port),
+                patch.object(
+                    app_module, "run", side_effect=lambda **kwargs: calls.append(kwargs)
+                ),
+                patch.dict(
+                    app_module.os.environ,
+                    {"APP_LOCATION": "heroku", "PORT": configured_port},
+                    clear=True,
+                ),
+                self.assertRaisesRegex(
+                    RuntimeError,
+                    "^invalid server port configuration$",
+                ),
+            ):
+                app_module.main()
+
+            self.assertEqual(calls, [])
+
     def test_main_requires_bottle(self):
         with patch.object(app_module, "run", None):
             with self.assertRaisesRegex(

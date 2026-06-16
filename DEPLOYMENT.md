@@ -26,7 +26,7 @@ unit files committed to git.
 | Variable | Purpose |
 | --- | --- |
 | `APP_LOCATION` | Set to `heroku` to bind the Bottle process to `0.0.0.0`. |
-| `PORT` | Internal application listener forwarded to by the reverse proxy. |
+| `PORT` | Internal application listener forwarded to by the reverse proxy. Heroku listener ports are validated as decimal values from 1 through 65535; absence retains port 5000. |
 | `REDIS_URL` | Redis connection used by air-quality and geocode caches. |
 | `MAPBOX_ACCESS_TOKEN` | Mapbox credential used by search requests. |
 | `AIRQUALITY_DATA` | HTTPS URL for the upstream JSON sensor feed. |

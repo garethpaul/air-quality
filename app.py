@@ -8,6 +8,7 @@ from geocode import GeoCode
 SEARCH_QUERY_MAX_LENGTH = 200
 INVALID_REQUEST_MESSAGE = "invalid request"
 SERVICE_UNAVAILABLE_MESSAGE = "service unavailable"
+SERVER_PORT_ERROR_MESSAGE = "invalid server port configuration"
 
 try:
     from bottle import request, response, route, run
@@ -98,6 +99,21 @@ def json_error(message, status=400):
     return json_response({"error": message}, status=status)
 
 
+def _parse_server_port(value):
+    if value is None:
+        return 5000
+
+    port_text = value.strip()
+    if not port_text or not port_text.isascii() or not port_text.isdecimal():
+        raise RuntimeError(SERVER_PORT_ERROR_MESSAGE)
+
+    port = int(port_text)
+    if port < 1 or port > 65535:
+        raise RuntimeError(SERVER_PORT_ERROR_MESSAGE)
+
+    return port
+
+
 @route("/")
 def show_data():
     try:
@@ -126,7 +142,7 @@ def main():
 
     if os.environ.get("APP_LOCATION") == "heroku":
         host = "0.0.0.0"
-        port = int(os.environ.get("PORT", 5000))
+        port = _parse_server_port(os.environ.get("PORT"))
     else:
         host = "localhost"
         port = 8080
