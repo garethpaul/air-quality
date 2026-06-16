@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import sys
 import unittest
@@ -462,6 +463,26 @@ class AirQualityTest(unittest.TestCase):
 
                 self.assertEqual(quality.lat, expected_latitude)
                 self.assertEqual(quality.lng, expected_longitude)
+
+    def test_constructor_canonicalizes_signed_zero_coordinates_and_cache_keys(self):
+        zero_values = (0.0, -0.0, "0", "-0", "0.0", "-0.0")
+
+        for latitude in zero_values:
+            for longitude in zero_values:
+                with self.subTest(latitude=latitude, longitude=longitude):
+                    quality = air.AirQuality(
+                        latitude, longitude, cache_client=MemoryCache()
+                    )
+
+                    self.assertEqual(quality.lat, 0.0)
+                    self.assertEqual(quality.lng, 0.0)
+                    self.assertEqual(math.copysign(1.0, quality.lat), 1.0)
+                    self.assertEqual(math.copysign(1.0, quality.lng), 1.0)
+                    self.assertEqual(quality.cache_key(), "a_q_2_0.0_0.0")
+
+        positive = air.AirQuality(0.0, 0.0, cache_client=MemoryCache())
+        negative = air.AirQuality(-0.0, -0.0, cache_client=MemoryCache())
+        self.assertEqual(positive.cache_key(), negative.cache_key())
 
     def test_default_http_get_uses_timeout(self):
         calls = []

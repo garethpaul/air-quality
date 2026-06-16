@@ -2,7 +2,7 @@ import math
 import os
 from json import dumps
 
-from air import AirQuality
+from air import AirQuality, _canonicalize_zero
 from geocode import GeoCode
 
 SEARCH_QUERY_MAX_LENGTH = 200
@@ -49,7 +49,7 @@ def parse_coordinate(value, name):
     if coordinate < lower or coordinate > upper:
         raise ValueError("{0} must be between {1} and {2}".format(name, lower, upper))
 
-    return coordinate
+    return _canonicalize_zero(coordinate)
 
 
 def air_quality_payload(lat, lng, air_quality_factory=AirQuality):

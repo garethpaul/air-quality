@@ -1,6 +1,6 @@
 # Air Quality Signed-Zero Coordinate Normalization
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -84,8 +84,24 @@ evidence.
   change.
 - Run focused constructor, cache-key, and route-helper regressions.
 - Run repository and external-directory `make check`.
-- Reject isolated mutations that remove zero canonicalization from either
+- Reject isolated hostile mutations that remove zero canonicalization from either
   boundary, weaken cache-key equality or sign assertions, remove guidance, or
   falsify completion evidence.
 - Audit the exact diff, generated artifacts, dependency/workflow drift,
   credential-shaped additions, conflict markers, and whitespace before commit.
+
+## Completed Verification
+
+- The pre-fix reproduction showed equal `0.0` and `-0.0` coordinates produced
+  different versioned cache keys.
+- Focused constructor, route-helper, route-collaborator, sign-bit, and cache-key
+  regressions passed, and the complete suite passed all 83 tests.
+- Ruff formatting and lint checks passed, and the maintained Python modules
+  compiled successfully.
+- Repository and external-directory `make check` passed the complete portable
+  gate.
+- Seven isolated hostile mutations were rejected for helper removal,
+  constructor and route integration removal, cache-key and sign-assertion
+  weakening, guidance removal, and plan-status rollback.
+- Live Redis, configured upstream data, and provider behavior remain outside
+  local validation.

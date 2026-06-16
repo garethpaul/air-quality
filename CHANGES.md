@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-16
+
+- Accepted signed-zero coordinates normalize to positive zero so equivalent
+  requests share one cache key.
+
 ## 2026-06-15
 
 - Near-antipodal sensor distances clamp floating-point drift to the haversine

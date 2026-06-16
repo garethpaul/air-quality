@@ -1,4 +1,5 @@
 import json
+import math
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -44,6 +45,15 @@ class AppRouteHelperTest(unittest.TestCase):
     def test_parse_coordinate_accepts_valid_lat_lng(self):
         self.assertEqual(parse_coordinate("37.7749", "lat"), 37.7749)
         self.assertEqual(parse_coordinate("-122.4194", "lng"), -122.4194)
+
+    def test_parse_coordinate_canonicalizes_signed_zero(self):
+        for value in (0.0, -0.0, "0", "-0", "0.0", "-0.0"):
+            for name in ("lat", "lng"):
+                with self.subTest(value=value, name=name):
+                    coordinate = parse_coordinate(value, name)
+
+                    self.assertEqual(coordinate, 0.0)
+                    self.assertEqual(math.copysign(1.0, coordinate), 1.0)
 
     def test_parse_coordinate_rejects_missing_non_numeric_and_out_of_range(self):
         invalid_values = [
@@ -100,6 +110,14 @@ class AppRouteHelperTest(unittest.TestCase):
 
         self.assertEqual(payload, {"category": "Good", "caution": "None", "score": 42})
         self.assertEqual(FakeAirQuality.calls, [(37.7749, -122.4194)])
+
+    def test_air_quality_payload_passes_canonical_zero_coordinates(self):
+        payload = air_quality_payload("-0.0", -0.0, air_quality_factory=FakeAirQuality)
+
+        self.assertEqual(payload, {"category": "Good", "caution": "None", "score": 42})
+        self.assertEqual(FakeAirQuality.calls, [(0.0, 0.0)])
+        self.assertEqual(math.copysign(1.0, FakeAirQuality.calls[0][0]), 1.0)
+        self.assertEqual(math.copysign(1.0, FakeAirQuality.calls[0][1]), 1.0)
 
     def test_search_payload_trims_query_and_uses_geocode_result(self):
         payload = search_payload(

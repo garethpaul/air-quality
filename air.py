@@ -35,6 +35,10 @@ def _missing(value):
     return value is None or value == ""
 
 
+def _canonicalize_zero(value):
+    return 0.0 if value == 0.0 else value
+
+
 def _normalize_coordinate(value, name):
     if isinstance(value, bool):
         raise ValueError("{0} must be a number".format(name))
@@ -51,7 +55,7 @@ def _normalize_coordinate(value, name):
     if coordinate < lower or coordinate > upper:
         raise ValueError("{0} must be between {1} and {2}".format(name, lower, upper))
 
-    return coordinate
+    return _canonicalize_zero(coordinate)
 
 
 def _require_https_data_url(url):

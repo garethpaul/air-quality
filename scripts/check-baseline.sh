@@ -68,8 +68,56 @@ for path in \
   "docs/plans/2026-06-15-air-quality-constructor-coordinate-validation.md" \
   "docs/plans/2026-06-15-air-quality-constructor-validation-stack-reconciliation.md" \
   "docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md" \
+  "docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for signed_zero_source_contract in \
+  'def _canonicalize_zero(value):' \
+  'return 0.0 if value == 0.0 else value' \
+  'return _canonicalize_zero(coordinate)'; do
+  if ! grep -Fq "$signed_zero_source_contract" "$ROOT_DIR/air.py" && \
+     ! grep -Fq "$signed_zero_source_contract" "$ROOT_DIR/app.py"; then
+    printf '%s\n' "Signed-zero coordinate handling must keep contract: $signed_zero_source_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Foc 'return _canonicalize_zero(coordinate)' "$ROOT_DIR/air.py" "$ROOT_DIR/app.py" | awk -F: '{ total += $2 } END { print total + 0 }')" -ne 2 ]; then
+  printf '%s\n' "Constructor and route coordinate boundaries must both canonicalize zero." >&2
+  exit 1
+fi
+
+for signed_zero_test_contract in \
+  'test_constructor_canonicalizes_signed_zero_coordinates_and_cache_keys' \
+  'math.copysign(1.0, quality.lat)' \
+  'self.assertEqual(positive.cache_key(), negative.cache_key())' \
+  'test_parse_coordinate_canonicalizes_signed_zero' \
+  'test_air_quality_payload_passes_canonical_zero_coordinates' \
+  'math.copysign(1.0, FakeAirQuality.calls[0][0])'; do
+  if ! grep -Fq "$signed_zero_test_contract" "$ROOT_DIR/air_tests.py" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "Signed-zero coordinate regression must keep contract: $signed_zero_test_contract" >&2
+    exit 1
+  fi
+done
+
+for signed_zero_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "signed-zero coordinates normalize to positive zero" "$ROOT_DIR/$signed_zero_document"; then
+    printf '%s\n' "$signed_zero_document must document canonical signed-zero coordinates." >&2
+    exit 1
+  fi
+done
+
+for signed_zero_plan_contract in \
+  'Status: Completed' \
+  'repository and external-directory `make check`' \
+  'hostile mutations' \
+  'Live Redis, configured upstream data, and provider behavior remain outside'; do
+  if ! grep -Fq "$signed_zero_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md"; then
+    printf '%s\n' "Signed-zero coordinate plan must record completed evidence: $signed_zero_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for cached_guidance_contract in \
