@@ -67,6 +67,9 @@
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.
+- Malformed Mapbox response shapes and coordinate values use the generic
+  geocoder service-error boundary; a valid empty feature list remains the
+  no-result client-error path.
 - Cached air-quality payloads must decode to the expected response shape; corrupt entries are ignored and refreshed from the configured data source.
 - Overflowing cached numeric values are ignored and refreshed rather than
   surfacing conversion failures from Redis data.

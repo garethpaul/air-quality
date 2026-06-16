@@ -1,6 +1,6 @@
 # Classify Malformed Geocoder Payloads As Service Errors
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -91,4 +91,19 @@ checker.
 
 ## Completed Verification
 
-Pending implementation and validation.
+- The pre-change reproduction showed a malformed Mapbox center escaping from
+  `getLatLng` as `ValueError`; the completed implementation returns only the
+  unchained generic geocoder service error for malformed provider payloads.
+- The focused geocoder suite passed 21 tests and the route suite passed 15
+  tests. The complete `python run_tests.py` suite passed all 96 tests.
+- Ruff formatting and lint, Python compilation, and the dependency-free
+  baseline checker passed.
+- Repository and external-directory `make check` passed with explicit
+  timeouts.
+- Seven isolated hostile mutations were rejected: removing the private
+  no-result exception, widening the no-result branch, removing malformed
+  payload normalization, reversing exception order, removing a focused test,
+  removing maintained guidance, and falsifying plan status.
+- Exact diff, generated-artifact, dependency/workflow drift,
+  credential-shaped addition, conflict-marker, file-mode, and whitespace
+  audits passed.

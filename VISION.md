@@ -42,6 +42,8 @@ Priority:
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup
 - Normalize geocoder transport failures without exposing provider details
+- Normalize malformed Mapbox payloads as service failures while preserving
+  valid empty results as a client-visible no-result outcome
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Ignore overflowing upstream sensor values before distance and AQI calculations
 - Near-antipodal sensor distances clamp floating-point drift to the haversine

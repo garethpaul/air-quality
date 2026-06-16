@@ -2,6 +2,9 @@
 
 ## 2026-06-16
 
+- Malformed Mapbox response shapes and coordinate values now use the generic
+  geocoder service-error boundary while valid empty results retain the
+  no-result client error.
 - Upstream network JSON now requires UTF-8 and rejects non-UTF-8 or unknown
   response encodings before response streaming.
 - Bottle debug mode is disabled by default for local and Heroku launch paths,

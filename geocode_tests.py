@@ -360,7 +360,7 @@ class GeoCodeTest(unittest.TestCase):
                 self.assertEqual(geocoder.queries, ["San Francisco, CA"])
                 self.assertEqual(cache.decoded(key), refreshed)
 
-    def test_center_must_be_finite_and_in_coordinate_bounds(self):
+    def test_invalid_center_values_are_normalized_as_service_errors(self):
         invalid_centers = [
             ["nan", "37.794678"],
             ["-122.41143", "inf"],
@@ -376,10 +376,14 @@ class GeoCodeTest(unittest.TestCase):
                     geocoder=FakeGeocoder({"features": [{"center": center}]}),
                 )
 
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(
+                    RuntimeError, "^geocoder request failed$"
+                ) as raised:
                     geo.getLatLng()
 
-    def test_overflowing_geocoder_center_values_raise_value_error(self):
+                self.assertIsNone(raised.exception.__cause__)
+
+    def test_overflowing_geocoder_center_values_are_service_errors(self):
         huge_integer = 10**400
         invalid_centers = [
             [huge_integer, "37.794678"],
@@ -395,11 +399,13 @@ class GeoCodeTest(unittest.TestCase):
                 )
 
                 with self.assertRaisesRegex(
-                    ValueError, "^geocoder center values must be numeric$"
-                ):
+                    RuntimeError, "^geocoder request failed$"
+                ) as raised:
                     geo.getLatLng()
 
-    def test_boolean_geocoder_center_values_raise_value_error(self):
+                self.assertIsNone(raised.exception.__cause__)
+
+    def test_boolean_geocoder_center_values_are_service_errors(self):
         invalid_centers = [
             [True, "37.794678"],
             ["-122.41143", False],
@@ -414,21 +420,27 @@ class GeoCodeTest(unittest.TestCase):
                 )
 
                 with self.assertRaisesRegex(
-                    ValueError, "^geocoder center values must be numeric$"
-                ):
+                    RuntimeError, "^geocoder request failed$"
+                ) as raised:
                     geo.getLatLng()
 
-    def test_missing_geocoder_results_raise_value_error(self):
+                self.assertIsNone(raised.exception.__cause__)
+
+    def test_missing_geocoder_results_remain_a_client_error(self):
         geo = GeoCode(
             "Not a real place",
             cache_client=MemoryCache(),
             geocoder=FakeGeocoder({"features": []}),
         )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(
+            ValueError, "^No geocoding results were returned$"
+        ) as raised:
             geo.getLatLng()
 
-    def test_malformed_geocoder_payloads_raise_value_error(self):
+        self.assertNotIsInstance(raised.exception, RuntimeError)
+
+    def test_malformed_geocoder_payloads_are_normalized_as_service_errors(self):
         invalid_payloads = [
             None,
             [],
@@ -450,8 +462,13 @@ class GeoCodeTest(unittest.TestCase):
                     geocoder=FakeGeocoder(payload),
                 )
 
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(
+                    RuntimeError, "^geocoder request failed$"
+                ) as raised:
                     geo.getLatLng()
+
+                self.assertIsNone(raised.exception.__cause__)
+                self.assertNotIn("Malformed place", str(raised.exception))
 
 
 if __name__ == "__main__":

@@ -133,8 +133,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the
   timeout without live network access.
 - Mapbox geocoder responses must return a first feature with a two-value
-  finite numeric `center` in valid coordinate bounds; malformed geocoder
-  payloads fail with a controlled route error before caching.
+  finite numeric `center` in valid coordinate bounds. Malformed Mapbox
+  payloads fail with the generic service error before caching, while a valid
+  empty feature list remains the no-result client error.
 - Cached Mapbox results use the `mapbox.places-permanent` dataset. Deployments
   must have permanent-geocoding entitlement and account for its provider
   billing terms before enabling geocoding.
@@ -203,6 +204,8 @@ must remain disabled in deployed process configuration.
   normalized Redis read/write failure boundary.
 - See `docs/plans/2026-06-13-air-quality-geocoder-transport-errors.md` for the
   normalized Mapbox request and JSON-decoding boundary.
+- See `docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md` for the
+  malformed-provider-payload service-error boundary.
 - See `docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md` for the
   permanent Mapbox dataset and cache-compliance boundary.
 - See `docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md` for

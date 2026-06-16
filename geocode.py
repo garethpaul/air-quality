@@ -10,6 +10,10 @@ GEOCODER_ERROR_MESSAGE = "geocoder request failed"
 MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"
 
 
+class _NoGeocodingResults(ValueError):
+    pass
+
+
 class GeoCode(object):
     def __init__(self, query, cache_client=None, geocoder=None):
         self.query = query
@@ -28,7 +32,12 @@ class GeoCode(object):
         except Exception:
             raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None
 
-        data = self.parse_first_feature_center(payload)
+        try:
+            data = self.parse_first_feature_center(payload)
+        except _NoGeocodingResults:
+            raise
+        except ValueError:
+            raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None
         self.cache_set(key, json.dumps(data))
         return data
 
@@ -91,7 +100,9 @@ class GeoCode(object):
 
         features = payload.get("features", [])
         if not isinstance(features, list) or not features:
-            raise ValueError("No geocoding results were returned")
+            if isinstance(features, list):
+                raise _NoGeocodingResults("No geocoding results were returned")
+            raise ValueError("geocoder features must be a list")
 
         first_feature = features[0]
         if not isinstance(first_feature, Mapping):

@@ -73,6 +73,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md" \
   "docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md" \
   "docs/plans/2026-06-16-disable-bottle-debug-default.md" \
+  "docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -417,11 +418,11 @@ done
 
 for overflowing_geocoder_contract in \
   'except (OverflowError, TypeError, ValueError):' \
-  'test_overflowing_geocoder_center_values_raise_value_error' \
+  'test_overflowing_geocoder_center_values_are_service_errors' \
   'huge_integer = 10**400' \
   '[huge_integer, "37.794678"]' \
   '["-122.41143", huge_integer]' \
-  'ValueError, "^geocoder center values must be numeric$"'; do
+  'RuntimeError, "^geocoder request failed$"'; do
   if ! grep -Fq "$overflowing_geocoder_contract" "$ROOT_DIR/geocode.py" && \
      ! grep -Fq "$overflowing_geocoder_contract" "$ROOT_DIR/geocode_tests.py"; then
     printf '%s\n' "Overflowing geocoder center handling must keep contract: $overflowing_geocoder_contract" >&2
@@ -456,9 +457,10 @@ for boolean_geocoder_contract in \
   'isinstance(center[1], bool)' \
   'json.dumps({"lat": True, "lng": -122.41143})' \
   'json.dumps({"lat": 37.794678, "lng": False})' \
-  'test_boolean_geocoder_center_values_raise_value_error' \
+  'test_boolean_geocoder_center_values_are_service_errors' \
   '[True, "37.794678"]' \
-  '["-122.41143", False]'; do
+  '["-122.41143", False]' \
+  'RuntimeError, "^geocoder request failed$"'; do
   if ! grep -Fq "$boolean_geocoder_contract" "$ROOT_DIR/geocode.py" && \
      ! grep -Fq "$boolean_geocoder_contract" "$ROOT_DIR/geocode_tests.py"; then
     printf '%s\n' "Boolean geocoder coordinate handling must keep contract: $boolean_geocoder_contract" >&2
@@ -1176,8 +1178,8 @@ if source.count('GEOCODER_ERROR_MESSAGE = "geocoder request failed"') != 1:
     raise SystemExit("Geocoder failures must use one stable local message.")
 if function.count("except Exception:") != 1:
     raise SystemExit("Geocoder request and JSON decoding must share one exception boundary.")
-if function.count("raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None") != 1:
-    raise SystemExit("Geocoder failures must use one unchained generic RuntimeError.")
+if function.count("raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None") != 2:
+    raise SystemExit("Transport and malformed payload failures must use the generic RuntimeError.")
 for contract in (
     "response = self.geocoder_client().forward(self.query)",
     "payload = response.json()",
@@ -1191,13 +1193,13 @@ if not (
     < function.index("except Exception:")
     < function.index("data = self.parse_first_feature_center(payload)")
 ):
-    raise SystemExit("Payload validation must remain outside the geocoder transport boundary.")
+    raise SystemExit("Payload validation must remain outside the geocoder transport boundary before separate normalization.")
 PY
 
 for geocoder_transport_test_contract in \
   "test_geocoder_request_failure_is_normalized_without_detail" \
   "test_geocoder_json_failure_is_normalized_without_detail" \
-  "test_malformed_geocoder_payloads_raise_value_error"; do
+  "test_malformed_geocoder_payloads_are_normalized_as_service_errors"; do
   if ! grep -Fq "$geocoder_transport_test_contract" "$ROOT_DIR/geocode_tests.py"; then
     printf '%s\n' "Geocoder transport tests must keep contract: $geocoder_transport_test_contract" >&2
     exit 1
@@ -1658,6 +1660,73 @@ for bottle_startup_plan_contract in \
   if ! grep -Fq "$bottle_startup_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-16-disable-bottle-debug-default.md"; then
     printf '%s\n' "Bottle startup plan must preserve completion evidence: $bottle_startup_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_payload_source_contract in \
+  'class _NoGeocodingResults(ValueError):' \
+  'except _NoGeocodingResults:' \
+  'except ValueError:' \
+  'raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None'; do
+  if ! grep -Fq "$geocoder_payload_source_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Geocoder payload classification must keep contract: $geocoder_payload_source_contract" >&2
+    exit 1
+  fi
+done
+
+python - "$ROOT_DIR/geocode.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+method = source.split("    def getLatLng(self):", 1)[1].split(
+    "\n    def cached_data", 1
+)[0]
+parse_call = "data = self.parse_first_feature_center(payload)"
+no_results = "except _NoGeocodingResults:"
+malformed = "except ValueError:"
+normalized = "raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None"
+
+if not all(token in method for token in (parse_call, no_results, malformed, normalized)):
+    raise SystemExit("Geocoder payload validation must retain both error classes.")
+payload_normalized_index = method.index(normalized, method.index(malformed))
+if not (
+    method.index(parse_call)
+    < method.index(no_results)
+    < method.index(malformed)
+    < payload_normalized_index
+):
+    raise SystemExit("Geocoder payload errors must preserve no-result before malformed normalization.")
+PY
+
+for geocoder_payload_test_contract in \
+  'test_invalid_center_values_are_normalized_as_service_errors' \
+  'test_overflowing_geocoder_center_values_are_service_errors' \
+  'test_boolean_geocoder_center_values_are_service_errors' \
+  'test_missing_geocoder_results_remain_a_client_error' \
+  'test_malformed_geocoder_payloads_are_normalized_as_service_errors'; do
+  if ! grep -Fq "$geocoder_payload_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Geocoder payload tests must keep contract: $geocoder_payload_test_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_payload_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fiq 'malformed Mapbox' "$ROOT_DIR/$geocoder_payload_document"; then
+    printf '%s\n' "$geocoder_payload_document must document malformed Mapbox service errors." >&2
+    exit 1
+  fi
+done
+
+for geocoder_payload_plan_contract in \
+  'Status: Completed' \
+  'all 96 tests' \
+  'Repository and external-directory `make check`' \
+  'isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$geocoder_payload_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md"; then
+    printf '%s\n' "Geocoder payload plan must preserve completion evidence: $geocoder_payload_plan_contract" >&2
     exit 1
   fi
 done
