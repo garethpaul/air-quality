@@ -54,6 +54,8 @@
   category construction.
 - Zero-width AQI interpolation ranges are rejected before division.
 - Descending AQI interpolation ranges are rejected before division.
+- Nonnegative AQI interpolation uses explicit half-up integer rounding instead
+  of Python's ties-to-even `round()` behavior.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - Near-antipodal sensor distances clamp floating-point drift to the haversine
   domain; preserve the focused regression when changing location math.

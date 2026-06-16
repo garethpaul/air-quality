@@ -1800,4 +1800,62 @@ for geocoder_payload_plan_contract in \
   fi
 done
 
+for aqi_rounding_source_contract in \
+  'linear = math.floor(a + 0.5)' \
+  'return linear'; do
+  if ! grep -Fq "$aqi_rounding_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "AQI interpolation must keep half-up rounding: $aqi_rounding_source_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'linear = round(a)' "$ROOT_DIR/air.py"; then
+  printf '%s\n' "AQI interpolation must not restore Python ties-to-even rounding." >&2
+  exit 1
+fi
+
+python - "$ROOT_DIR/air.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+method = source.split("    def Linear(", 1)[1].split("\n    @staticmethod", 1)[0]
+calculation = "a = ((Conc - Conclow) / (Conchigh - Conclow))"
+rounding = "linear = math.floor(a + 0.5)"
+result = "return linear"
+if not all(token in method for token in (calculation, rounding, result)):
+    raise SystemExit("AQI interpolation must retain calculation, half-up rounding, and return.")
+if not method.index(calculation) < method.index(rounding) < method.index(result):
+    raise SystemExit("AQI half-up rounding must remain after interpolation and before return.")
+PY
+
+for aqi_rounding_test_contract in \
+  'test_linear_rounds_nonnegative_half_values_up' \
+  'quality.Linear(1, 0, 2, 0, 1), 1' \
+  'quality.Linear(3, 0, 2, 0, 1), 2'; do
+  if ! grep -Fq "$aqi_rounding_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "AQI tests must preserve half-up rounding: $aqi_rounding_test_contract" >&2
+    exit 1
+  fi
+done
+
+for aqi_rounding_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fiq 'half-up integer rounding' "$ROOT_DIR/$aqi_rounding_document"; then
+    printf '%s\n' "$aqi_rounding_document must document half-up AQI rounding." >&2
+    exit 1
+  fi
+done
+
+for aqi_rounding_plan_contract in \
+  'status: completed' \
+  'all 100 tests' \
+  'Repository and external-directory `make check`' \
+  'Five isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$aqi_rounding_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-air-quality-aqi-half-up-rounding.md"; then
+    printf '%s\n' "AQI half-up rounding plan must preserve completion evidence: $aqi_rounding_plan_contract" >&2
+    exit 1
+  fi
+done
+
 printf '%s\n' "air-quality baseline checks passed."

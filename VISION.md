@@ -55,6 +55,7 @@ Priority:
   construction.
 - Zero-width AQI interpolation ranges are rejected before division.
 - Descending AQI interpolation ranges are rejected before division.
+- Nonnegative AQI interpolation uses explicit half-up integer rounding.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.

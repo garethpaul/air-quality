@@ -110,6 +110,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   category construction.
 - Zero-width AQI interpolation ranges are rejected before division.
 - Descending AQI interpolation ranges are rejected before division.
+- Nonnegative AQI interpolation uses explicit half-up integer rounding instead
+  of Python's ties-to-even `round()` behavior.
 - Negative AQI scores are classified as Out of Range instead of Good.
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
@@ -198,6 +200,8 @@ before Bottle launch; an absent `PORT` retains the 5000 default.
   sensor-data streaming and root-independent verification.
 - See `docs/plans/2026-06-10-current-epa-pm25-breakpoints.md` for the current
   PM2.5 AQI calculation and cache-version contract.
+- See `docs/plans/2026-06-16-air-quality-aqi-half-up-rounding.md` for explicit
+  half-up integer rounding at the AQI interpolation boundary.
 - See `docs/plans/2026-06-12-air-quality-response-cleanup.md` for deterministic
   upstream response cleanup.
 - See `docs/plans/2026-06-13-air-quality-upstream-transport-errors.md` for the

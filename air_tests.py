@@ -1023,6 +1023,14 @@ class AirQualityTest(unittest.TestCase):
 
         self.assertEqual(quality.Linear(50, 0, 9.0, 0.0, "9.0"), 50)
 
+    def test_linear_rounds_nonnegative_half_values_up(self):
+        quality = air.AirQuality(37.794678, -122.41143, cache_client=MemoryCache())
+
+        self.assertEqual(quality.Linear(49, 0, 100, 0, 1), 0)
+        self.assertEqual(quality.Linear(1, 0, 2, 0, 1), 1)
+        self.assertEqual(quality.Linear(3, 0, 2, 0, 1), 2)
+        self.assertEqual(quality.Linear(51, 0, 100, 0, 1), 1)
+
     def test_category(self):
         d = air.AirQuality.AQICategory(120)
         self.assertIsNotNone(d)

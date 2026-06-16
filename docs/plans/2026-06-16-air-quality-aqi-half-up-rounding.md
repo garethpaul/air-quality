@@ -1,6 +1,6 @@
 # AQI Half-Up Integer Rounding
 
-status: planned
+status: completed
 
 ## Problem
 
@@ -68,3 +68,27 @@ the named half-up AQI boundary. The static gate must reject reintroducing
 - The public interpolation helper will intentionally differ at exact half ties.
 - No live sensor feed, Redis instance, Mapbox request, reverse proxy, or hosted
   deployment is exercised locally.
+
+## Work Completed
+
+- Replaced Python ties-to-even rounding with explicit nonnegative half-up
+  integer rounding after AQI interpolation.
+- Added below-half, exact-half, second exact-half, and above-half runtime
+  regressions while preserving all existing PM2.5 and validation coverage.
+- Added dependency-free static contracts and synchronized maintainer, user,
+  security, vision, and changelog guidance.
+
+## Verification Completed
+
+- The pre-change helper returned `0` for the exact `0.5` interpolation and the
+  corrected focused regression passed.
+- Ruff formatting and lint checks passed, Python compilation completed, and
+  the complete suite passed all 100 tests.
+- Repository and external-directory `make check` passed with explicit
+  timeouts.
+- Five isolated hostile mutations were rejected: restoring banker rounding,
+  removing the half offset, deleting the focused test contract, removing
+  maintained security guidance, and reopening plan status.
+- Exact diff, generated-artifact, dependency/workflow drift,
+  credential-pattern, conflict-marker, binary, large-file, file-mode, and
+  whitespace audits passed.

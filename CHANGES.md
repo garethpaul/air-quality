@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- AQI interpolation now uses half-up integer rounding for nonnegative values
+  instead of inheriting Python's ties-to-even behavior.
 - Heroku listener ports are validated as decimal values from 1 through 65535
   before Bottle launch, while an absent `PORT` retains the 5000 default.
 - Malformed Mapbox response shapes and coordinate values now use the generic

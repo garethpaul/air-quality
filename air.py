@@ -404,7 +404,7 @@ class AirQuality(object):
             raise ValueError("AQI interpolation concentration range must be ascending")
 
         a = ((Conc - Conclow) / (Conchigh - Conclow)) * (AQIhigh - AQIlow) + AQIlow
-        linear = round(a)
+        linear = math.floor(a + 0.5)
         return linear
 
     @staticmethod
