@@ -83,6 +83,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
 - Geocoder transport failures during Mapbox dispatch or JSON decoding become
   stable service errors without exposing provider or credential details;
   successful malformed payloads remain invalid requests.
+- Default Mapbox geocoder requests use a five-second timeout while preserving
+  SDK session authentication and explicitly injected geocoder clients.
 - The default client enforces an HTTPS-only data source before requesting,
   before following redirects, and on the final response URL without exposing
   endpoint URLs. Literal and DNS-resolved IPv4 and IPv6 targets must all be

@@ -7,11 +7,24 @@ from air import _canonicalize_zero
 
 CACHE_ERROR_MESSAGE = "cache request failed"
 GEOCODER_ERROR_MESSAGE = "geocoder request failed"
+GEOCODER_TIMEOUT_SECONDS = 5.0
 MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"
 
 
 class _NoGeocodingResults(ValueError):
     pass
+
+
+class _TimeoutSession(object):
+    def __init__(self, session):
+        self._session = session
+
+    def get(self, *args, **kwargs):
+        kwargs.setdefault("timeout", GEOCODER_TIMEOUT_SECONDS)
+        return self._session.get(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._session, name)
 
 
 class GeoCode(object):
@@ -148,4 +161,5 @@ class GeoCode(object):
             from mapbox import Geocoder
 
             self.geocoder = Geocoder(name=MAPBOX_PERMANENT_DATASET)
+            self.geocoder.session = _TimeoutSession(self.geocoder.session)
         return self.geocoder

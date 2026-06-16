@@ -76,6 +76,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md" \
   "docs/plans/2026-06-16-server-port-validation.md" \
   "docs/plans/2026-06-16-search-query-control-character-guard.md" \
+  "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -85,6 +86,49 @@ for permanent_geocoder_source_contract in \
   'self.geocoder = Geocoder(name=MAPBOX_PERMANENT_DATASET)'; do
   if ! grep -Fq "$permanent_geocoder_source_contract" "$ROOT_DIR/geocode.py"; then
     printf '%s\n' "Permanent geocoder construction must keep contract: $permanent_geocoder_source_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_timeout_source_contract in \
+  'GEOCODER_TIMEOUT_SECONDS = 5.0' \
+  'kwargs.setdefault("timeout", GEOCODER_TIMEOUT_SECONDS)' \
+  'return self._session.get(*args, **kwargs)' \
+  'return getattr(self._session, name)' \
+  'self.geocoder.session = _TimeoutSession(self.geocoder.session)'; do
+  if ! grep -Fq "$geocoder_timeout_source_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Default geocoder timeout must keep contract: $geocoder_timeout_source_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_timeout_test_contract in \
+  'test_default_geocoder_uses_permanent_dataset_before_caching' \
+  '"timeout": 5.0' \
+  'self.assertIs(geocoder.session.params, original_session.params)' \
+  'self.assertIs(geocoder.session.headers, original_session.headers)' \
+  'test_injected_geocoder_session_is_not_wrapped' \
+  'self.assertIs(geocoder.session, session)'; do
+  if ! grep -Fq "$geocoder_timeout_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Default geocoder timeout regression must keep contract: $geocoder_timeout_test_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_timeout_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Default Mapbox geocoder requests use a five-second timeout" "$ROOT_DIR/$geocoder_timeout_document"; then
+    printf '%s\n' "$geocoder_timeout_document must document bounded Mapbox geocoder requests." >&2
+    exit 1
+  fi
+done
+
+for geocoder_timeout_plan_contract in \
+  'status: completed' \
+  'Focused geocoder tests and all 104 tests passed.' \
+  'Six isolated hostile mutations were rejected' \
+  'No live Mapbox request was made.'; do
+  if ! grep -Fq "$geocoder_timeout_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-geocoder-timeout.md"; then
+    printf '%s\n' "Geocoder timeout plan must record completed evidence: $geocoder_timeout_plan_contract" >&2
     exit 1
   fi
 done

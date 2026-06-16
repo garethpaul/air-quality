@@ -1,6 +1,6 @@
 # Air Quality Geocoder Request Timeout
 
-status: planned
+status: completed
 
 ## Context
 
@@ -85,4 +85,17 @@ Mapbox dataset, or generic route-error model.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- Focused geocoder tests and all 104 tests passed.
+- A fresh Python 3.12 environment installed the exact runtime and development
+  requirements; Ruff format/lint and Python compilation passed.
+- Repository and external-directory `make check` passed with the pinned
+  environment and caller-directory-independent Makefile.
+- The installed Mapbox 0.18.1 client passed a no-network smoke test proving its
+  original session receives `timeout=5.0` while retaining access-token session
+  parameters and headers.
+- Six isolated hostile mutations were rejected for the timeout value, wrapper
+  installation, session delegation, injected-client boundary, focused test
+  registration, and maintained guidance.
+- The exact diff, generated-artifact inventory, changed-line secret scan,
+  dependency/workflow drift, and whitespace checks passed before commit.
+- No live Mapbox request was made.

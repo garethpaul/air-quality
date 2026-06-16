@@ -83,6 +83,8 @@
 - Upstream network JSON must use UTF-8; non-UTF-8 or unknown response
   encodings fail through the generic provider error before body streaming.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the timeout without live network access.
+- Default Mapbox geocoder requests use a five-second timeout while preserving
+  SDK session authentication and explicitly injected geocoder clients.
 - Bottle debug mode is disabled by default for every repository launch path;
   preserve the local and Heroku startup regressions when changing process
   configuration.

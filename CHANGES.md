@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- Default Mapbox geocoder requests use a five-second timeout while preserving
+  SDK session authentication and explicitly injected geocoder clients.
 - Unicode control characters in search queries are rejected before geocoder
   construction or cache-key use while visible internationalized text remains valid.
 - AQI interpolation now uses half-up integer rounding for nonnegative values

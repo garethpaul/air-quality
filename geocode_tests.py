@@ -47,20 +47,34 @@ class InvalidJsonGeocoder(object):
 class GeoCodeTest(unittest.TestCase):
     def test_default_geocoder_uses_permanent_dataset_before_caching(self):
         events = []
+        payload = {"features": [{"center": [-122.41143, 37.794678]}]}
 
         class RecordingCache(MemoryCache):
             def set(self, key, value):
                 events.append(("cache", key, json.loads(value)))
                 super().set(key, value)
 
-        class RecordingGeocoder(FakeGeocoder):
+        class RecordingSession(object):
+            def __init__(self):
+                self.params = {"access_token": "configured"}
+                self.headers = {"User-Agent": "mapbox-sdk-py/test"}
+
+            def get(self, url, **kwargs):
+                events.append(("request", url, kwargs))
+                return JsonResponse(payload)
+
+        class RecordingGeocoder(object):
+            def __init__(self):
+                self.session = RecordingSession()
+
             def forward(self, query):
                 events.append(("forward", query))
-                return super().forward(query)
+                return self.session.get(
+                    "https://api.mapbox.com/geocoding/v5", params={"query": query}
+                )
 
-        geocoder = RecordingGeocoder(
-            {"features": [{"center": [-122.41143, 37.794678]}]}
-        )
+        geocoder = RecordingGeocoder()
+        original_session = geocoder.session
         mapbox = ModuleType("mapbox")
 
         def geocoder_factory(**kwargs):
@@ -80,16 +94,35 @@ class GeoCodeTest(unittest.TestCase):
                 ("construct", {"name": "mapbox.places-permanent"}),
                 ("forward", "San Francisco, CA"),
                 (
+                    "request",
+                    "https://api.mapbox.com/geocoding/v5",
+                    {"params": {"query": "San Francisco, CA"}, "timeout": 5.0},
+                ),
+                (
                     "cache",
                     "geocode_query_1_San Francisco, CA",
                     {"lat": 37.794678, "lng": -122.41143},
                 ),
             ],
         )
+        self.assertIs(geocoder.session.params, original_session.params)
+        self.assertIs(geocoder.session.headers, original_session.headers)
         self.assertEqual(
             cache.decoded("geocode_query_1_San Francisco, CA"),
             {"lat": 37.794678, "lng": -122.41143},
         )
+
+    def test_injected_geocoder_session_is_not_wrapped(self):
+        geocoder = FakeGeocoder({"features": [{"center": [-122.41143, 37.794678]}]})
+        session = object()
+        geocoder.session = session
+        geo = GeoCode(
+            "San Francisco, CA", cache_client=MemoryCache(), geocoder=geocoder
+        )
+
+        self.assertEqual(geo.getLatLng(), {"lat": 37.794678, "lng": -122.41143})
+        self.assertIs(geo.geocoder_client(), geocoder)
+        self.assertIs(geocoder.session, session)
 
     def test_geocoder_request_failure_is_normalized_without_detail(self):
         geocoder = FailingGeocoder(

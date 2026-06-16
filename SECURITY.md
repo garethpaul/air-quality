@@ -41,6 +41,8 @@ geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 Unicode control characters are rejected from search queries before cache-key
 construction or Mapbox lookup; visible internationalized text remains valid.
+Default Mapbox geocoder requests use a five-second timeout while preserving
+SDK session authentication and explicitly injected geocoder clients.
 Overflowing cached numeric values are ignored and refreshed before conversion
 errors can escape the cache validation boundary.
 Cached AQI guidance is accepted only when its 0-500 score, category, and
