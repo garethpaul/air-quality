@@ -14,6 +14,8 @@ an infrastructure stack to the repository.
   local `PORT`.
 - Run one application process per instance. This service has no background
   workers or repository-managed database migrations.
+- Bottle debug mode is disabled by default for every repository launch path.
+  Keep it disabled in deployed process configuration.
 
 ## Required Configuration
 

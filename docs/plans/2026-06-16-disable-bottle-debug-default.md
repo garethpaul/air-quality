@@ -1,6 +1,6 @@
 # Disable Bottle Debug Mode By Default
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -36,8 +36,8 @@ guidance.
 
 **File:** `app.py`
 
-Use Bottle's production-safe default for the local launch path while preserving
-its existing host and port.
+Select the existing local or Heroku host and port, then launch Bottle once with
+debug mode explicitly disabled.
 
 ### U2: Add Startup Regressions
 
@@ -85,4 +85,24 @@ completed status, and truthful full-gate evidence.
 
 ## Completed Verification
 
-Pending implementation and validation.
+- The pre-change reproduction showed the local launch path passing
+  `debug=True` to Bottle.
+- The focused test-first run failed only on the unsafe local argument while the
+  Heroku and missing-Bottle scenarios passed.
+- `test_main_uses_safe_local_server_defaults`,
+  `test_main_uses_safe_heroku_server_defaults`, and `test_main_requires_bottle`
+  passed, as did all 15 app tests.
+- Ruff formatting and lint checks passed, all maintained Python modules
+  compiled, and the complete suite passed all 94 tests.
+- Repository and external-directory `make check` both passed the complete gate,
+  including all 94 tests and the baseline contracts.
+- Seven isolated hostile mutations were rejected: enabling debug mode, removing
+  the explicit false setting, removing either startup test, removing the
+  missing-Bottle guard, removing maintained guidance, and reopening plan
+  status.
+- A plan-aware review across correctness, security, testing, maintainability,
+  reuse, and efficiency found no actionable findings.
+- Exact diff, whitespace, mode, conflict-marker, generated-artifact,
+  credential-shaped addition, dependency, and workflow audits passed.
+- Live deployment, reverse-proxy, Redis, Mapbox, and sensor-feed behavior remain
+  outside local validation.

@@ -72,6 +72,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md" \
   "docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md" \
   "docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md" \
+  "docs/plans/2026-06-16-disable-bottle-debug-default.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -1590,5 +1591,46 @@ if ! grep -Fq 'credential persistence disabled' "$ROOT_DIR/SECURITY.md"; then
   printf '%s\n' "SECURITY.md must document credential-free checkout." >&2
   exit 1
 fi
+
+if ! grep -Fq 'run(host=host, port=port, debug=False)' "$ROOT_DIR/app.py"; then
+  printf '%s\n' "Bottle startup must disable debug mode explicitly." >&2
+  exit 1
+fi
+
+if grep -Eq 'run\([^)]*debug[[:space:]]*=[[:space:]]*True' "$ROOT_DIR/app.py"; then
+  printf '%s\n' "Bottle startup must not enable debug mode." >&2
+  exit 1
+fi
+
+for bottle_startup_test in \
+  'test_main_uses_safe_local_server_defaults' \
+  'test_main_uses_safe_heroku_server_defaults' \
+  'test_main_requires_bottle'; do
+  if ! grep -Fq "$bottle_startup_test" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "App tests must preserve startup contract: $bottle_startup_test" >&2
+    exit 1
+  fi
+done
+
+for bottle_startup_doc in AGENTS.md README.md DEPLOYMENT.md SECURITY.md VISION.md; do
+  if ! grep -Fq 'Bottle debug mode is disabled by default' \
+    "$ROOT_DIR/$bottle_startup_doc"; then
+    printf '%s\n' "$bottle_startup_doc must document disabled Bottle debug mode." >&2
+    exit 1
+  fi
+done
+
+for bottle_startup_plan_contract in \
+  'Status: Completed' \
+  'test_main_uses_safe_local_server_defaults' \
+  'test_main_uses_safe_heroku_server_defaults' \
+  'repository and external-directory `make check`' \
+  'hostile mutations'; do
+  if ! grep -Fq "$bottle_startup_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-disable-bottle-debug-default.md"; then
+    printf '%s\n' "Bottle startup plan must preserve completion evidence: $bottle_startup_plan_contract" >&2
+    exit 1
+  fi
+done
 
 printf '%s\n' "air-quality baseline checks passed."

@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- Bottle debug mode is disabled by default for local and Heroku launch paths,
+  with deterministic startup argument regressions.
 - Accepted signed-zero coordinates normalize to positive zero so equivalent
   requests share one cache key.
 - Mapbox and cached geocoder signed-zero coordinates normalize to positive zero

@@ -75,6 +75,9 @@
 - Upstream sensor responses must declare `application/json` or a valid
   `application/*+json` media type before body streaming.
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the timeout without live network access.
+- Bottle debug mode is disabled by default for every repository launch path;
+  preserve the local and Heroku startup regressions when changing process
+  configuration.
 - Checked-in binary libraries are present; do not replace them without documenting toolchain and checksums.
 
 ## Agent workflow

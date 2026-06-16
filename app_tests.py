@@ -197,6 +197,50 @@ class AppRouteHelperTest(unittest.TestCase):
                 self.assertEqual(payload, {"error": expected_message})
                 self.assertNotIn(str(error), json.dumps(payload))
 
+    def test_main_uses_safe_local_server_defaults(self):
+        calls = []
+
+        with (
+            patch.object(
+                app_module, "run", side_effect=lambda **kwargs: calls.append(kwargs)
+            ),
+            patch.dict(app_module.os.environ, {}, clear=True),
+        ):
+            app_module.main()
+
+        self.assertEqual(
+            calls,
+            [{"host": "localhost", "port": 8080, "debug": False}],
+        )
+
+    def test_main_uses_safe_heroku_server_defaults(self):
+        calls = []
+
+        with (
+            patch.object(
+                app_module, "run", side_effect=lambda **kwargs: calls.append(kwargs)
+            ),
+            patch.dict(
+                app_module.os.environ,
+                {"APP_LOCATION": "heroku", "PORT": "4321"},
+                clear=True,
+            ),
+        ):
+            app_module.main()
+
+        self.assertEqual(
+            calls,
+            [{"host": "0.0.0.0", "port": 4321, "debug": False}],
+        )
+
+    def test_main_requires_bottle(self):
+        with patch.object(app_module, "run", None):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "^Bottle must be installed to run the web service$",
+            ):
+                app_module.main()
+
 
 if __name__ == "__main__":
     unittest.main()

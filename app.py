@@ -125,9 +125,13 @@ def main():
         raise RuntimeError("Bottle must be installed to run the web service")
 
     if os.environ.get("APP_LOCATION") == "heroku":
-        run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+        host = "0.0.0.0"
+        port = int(os.environ.get("PORT", 5000))
     else:
-        run(host="localhost", port=8080, debug=True)
+        host = "localhost"
+        port = 8080
+
+    run(host=host, port=port, debug=False)
 
 
 if __name__ == "__main__":

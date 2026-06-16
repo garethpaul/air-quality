@@ -96,6 +96,8 @@ additionally rejects multicast targets, which Python classifies as global but
 which are not valid unicast service endpoints. This preflight does not pin the
 subsequent Requests connection to a validated address, so deployment DNS
 remains part of the trusted infrastructure boundary.
+Bottle debug mode is disabled by default for every repository launch path so
+provider-neutral deployment cannot expose debug responses accidentally.
 
 ## Dependency and Supply Chain Security
 
