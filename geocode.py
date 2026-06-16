@@ -64,7 +64,9 @@ class GeoCode(object):
             "lat": _canonicalize_zero(lat),
             "lng": _canonicalize_zero(lng),
         }
-        if any(value == 0.0 and math.copysign(1.0, value) < 0 for value in (lat, lng)):
+        if any(isinstance(data[field], str) for field in ("lat", "lng")) or any(
+            value == 0.0 and math.copysign(1.0, value) < 0 for value in (lat, lng)
+        ):
             self.cache_set(key, json.dumps(normalized))
         return normalized
 

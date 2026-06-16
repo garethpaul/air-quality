@@ -62,6 +62,8 @@
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
 - Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
   before use or cache serialization.
+- Valid cached geocoder numeric strings are rewritten as canonical JSON numbers
+  after validation; preserve the no-rewrite path for canonical numeric hits.
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to numeric locations.

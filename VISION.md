@@ -54,6 +54,7 @@ Priority:
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
 - Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
   before use or cache serialization.
+- Rewrite valid cached geocoder numeric strings as canonical JSON numbers
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data

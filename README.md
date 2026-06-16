@@ -114,6 +114,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
 - Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
   before use or cache serialization.
+- Valid cached geocoder numeric strings are rewritten as canonical JSON numbers
+  after validation so Redis retains one coordinate schema.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
   35.5-55.4 Unhealthy for Sensitive Groups, 55.5-125.4 Unhealthy,
   125.5-225.4 Very Unhealthy, and 225.5+ Hazardous breakpoints. Scores above
@@ -199,6 +201,8 @@ listener must be reachable only by the reverse proxy or private network.
   normalized Mapbox request and JSON-decoding boundary.
 - See `docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md` for the
   permanent Mapbox dataset and cache-compliance boundary.
+- See `docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md` for
+  canonical cached coordinate serialization.
 - See `docs/plans/2026-06-13-air-quality-https-data-source.md` for direct and
   post-redirect HTTPS transport enforcement.
 - See `docs/plans/2026-06-13-air-quality-public-data-addresses.md` for the

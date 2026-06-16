@@ -71,6 +71,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md" \
   "docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md" \
+  "docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -114,6 +115,45 @@ for permanent_geocoder_plan_contract in \
   'No live Mapbox request was made'; do
   if ! grep -Fq "$permanent_geocoder_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md"; then
     printf '%s\n' "Permanent geocoding plan must record completed evidence: $permanent_geocoder_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for canonical_geocode_cache_source_contract in \
+  'any(isinstance(data[field], str) for field in ("lat", "lng"))' \
+  'self.cache_set(key, json.dumps(normalized))'; do
+  if ! grep -Fq "$canonical_geocode_cache_source_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Canonical geocode cache handling must keep contract: $canonical_geocode_cache_source_contract" >&2
+    exit 1
+  fi
+done
+
+for canonical_geocode_cache_test_contract in \
+  'test_cached_numeric_strings_are_rewritten_as_canonical_numbers' \
+  'test_canonical_numeric_cache_hit_does_not_rewrite' \
+  'test_numeric_string_cache_repair_failure_is_normalized' \
+  'self.assertIsInstance(cached["lat"], float)' \
+  'self.assertEqual(geocoder.queries, [])'; do
+  if ! grep -Fq "$canonical_geocode_cache_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Canonical geocode cache regression must keep contract: $canonical_geocode_cache_test_contract" >&2
+    exit 1
+  fi
+done
+
+for canonical_geocode_cache_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "cached geocoder numeric strings" "$ROOT_DIR/$canonical_geocode_cache_document"; then
+    printf '%s\n' "$canonical_geocode_cache_document must document canonical cached geocoder numbers." >&2
+    exit 1
+  fi
+done
+
+for canonical_geocode_cache_plan_contract in \
+  'Status: Completed' \
+  'repository and external-directory `make check`' \
+  'hostile mutations' \
+  'Live Redis, Mapbox credentials, and provider behavior remain outside'; do
+  if ! grep -Fq "$canonical_geocode_cache_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-canonical-geocode-cache.md"; then
+    printf '%s\n' "Canonical geocode cache plan must record completed evidence: $canonical_geocode_cache_plan_contract" >&2
     exit 1
   fi
 done

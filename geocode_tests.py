@@ -245,6 +245,90 @@ class GeoCodeTest(unittest.TestCase):
         self.assertEqual(geo.getLatLng(), {"lat": 0.0, "lng": 0.0})
         self.assertEqual(geocoder.queries, [])
 
+    def test_cached_numeric_strings_are_rewritten_as_canonical_numbers(self):
+        cached_values = [
+            (
+                {"lat": "37.794678", "lng": -122.41143},
+                {"lat": 37.794678, "lng": -122.41143},
+            ),
+            (
+                {"lat": 37.794678, "lng": "-122.41143"},
+                {"lat": 37.794678, "lng": -122.41143},
+            ),
+            (
+                {"lat": "37.794678", "lng": "-122.41143"},
+                {"lat": 37.794678, "lng": -122.41143},
+            ),
+            ({"lat": "-0.0", "lng": "0.0"}, {"lat": 0.0, "lng": 0.0}),
+        ]
+
+        for cached_value, expected in cached_values:
+            with self.subTest(cached_value=cached_value):
+                cache = MemoryCache()
+                key = "geocode_query_1_Canonical"
+                cache.set(key, json.dumps(cached_value))
+                geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+                geo = GeoCode("Canonical", cache_client=cache, geocoder=geocoder)
+
+                result = geo.getLatLng()
+                cached = cache.decoded(key)
+
+                self.assertEqual(result, expected)
+                self.assertEqual(cached, expected)
+                self.assertIsInstance(cached["lat"], float)
+                self.assertIsInstance(cached["lng"], float)
+                if cached["lat"] == 0.0:
+                    self.assertEqual(math.copysign(1.0, cached["lat"]), 1.0)
+                if cached["lng"] == 0.0:
+                    self.assertEqual(math.copysign(1.0, cached["lng"]), 1.0)
+                self.assertEqual(geocoder.queries, [])
+
+    def test_canonical_numeric_cache_hit_does_not_rewrite(self):
+        class RewriteRejectingCache(MemoryCache):
+            def set(self, key, value):
+                if key in self.values:
+                    raise AssertionError(
+                        "canonical numeric cache hit must not be rewritten"
+                    )
+                super().set(key, value)
+
+        for cached_value in (
+            {"lat": 37, "lng": -122},
+            {"lat": 37.794678, "lng": -122.41143},
+        ):
+            with self.subTest(cached_value=cached_value):
+                cache = RewriteRejectingCache()
+                key = "geocode_query_1_Canonical"
+                cache.values[key] = json.dumps(cached_value)
+                geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+
+                result = GeoCode(
+                    "Canonical", cache_client=cache, geocoder=geocoder
+                ).getLatLng()
+
+                self.assertEqual(result, cached_value)
+                self.assertIsInstance(result["lat"], float)
+                self.assertIsInstance(result["lng"], float)
+                self.assertEqual(geocoder.queries, [])
+
+    def test_numeric_string_cache_repair_failure_is_normalized(self):
+        class FailingRepairCache(MemoryCache):
+            def set(self, key, value):
+                raise RuntimeError("redis://user:secret@example.test unavailable")
+
+        cache = FailingRepairCache()
+        key = "geocode_query_1_Canonical"
+        cache.values[key] = json.dumps({"lat": "37.794678", "lng": "-122.41143"})
+        geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+        geo = GeoCode("Canonical", cache_client=cache, geocoder=geocoder)
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(geocoder.queries, [])
+
     def test_corrupt_cached_geocode_is_ignored_and_refreshed(self):
         invalid_cached_values = [
             "not-json",

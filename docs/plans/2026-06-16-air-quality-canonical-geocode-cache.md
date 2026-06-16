@@ -1,6 +1,6 @@
 # Canonicalize Valid Cached Geocoder Coordinates
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -92,5 +92,24 @@ completed status, and truthful full-gate evidence.
 - Reject isolated mutations that remove schema detection, skip repair, rewrite
   canonical hits, weaken failure normalization or tests, remove guidance, or
   falsify plan status.
+- The hostile mutations must be rejected before final review and commit.
 - Audit the exact diff, generated artifacts, dependency/workflow drift,
   credential-shaped additions, conflict markers, modes, and whitespace.
+
+## Completed Verification
+
+- The pre-change reproduction returned float coordinates while the valid Redis
+  payload remained string-valued, with no Mapbox request.
+- Four focused regressions passed for canonical repair, no-write canonical
+  hits, repair failure normalization, and corrupt-cache refresh behavior.
+- All 21 geocoder tests passed.
+- Ruff formatting and lint checks passed, all maintained Python modules
+  compiled, and the complete suite passed all 91 tests.
+- Repository and external-directory `make check` both passed the complete gate
+  for this change, including all 91 tests and the baseline contracts.
+- All eight isolated hostile mutations were rejected by focused regressions or
+  the baseline checker: removed or inverted string detection, forced canonical
+  rewrites, dropped repair writes, removed failure coverage, weakened source
+  contracts, removed guidance, and reopened plan status.
+- Live Redis, Mapbox credentials, and provider behavior remain outside local
+  validation.
