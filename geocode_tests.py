@@ -1,5 +1,6 @@
 import unittest
 import json
+import math
 import os
 from unittest.mock import patch
 
@@ -129,6 +130,72 @@ class GeoCodeTest(unittest.TestCase):
         geo = GeoCode("San Francisco, CA", cache_client=cache, geocoder=geocoder)
 
         self.assertEqual(geo.getLatLng(), {"lat": 37.794678, "lng": -122.41143})
+
+    def test_fresh_geocoder_center_canonicalizes_and_caches_signed_zero(self):
+        signed_zero_values = [0.0, -0.0, "0", "-0", "0.0", "-0.0"]
+
+        for value in signed_zero_values:
+            with self.subTest(value=value):
+                cache = MemoryCache()
+                geocoder = FakeGeocoder({"features": [{"center": [value, value]}]})
+                geo = GeoCode("Zero", cache_client=cache, geocoder=geocoder)
+
+                result = geo.getLatLng()
+                cached = cache.decoded("geocode_query_1_Zero")
+
+                self.assertEqual(result, {"lat": 0.0, "lng": 0.0})
+                self.assertEqual(math.copysign(1.0, result["lat"]), 1.0)
+                self.assertEqual(math.copysign(1.0, result["lng"]), 1.0)
+                self.assertEqual(math.copysign(1.0, cached["lat"]), 1.0)
+                self.assertEqual(math.copysign(1.0, cached["lng"]), 1.0)
+
+    def test_cached_geocoder_coordinates_canonicalize_signed_zero(self):
+        cache = MemoryCache()
+        key = "geocode_query_1_Zero"
+        cache.set(key, json.dumps({"lat": -0.0, "lng": -0.0}))
+        geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+        geo = GeoCode("Zero", cache_client=cache, geocoder=geocoder)
+
+        result = geo.getLatLng()
+
+        self.assertEqual(result, {"lat": 0.0, "lng": 0.0})
+        self.assertEqual(math.copysign(1.0, result["lat"]), 1.0)
+        self.assertEqual(math.copysign(1.0, result["lng"]), 1.0)
+        self.assertEqual(math.copysign(1.0, cache.decoded(key)["lat"]), 1.0)
+        self.assertEqual(math.copysign(1.0, cache.decoded(key)["lng"]), 1.0)
+        self.assertEqual(geocoder.queries, [])
+
+    def test_signed_zero_cache_repair_failure_is_normalized(self):
+        class FailingRepairCache(MemoryCache):
+            def set(self, key, value):
+                raise RuntimeError("redis://user:secret@example.test unavailable")
+
+        cache = FailingRepairCache()
+        key = "geocode_query_1_Zero"
+        cache.values[key] = json.dumps({"lat": -0.0, "lng": -0.0})
+        geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+        geo = GeoCode("Zero", cache_client=cache, geocoder=geocoder)
+
+        with self.assertRaisesRegex(RuntimeError, "^cache request failed$") as raised:
+            geo.getLatLng()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("secret", str(raised.exception))
+        self.assertEqual(geocoder.queries, [])
+
+    def test_positive_zero_cache_hit_does_not_rewrite(self):
+        class RewriteRejectingCache(MemoryCache):
+            def set(self, key, value):
+                raise AssertionError("canonical cache hit must not be rewritten")
+
+        cache = RewriteRejectingCache()
+        key = "geocode_query_1_Zero"
+        cache.values[key] = json.dumps({"lat": 0.0, "lng": 0.0})
+        geocoder = FakeGeocoder({"features": [{"center": [1.0, 1.0]}]})
+        geo = GeoCode("Zero", cache_client=cache, geocoder=geocoder)
+
+        self.assertEqual(geo.getLatLng(), {"lat": 0.0, "lng": 0.0})
+        self.assertEqual(geocoder.queries, [])
 
     def test_corrupt_cached_geocode_is_ignored_and_refreshed(self):
         invalid_cached_values = [

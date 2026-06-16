@@ -69,8 +69,59 @@ for path in \
   "docs/plans/2026-06-15-air-quality-constructor-validation-stack-reconciliation.md" \
   "docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md" \
   "docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md" \
+  "docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for geocoder_signed_zero_source_contract in \
+  'from air import _canonicalize_zero' \
+  '"lat": _canonicalize_zero(lat)' \
+  '"lng": _canonicalize_zero(lng)' \
+  'math.copysign(1.0, value) < 0' \
+  'self.cache_set(key, json.dumps(normalized))'; do
+  if ! grep -Fq "$geocoder_signed_zero_source_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Geocoder signed-zero handling must keep contract: $geocoder_signed_zero_source_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Foc '"lat": _canonicalize_zero(lat)' "$ROOT_DIR/geocode.py")" -ne 2 ] || \
+   [ "$(grep -Foc '"lng": _canonicalize_zero(lng)' "$ROOT_DIR/geocode.py")" -ne 2 ]; then
+  printf '%s\n' "Fresh and cached geocoder coordinates must both canonicalize signed zero." >&2
+  exit 1
+fi
+
+for geocoder_signed_zero_test_contract in \
+  'test_fresh_geocoder_center_canonicalizes_and_caches_signed_zero' \
+  'test_cached_geocoder_coordinates_canonicalize_signed_zero' \
+  'test_signed_zero_cache_repair_failure_is_normalized' \
+  'test_positive_zero_cache_hit_does_not_rewrite' \
+  'math.copysign(1.0, cached["lat"])' \
+  'math.copysign(1.0, cache.decoded(key)["lat"])' \
+  'self.assertEqual(geocoder.queries, [])'; do
+  if ! grep -Fq "$geocoder_signed_zero_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Geocoder signed-zero regression must keep contract: $geocoder_signed_zero_test_contract" >&2
+    exit 1
+  fi
+done
+
+for geocoder_signed_zero_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fq "Mapbox and cached geocoder signed-zero coordinates normalize to positive zero" "$ROOT_DIR/$geocoder_signed_zero_document"; then
+    printf '%s\n' "$geocoder_signed_zero_document must document geocoder signed-zero normalization." >&2
+    exit 1
+  fi
+done
+
+for geocoder_signed_zero_plan_contract in \
+  'Status: Completed' \
+  'repository and external-directory `make check`' \
+  'hostile mutations' \
+  'Live Redis, Mapbox credentials, and provider behavior remain outside'; do
+  if ! grep -Fq "$geocoder_signed_zero_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md"; then
+    printf '%s\n' "Geocoder signed-zero plan must record completed evidence: $geocoder_signed_zero_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for signed_zero_source_contract in \

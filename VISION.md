@@ -52,6 +52,8 @@ Priority:
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
+- Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
+  before use or cache serialization.
 - Reject non-finite or out-of-range geocoder coordinates before caching
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data

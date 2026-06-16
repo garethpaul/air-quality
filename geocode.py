@@ -3,6 +3,8 @@ import math
 import os
 from collections.abc import Mapping
 
+from air import _canonicalize_zero
+
 CACHE_ERROR_MESSAGE = "cache request failed"
 GEOCODER_ERROR_MESSAGE = "geocoder request failed"
 
@@ -57,7 +59,13 @@ class GeoCode(object):
         if lat < -90 or lat > 90 or lng < -180 or lng > 180:
             return None
 
-        return {"lat": lat, "lng": lng}
+        normalized = {
+            "lat": _canonicalize_zero(lat),
+            "lng": _canonicalize_zero(lng),
+        }
+        if any(value == 0.0 and math.copysign(1.0, value) < 0 for value in (lat, lng)):
+            self.cache_set(key, json.dumps(normalized))
+        return normalized
 
     def cache_get(self, key):
         cache = self.cache()
@@ -105,7 +113,10 @@ class GeoCode(object):
         if lat < -90 or lat > 90 or lng < -180 or lng > 180:
             raise ValueError("geocoder center values must be valid coordinates")
 
-        return {"lat": lat, "lng": lng}
+        return {
+            "lat": _canonicalize_zero(lat),
+            "lng": _canonicalize_zero(lng),
+        }
 
     def cache(self):
         if self.r is None:

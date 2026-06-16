@@ -112,6 +112,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
 - Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
 - Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
+- Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
+  before use or cache serialization.
 - PM2.5 scores use EPA's current 0.0-9.0 Good, 9.1-35.4 Moderate,
   35.5-55.4 Unhealthy for Sensitive Groups, 55.5-125.4 Unhealthy,
   125.5-225.4 Very Unhealthy, and 225.5+ Hazardous breakpoints. Scores above

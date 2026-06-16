@@ -1,6 +1,6 @@
 # Air Quality Geocoder Signed-Zero Normalization
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -25,7 +25,8 @@ cache keys eventually normalize them.
 1. `GeoCode.parse_first_feature_center` must return positive `0.0` for numeric
    and textual positive or negative zero in either coordinate position.
 2. `GeoCode.cached_data` must normalize valid cached signed-zero coordinates to
-   positive `0.0` without accepting any currently invalid cache payload.
+   positive `0.0`, repair the permanent cache entry, and avoid accepting any
+   currently invalid cache payload.
 3. Fresh geocoder results must be serialized to Redis only after
    canonicalization.
 4. Nonzero numeric strings, geographic boundaries, transport errors, cache
@@ -64,7 +65,9 @@ guidance, completed status, and verification evidence.
 - Fresh centers containing `0.0`, `-0.0`, `"0"`, `"-0"`, `"0.0"`, and
   `"-0.0"` return positive-zero latitude and longitude.
 - Valid cached payloads containing positive or negative signed zero return the
-  same canonical mapping without a provider request.
+  same canonical mapping and repair negative-zero serialization without a
+  provider request.
+- Already-canonical positive-zero cache hits do not issue redundant writes.
 - Fresh signed-zero results are cached as positive zero.
 - Nonzero numeric strings and exact geographic boundaries retain their values.
 - Existing boolean, nonnumeric, non-finite, overflowing, and out-of-range
@@ -97,3 +100,19 @@ guidance, completed status, and verification evidence.
   cache-serialization assertions, remove guidance, or falsify plan status.
 - Audit the exact diff, generated artifacts, dependency/workflow drift,
   credential-shaped additions, conflict markers, and whitespace before commit.
+
+## Completed Verification
+
+- The pre-change reproduction showed negative sign bits from both fresh Mapbox
+  centers and otherwise valid cached geocoder coordinates.
+- Focused fresh, cached, legacy-cache repair, repair-failure normalization,
+  cache-serialization, numeric-string, and corrupt-cache regressions passed.
+- Ruff formatting and lint checks passed, all maintained Python modules
+  compiled, and the complete suite passed all 87 tests.
+- Eight isolated hostile mutations covering fresh and cached normalization,
+  legacy cache repair, source integration, focused tests, guidance, and plan
+  status were rejected.
+- Repository and external-directory `make check` passed the complete 87-test
+  gate and all portable baseline contracts.
+- Live Redis, Mapbox credentials, and provider behavior remain outside local
+  validation.
