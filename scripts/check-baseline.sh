@@ -994,7 +994,11 @@ for https_test_contract in \
 done
 
 for response_encoding_source_contract in \
-  'except (LookupError, UnicodeDecodeError, ValueError):' \
+  'def _require_json_utf8_encoding(encoding):' \
+  'canonical_encoding = codecs.lookup(encoding or "utf-8").name' \
+  'if canonical_encoding != "utf-8":' \
+  '_require_json_utf8_encoding(response.encoding)' \
+  'body.decode("utf-8")' \
   'raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")'; do
   if ! grep -Fq "$response_encoding_source_contract" "$ROOT_DIR/air.py"; then
     printf '%s\n' "Upstream response encoding must keep source contract: $response_encoding_source_contract" >&2
@@ -1002,12 +1006,15 @@ for response_encoding_source_contract in \
   fi
 done
 
-if ! grep -Fq \
-  'test_default_http_get_normalizes_unknown_encoding_and_closes_response' \
-  "$ROOT_DIR/air_tests.py"; then
-  printf '%s\n' 'Upstream response encoding regression must remain covered.' >&2
-  exit 1
-fi
+for response_encoding_test_contract in \
+  'test_default_http_get_accepts_utf8_encoding_aliases' \
+  'test_default_http_get_rejects_non_utf8_json_before_streaming' \
+  'test_default_http_get_normalizes_unknown_encoding_and_closes_response'; do
+  if ! grep -Fq "$response_encoding_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Upstream response encoding tests must keep contract: $response_encoding_test_contract" >&2
+    exit 1
+  fi
+done
 
 for content_length_source_contract in \
   'CONTENT_LENGTH_DIGITS = re.compile(r"^[0-9]+$")' \
@@ -1084,6 +1091,28 @@ for response_encoding_document in \
   "$ROOT_DIR/VISION.md"; do
   if ! grep -Fq "unsupported response encodings" "$response_encoding_document"; then
     printf '%s\n' "$response_encoding_document must document unsupported response encodings." >&2
+    exit 1
+  fi
+done
+
+for json_utf8_document in \
+  "$ROOT_DIR/AGENTS.md" \
+  "$ROOT_DIR/README.md" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$ROOT_DIR/VISION.md"; do
+  if ! grep -Fq "network JSON must use UTF-8" "$json_utf8_document"; then
+    printf '%s\n' "$json_utf8_document must document the network JSON UTF-8 boundary." >&2
+    exit 1
+  fi
+done
+
+for json_utf8_plan_contract in \
+  'Status: Completed' \
+  'Repository and external-directory `make check` both passed' \
+  'isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$json_utf8_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-air-quality-json-utf8-boundary.md"; then
+    printf '%s\n' "JSON UTF-8 plan must preserve completion evidence: $json_utf8_plan_contract" >&2
     exit 1
   fi
 done

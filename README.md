@@ -76,6 +76,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
   keeps the existing
   10-second timeout, and closes the streamed response after both successful and
   failed reads.
+- Upstream network JSON must use UTF-8; non-UTF-8 and unknown response
+  encodings fail before response streaming through the generic JSON error.
 - Requests transport failures at connection, status, and streamed-read stages
   become stable service errors without exposing provider exception details.
 - Geocoder transport failures during Mapbox dispatch or JSON decoding become

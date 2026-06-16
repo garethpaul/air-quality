@@ -37,6 +37,7 @@ Priority:
 - Require non-negative Content-Length syntax using only ASCII decimal digits
 - Require a final `application/json` or `application/*+json` response media type
 - Normalize unsupported response encodings before sensor payload processing
+- Require that upstream network JSON must use UTF-8 before response streaming
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup

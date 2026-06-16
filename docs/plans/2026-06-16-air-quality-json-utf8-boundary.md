@@ -1,6 +1,6 @@
 # Enforce The Network JSON UTF-8 Boundary
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -99,3 +99,17 @@ Document the RFC 8259 network JSON boundary without changing the public API.
 - RFC 8259 section 8.1 requires network-transmitted JSON to use UTF-8.
 - The RFC 8259 media type registration defines no `charset` parameter for
   `application/json`.
+
+## Completed Verification
+
+- The focused UTF-8 alias, non-UTF-8 rejection, and unknown-encoding tests
+  passed, including cleanup and pre-streaming assertions.
+- The complete dependency-free suite passed all 96 tests.
+- Ruff formatting and lint, Python compilation, and the baseline checker
+  passed in an isolated copy before the completion record was enabled.
+- Repository and external-directory `make check` both passed with explicit
+  timeouts after completion evidence was recorded.
+- Seven isolated hostile mutations were rejected: removing the encoding
+  guard, weakening the canonical codec comparison, restoring arbitrary codec
+  decoding, removing either focused regression, removing maintained guidance,
+  and falsifying plan status.

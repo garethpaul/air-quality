@@ -51,6 +51,8 @@ that violate non-negative Content-Length syntax (ASCII decimal digits only)
 should fail before sensor payload processing, as should missing or non-JSON
 `application/json` or `application/*+json` response media types and
 unsupported response encodings.
+Upstream network JSON must use UTF-8; non-UTF-8 and unknown response encodings
+fail before response streaming through the generic JSON error.
 Non-finite and overflowing upstream sensor values are ignored before distance
 or AQI calculations.
 Boolean upstream sensor values are ignored before distance and AQI calculations.

@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- Upstream network JSON now requires UTF-8 and rejects non-UTF-8 or unknown
+  response encodings before response streaming.
 - Bottle debug mode is disabled by default for local and Heroku launch paths,
   with deterministic startup argument regressions.
 - Accepted signed-zero coordinates normalize to positive zero so equivalent

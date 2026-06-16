@@ -529,6 +529,37 @@ class AirQualityTest(unittest.TestCase):
                 self.assertEqual(payload, {"results": []})
                 self.assertEqual(response.close_calls, 1)
 
+    def test_default_http_get_accepts_utf8_encoding_aliases(self):
+        for encoding in (None, "utf-8", "UTF8", "utf_8"):
+            with self.subTest(encoding=encoding):
+                response = self.StreamingResponse(
+                    ['{"label":"caf\u00e9"}'.encode("utf-8")], encoding=encoding
+                )
+
+                payload = self.call_with_requests_module(
+                    self.requests_module(lambda _url, **_kwargs: response)
+                )
+
+                self.assertEqual(payload, {"label": "caf\u00e9"})
+                self.assertEqual(response.close_calls, 1)
+
+    def test_default_http_get_rejects_non_utf8_json_before_streaming(self):
+        response = self.StreamingResponse(
+            [b'{"label":"caf\xe9"}'], encoding="iso-8859-1"
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA response must be valid JSON$"
+        ) as raised:
+            self.call_with_requests_module(
+                self.requests_module(lambda _url, **_kwargs: response)
+            )
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertNotIn("iso-8859-1", str(raised.exception))
+        self.assertFalse(hasattr(response, "chunk_size"))
+        self.assertEqual(response.close_calls, 1)
+
     def test_default_http_get_rejects_non_json_media_types_before_streaming(self):
         for content_type in (
             None,

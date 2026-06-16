@@ -1,3 +1,4 @@
+import codecs
 import ipaddress
 import json
 import math
@@ -123,6 +124,16 @@ def _require_json_media_type(content_type):
         raise RuntimeError(JSON_MEDIA_TYPE_ERROR)
 
 
+def _require_json_utf8_encoding(encoding):
+    try:
+        canonical_encoding = codecs.lookup(encoding or "utf-8").name
+    except LookupError:
+        raise RuntimeError("AIRQUALITY_DATA response must be valid JSON") from None
+
+    if canonical_encoding != "utf-8":
+        raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
+
+
 def _default_http_get(url):
     import requests
 
@@ -142,6 +153,7 @@ def _default_http_get(url):
         _require_https_data_url(response.url)
         response.raise_for_status()
         _require_json_media_type(response.headers.get("Content-Type"))
+        _require_json_utf8_encoding(response.encoding)
 
         content_length = response.headers.get("Content-Length")
         if content_length is not None:
@@ -164,8 +176,8 @@ def _default_http_get(url):
             body.extend(chunk)
 
         try:
-            return json.loads(body.decode(response.encoding or "utf-8"))
-        except (LookupError, UnicodeDecodeError, ValueError):
+            return json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
             raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
     except requests.exceptions.RequestException:
         raise RuntimeError("AIRQUALITY_DATA request failed") from None
