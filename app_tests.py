@@ -151,6 +151,30 @@ class AppRouteHelperTest(unittest.TestCase):
 
         self.assertEqual(parse_search_query(query), "a" * SEARCH_QUERY_MAX_LENGTH)
 
+    def test_parse_search_query_rejects_unicode_control_characters(self):
+        for query in ("San\x00Francisco", "San\nFrancisco", "San\u0085Francisco"):
+            with self.subTest(query=repr(query)):
+                with self.assertRaisesRegex(
+                    ValueError, "^query must not contain control characters$"
+                ):
+                    parse_search_query(query)
+
+    def test_rejected_control_query_does_not_construct_geocoder(self):
+        with self.assertRaisesRegex(
+            ValueError, "^query must not contain control characters$"
+        ):
+            search_payload(
+                "San\x00Francisco",
+                geocode_factory=FakeGeoCode,
+                air_quality_factory=FakeAirQuality,
+            )
+
+        self.assertEqual(FakeGeoCode.calls, [])
+        self.assertEqual(FakeAirQuality.calls, [])
+
+    def test_parse_search_query_preserves_internationalized_visible_text(self):
+        self.assertEqual(parse_search_query("  São Paulo 東京  "), "São Paulo 東京")
+
     def test_show_data_does_not_expose_exception_details(self):
         cases = [
             (ValueError("private validation detail"), 400, "invalid request"),

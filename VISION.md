@@ -43,6 +43,8 @@ Priority:
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup
+- Reject Unicode control characters from search queries while preserving
+  visible internationalized text
 - Normalize geocoder transport failures without exposing provider details
 - Normalize malformed Mapbox payloads as service failures while preserving
   valid empty results as a client-visible no-result outcome

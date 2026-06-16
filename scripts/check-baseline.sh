@@ -75,6 +75,7 @@ for path in \
   "docs/plans/2026-06-16-disable-bottle-debug-default.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md" \
   "docs/plans/2026-06-16-server-port-validation.md" \
+  "docs/plans/2026-06-16-search-query-control-character-guard.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -1854,6 +1855,66 @@ for aqi_rounding_plan_contract in \
   if ! grep -Fq "$aqi_rounding_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-16-air-quality-aqi-half-up-rounding.md"; then
     printf '%s\n' "AQI half-up rounding plan must preserve completion evidence: $aqi_rounding_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for search_control_source_contract in \
+  'import unicodedata' \
+  'unicodedata.category(character) == "Cc"' \
+  'raise ValueError("query must not contain control characters")'; do
+  if ! grep -Fq "$search_control_source_contract" "$ROOT_DIR/app.py"; then
+    printf '%s\n' "Search queries must keep control-character guard: $search_control_source_contract" >&2
+    exit 1
+  fi
+done
+
+python - "$ROOT_DIR/app.py" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+method = source.split("def parse_search_query(query):", 1)[1].split(
+    "\n\ndef search_payload", 1
+)[0]
+trim = "query_string = query.strip()"
+length = "if len(query_string) > SEARCH_QUERY_MAX_LENGTH:"
+control = 'unicodedata.category(character) == "Cc"'
+result = "return query_string"
+if not all(token in method for token in (trim, length, control, result)):
+    raise SystemExit("Search query validation must keep trim, length, control, and return boundaries.")
+if not method.index(trim) < method.index(length) < method.index(control) < method.index(result):
+    raise SystemExit("Search control validation must run after trim/length and before return.")
+PY
+
+for search_control_test_contract in \
+  'test_parse_search_query_rejects_unicode_control_characters' \
+  'test_rejected_control_query_does_not_construct_geocoder' \
+  'test_parse_search_query_preserves_internationalized_visible_text' \
+  '"San\x00Francisco"' \
+  '"San\u0085Francisco"' \
+  '"São Paulo 東京"'; do
+  if ! grep -Fq "$search_control_test_contract" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "Search control-character tests must keep contract: $search_control_test_contract" >&2
+    exit 1
+  fi
+done
+
+for search_control_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fiq 'Unicode control characters' "$ROOT_DIR/$search_control_document"; then
+    printf '%s\n' "$search_control_document must document Unicode control-character rejection." >&2
+    exit 1
+  fi
+done
+
+for search_control_plan_contract in \
+  'status: completed' \
+  'all 103 tests' \
+  'Repository and external-directory `make check`' \
+  'Six isolated hostile mutations were rejected'; do
+  if ! grep -Fq "$search_control_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-16-search-query-control-character-guard.md"; then
+    printf '%s\n' "Search control-character plan must preserve completion evidence: $search_control_plan_contract" >&2
     exit 1
   fi
 done

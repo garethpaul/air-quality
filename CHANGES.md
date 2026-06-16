@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- Unicode control characters in search queries are rejected before geocoder
+  construction or cache-key use while visible internationalized text remains valid.
 - AQI interpolation now uses half-up integer rounding for nonnegative values
   instead of inheriting Python's ties-to-even behavior.
 - Heroku listener ports are validated as decimal values from 1 through 65535

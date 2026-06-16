@@ -1,5 +1,6 @@
 import math
 import os
+import unicodedata
 from json import dumps
 
 from air import AirQuality, _canonicalize_zero
@@ -74,6 +75,9 @@ def parse_search_query(query):
         raise ValueError(
             "query must be {0} characters or fewer".format(SEARCH_QUERY_MAX_LENGTH)
         )
+
+    if any(unicodedata.category(character) == "Cc" for character in query_string):
+        raise ValueError("query must not contain control characters")
 
     return query_string
 
