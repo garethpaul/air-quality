@@ -6,6 +6,9 @@
   requests share one cache key.
 - Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
   before use or cache serialization.
+- Cached Mapbox results use the `mapbox.places-permanent` dataset so Redis
+  storage is explicitly requested under the provider's permanent-geocoding
+  terms.
 
 ## 2026-06-15
 

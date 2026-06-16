@@ -1,6 +1,6 @@
 # Permanent Mapbox Geocoding Cache
 
-## Status Planned
+## Status: Completed
 
 ## Problem
 
@@ -79,15 +79,19 @@ results, so the provider request must explicitly declare permanent geocoding.
 - Require the implementation and executable regression, explain provider
   entitlement/billing, and record completed evidence.
 
-## Verification Planned
+## Verification Completed
 
-- Python compilation and focused geocoder tests.
-- Repository-root and external-directory `make check`.
-- Isolated hostile mutations for dataset fallback, constructor argument
-  removal, request-before-client ordering, missing cache assertion, weakened
-  guidance, and reopened plan status.
+- The focused permanent-dataset regression and all 18 geocoder tests passed.
+- Ruff format/lint, Python compilation, and all 88 repository tests passed.
+- The repository-root and external-directory `make check` commands passed.
+- Six isolated hostile mutations were rejected for dataset fallback,
+  constructor argument removal, request-before-client ordering, missing cache
+  expectations, weakened guidance, and reopened plan status.
 - Exact diff, generated-artifact, untracked-file, dependency/workflow drift,
-  mode, credential-pattern, conflict-marker, and whitespace audits.
+  mode, credential-pattern, conflict-marker, and whitespace audits remain part
+  of final validation.
+- No live Mapbox request was made, so provider entitlement and billable
+  behavior remain deployment prerequisites rather than local test claims.
 
 ## Risks
 

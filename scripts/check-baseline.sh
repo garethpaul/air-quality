@@ -70,8 +70,52 @@ for path in \
   "docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md" \
   "docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md" \
+  "docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for permanent_geocoder_source_contract in \
+  'MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"' \
+  'self.geocoder = Geocoder(name=MAPBOX_PERMANENT_DATASET)'; do
+  if ! grep -Fq "$permanent_geocoder_source_contract" "$ROOT_DIR/geocode.py"; then
+    printf '%s\n' "Permanent geocoder construction must keep contract: $permanent_geocoder_source_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq 'self.geocoder = Geocoder()' "$ROOT_DIR/geocode.py"; then
+  printf '%s\n' "Cached geocoding must not use the temporary default Mapbox dataset." >&2
+  exit 1
+fi
+
+for permanent_geocoder_test_contract in \
+  'test_default_geocoder_uses_permanent_dataset_before_caching' \
+  '("construct", {"name": "mapbox.places-permanent"})' \
+  '("forward", "San Francisco, CA")' \
+  '"geocode_query_1_San Francisco, CA"'; do
+  if ! grep -Fq "$permanent_geocoder_test_contract" "$ROOT_DIR/geocode_tests.py"; then
+    printf '%s\n' "Permanent geocoder regression must keep contract: $permanent_geocoder_test_contract" >&2
+    exit 1
+  fi
+done
+
+for permanent_geocoder_document in README.md SECURITY.md CHANGES.md; do
+  if ! grep -Fq 'Cached Mapbox results use the `mapbox.places-permanent` dataset' "$ROOT_DIR/$permanent_geocoder_document"; then
+    printf '%s\n' "$permanent_geocoder_document must document permanent Mapbox geocoding." >&2
+    exit 1
+  fi
+done
+
+for permanent_geocoder_plan_contract in \
+  '## Status: Completed' \
+  'repository-root and external-directory `make check`' \
+  'hostile mutations' \
+  'No live Mapbox request was made'; do
+  if ! grep -Fq "$permanent_geocoder_plan_contract" "$ROOT_DIR/docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md"; then
+    printf '%s\n' "Permanent geocoding plan must record completed evidence: $permanent_geocoder_plan_contract" >&2
+    exit 1
+  fi
 done
 
 for geocoder_signed_zero_source_contract in \

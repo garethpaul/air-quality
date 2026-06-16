@@ -131,6 +131,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Mapbox geocoder responses must return a first feature with a two-value
   finite numeric `center` in valid coordinate bounds; malformed geocoder
   payloads fail with a controlled route error before caching.
+- Cached Mapbox results use the `mapbox.places-permanent` dataset. Deployments
+  must have permanent-geocoding entitlement and account for its provider
+  billing terms before enabling geocoding.
 - Overflowing Mapbox center values are rejected before coordinate caching.
 - Boolean Mapbox and cached geocoder coordinates are rejected instead of being
   normalized to `1.0` or `0.0`.
@@ -194,6 +197,8 @@ listener must be reachable only by the reverse proxy or private network.
   normalized Redis read/write failure boundary.
 - See `docs/plans/2026-06-13-air-quality-geocoder-transport-errors.md` for the
   normalized Mapbox request and JSON-decoding boundary.
+- See `docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md` for the
+  permanent Mapbox dataset and cache-compliance boundary.
 - See `docs/plans/2026-06-13-air-quality-https-data-source.md` for direct and
   post-redirect HTTPS transport enforcement.
 - See `docs/plans/2026-06-13-air-quality-public-data-addresses.md` for the

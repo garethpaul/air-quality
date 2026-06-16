@@ -7,6 +7,7 @@ from air import _canonicalize_zero
 
 CACHE_ERROR_MESSAGE = "cache request failed"
 GEOCODER_ERROR_MESSAGE = "geocoder request failed"
+MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"
 
 
 class GeoCode(object):
@@ -133,5 +134,5 @@ class GeoCode(object):
         if self.geocoder is None:
             from mapbox import Geocoder
 
-            self.geocoder = Geocoder()
+            self.geocoder = Geocoder(name=MAPBOX_PERMANENT_DATASET)
         return self.geocoder

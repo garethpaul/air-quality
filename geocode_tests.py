@@ -2,6 +2,8 @@ import unittest
 import json
 import math
 import os
+import sys
+from types import ModuleType
 from unittest.mock import patch
 
 from geocode import GeoCode
@@ -43,6 +45,52 @@ class InvalidJsonGeocoder(object):
 
 
 class GeoCodeTest(unittest.TestCase):
+    def test_default_geocoder_uses_permanent_dataset_before_caching(self):
+        events = []
+
+        class RecordingCache(MemoryCache):
+            def set(self, key, value):
+                events.append(("cache", key, json.loads(value)))
+                super().set(key, value)
+
+        class RecordingGeocoder(FakeGeocoder):
+            def forward(self, query):
+                events.append(("forward", query))
+                return super().forward(query)
+
+        geocoder = RecordingGeocoder(
+            {"features": [{"center": [-122.41143, 37.794678]}]}
+        )
+        mapbox = ModuleType("mapbox")
+
+        def geocoder_factory(**kwargs):
+            events.append(("construct", kwargs))
+            return geocoder
+
+        mapbox.Geocoder = geocoder_factory
+        cache = RecordingCache()
+
+        with patch.dict(sys.modules, {"mapbox": mapbox}):
+            result = GeoCode("San Francisco, CA", cache_client=cache).getLatLng()
+
+        self.assertEqual(result, {"lat": 37.794678, "lng": -122.41143})
+        self.assertEqual(
+            events,
+            [
+                ("construct", {"name": "mapbox.places-permanent"}),
+                ("forward", "San Francisco, CA"),
+                (
+                    "cache",
+                    "geocode_query_1_San Francisco, CA",
+                    {"lat": 37.794678, "lng": -122.41143},
+                ),
+            ],
+        )
+        self.assertEqual(
+            cache.decoded("geocode_query_1_San Francisco, CA"),
+            {"lat": 37.794678, "lng": -122.41143},
+        )
+
     def test_geocoder_request_failure_is_normalized_without_detail(self):
         geocoder = FailingGeocoder(
             ConnectionError("private Mapbox token and transport detail")
