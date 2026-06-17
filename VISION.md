@@ -46,6 +46,8 @@ Priority:
 - Reject Unicode control characters from search queries while preserving
   visible internationalized text
 - Normalize geocoder transport failures without exposing provider details
+- Normalize response-adapter JSON failures as service errors while preserving
+  decoded mapping adapters
 - Default Mapbox geocoder requests use a five-second timeout while preserving
   SDK session authentication and explicitly injected geocoder clients.
   Caller-provided timeout values cannot weaken the service-owned timeout.

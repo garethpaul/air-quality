@@ -89,6 +89,9 @@ pooled connections are not retained indefinitely.
 Requests transport failures are normalized to a generic local service error
 without preserving provider URLs, status text, or exception details in the
 public error path.
+Response-adapter JSON failures are normalized to the same unchained service
+error without preserving provider content; decoded mapping adapters remain
+supported.
 Geocoder transport failures during Mapbox client creation, request dispatch,
 or JSON decoding are normalized to a generic local service error without
 preserving provider, token, or exception details in the public error path.

@@ -6,7 +6,7 @@ date: 2026-06-17
 
 # Air Quality Response JSON Error Boundary
 
-status: planned
+status: completed
 
 ## Summary
 
@@ -85,3 +85,27 @@ coordinates are valid and the upstream provider returned malformed JSON.
   regression registration.
 - Audit the exact diff, generated artifacts, added secret patterns, dependency
   and workflow drift, whitespace, and intended staged paths before each commit.
+
+## Work Completed
+
+- Added a response-adapter decode boundary that preserves decoded mappings and
+  converts ordinary `json()` failures to an unchained generic service error.
+- Added focused sensor and route regressions for exception redaction, direct
+  mapping compatibility, and HTTP 503 classification.
+- Extended the portable baseline and maintained reliability guidance.
+
+## Verification Completed
+
+- The focused `test_response_json_failure_is_normalized_without_detail`,
+  `test_direct_mapping_http_adapter_remains_supported`, and
+  `test_show_data_classifies_upstream_json_failure_as_service_unavailable`
+  regressions passed.
+- Ruff format and lint, all 108 unit tests, and Python compilation passed before
+  the baseline plan-status gate was reconciled.
+- Repository-root and external-directory `make check` each passed the complete
+  Ruff, 108-test, compilation, and maintained baseline gate.
+- Seven isolated mutations were rejected for inline decoding, narrowed
+  exception handling, restored exception chaining, and removed runtime or route
+  regression registration. The three source mutations also failed focused
+  runtime tests where applicable.
+- No live provider or cache request was made.

@@ -1298,6 +1298,71 @@ for transport_test_contract in \
   fi
 done
 
+for response_json_source_contract in \
+  'def _decode_response_payload(response):' \
+  'if not hasattr(response, "json"):' \
+  'except Exception:' \
+  'raise RuntimeError("AIRQUALITY_DATA response must be valid JSON") from None' \
+  'payload = _decode_response_payload(response)'; do
+  if ! grep -Fq "$response_json_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Response JSON normalization must keep contract: $response_json_source_contract" >&2
+    exit 1
+  fi
+done
+
+python - "$ROOT_DIR/air.py" <<'PY'
+import ast
+import sys
+
+source_path = sys.argv[1]
+module = ast.parse(open(source_path, encoding="utf-8").read())
+functions = {
+    node.name: node
+    for node in module.body
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+}
+helper = functions.get("_decode_response_payload")
+if helper is None:
+    raise SystemExit("Response JSON normalization helper must remain defined.")
+
+handlers = [node for node in ast.walk(helper) if isinstance(node, ast.ExceptHandler)]
+if len(handlers) != 1 or not isinstance(handlers[0].type, ast.Name) or handlers[0].type.id != "Exception":
+    raise SystemExit("Response JSON normalization must catch ordinary adapter exceptions.")
+
+raises = [node for node in ast.walk(helper) if isinstance(node, ast.Raise)]
+if len(raises) != 1 or not isinstance(raises[0].cause, ast.Constant) or raises[0].cause.value is not None:
+    raise SystemExit("Response JSON normalization must suppress provider exception chaining.")
+
+get_data = next(
+    node
+    for node in ast.walk(module)
+    if isinstance(node, ast.FunctionDef) and node.name == "getData"
+)
+calls = [
+    node
+    for node in ast.walk(get_data)
+    if isinstance(node, ast.Call)
+    and isinstance(node.func, ast.Name)
+    and node.func.id == "_decode_response_payload"
+]
+if len(calls) != 1:
+    raise SystemExit("AirQuality.getData must decode through the normalized adapter boundary exactly once.")
+PY
+
+if grep -Fq 'response.json() if hasattr(response, "json") else response' "$ROOT_DIR/air.py"; then
+  printf '%s\n' "Response JSON decoding must use the normalized adapter boundary." >&2
+  exit 1
+fi
+
+for response_json_test_contract in \
+  'test_response_json_failure_is_normalized_without_detail' \
+  'test_direct_mapping_http_adapter_remains_supported'; do
+  if ! grep -Fq "$response_json_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Response JSON regression tests must keep contract: $response_json_test_contract" >&2
+    exit 1
+  fi
+done
+
 for cache_source in "$ROOT_DIR/air.py" "$ROOT_DIR/geocode.py"; do
   if ! grep -Fq 'CACHE_ERROR_MESSAGE = "cache request failed"' "$cache_source" ||
      [ "$(grep -Fc 'raise RuntimeError(CACHE_ERROR_MESSAGE) from None' "$cache_source")" -ne 2 ]; then
@@ -1360,6 +1425,7 @@ fi
 
 for route_test_contract in \
   'test_show_data_does_not_expose_exception_details' \
+  'test_show_data_classifies_upstream_json_failure_as_service_unavailable' \
   'test_search_does_not_expose_exception_details' \
   'AIRQUALITY_DATA=https://secret' \
   'REDIS_URL=redis://secret'; do
@@ -1440,6 +1506,10 @@ for reliability_document in "$README" "$ROOT_DIR/SECURITY.md" "$ROOT_DIR/CHANGES
     printf '%s\n' "$reliability_document must document Geocoder transport failures." >&2
     exit 1
   fi
+  if ! grep -Fq "Response-adapter JSON failures" "$reliability_document"; then
+    printf '%s\n' "$reliability_document must document response-adapter JSON failures." >&2
+    exit 1
+  fi
   if ! grep -Fq "HTTPS-only data source" "$reliability_document"; then
     printf '%s\n' "$reliability_document must document the HTTPS-only data source boundary." >&2
     exit 1
@@ -1450,6 +1520,25 @@ if ! grep -Fq "geocoder transport failures" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must document geocoder transport failures." >&2
   exit 1
 fi
+
+if ! grep -Fq "response-adapter JSON failures" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must document response-adapter JSON failures." >&2
+  exit 1
+fi
+
+RESPONSE_JSON_PLAN="$DOCS_PLANS/2026-06-17-002-fix-air-quality-response-json-error-boundary-plan.md"
+for plan_contract in \
+  "status: completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "all 108 unit tests" \
+  "test_response_json_failure_is_normalized_without_detail" \
+  "test_show_data_classifies_upstream_json_failure_as_service_unavailable"; do
+  if ! grep -Fq "$plan_contract" "$RESPONSE_JSON_PLAN"; then
+    printf '%s\n' "Response JSON error-boundary plan must keep completed evidence: $plan_contract" >&2
+    exit 1
+  fi
+done
 
 GEOCODER_TRANSPORT_PLAN="$DOCS_PLANS/2026-06-13-air-quality-geocoder-transport-errors.md"
 for plan_contract in \

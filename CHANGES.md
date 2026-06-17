@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Response-adapter JSON failures now use the unchained generic service-error
+  boundary while adapters that return decoded mappings remain supported.
+
 ## 2026-06-16
 
 - Default Mapbox geocoder requests use a five-second timeout while preserving

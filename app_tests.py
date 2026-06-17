@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import app as app_module
+from air import AirQuality
 from app import (
     SEARCH_QUERY_MAX_LENGTH,
     air_quality_payload,
@@ -12,6 +13,7 @@ from app import (
     parse_search_query,
     search_payload,
 )
+from test_helpers import MemoryCache
 
 
 class FakeAirQuality(object):
@@ -199,6 +201,40 @@ class AppRouteHelperTest(unittest.TestCase):
                 self.assertEqual(fake_response.status, expected_status)
                 self.assertEqual(payload, {"error": expected_message})
                 self.assertNotIn(str(error), json.dumps(payload))
+
+    def test_show_data_classifies_upstream_json_failure_as_service_unavailable(self):
+        class BrokenJsonResponse(object):
+            def json(self):
+                raise ValueError("provider payload contained account detail")
+
+        def air_quality_factory(lat, lng):
+            return AirQuality(
+                lat,
+                lng,
+                cache_client=MemoryCache(),
+                data_url="https://example.test/air.json",
+                http_get=lambda _url: BrokenJsonResponse(),
+            )
+
+        def upstream_payload(lat, lng):
+            return air_quality_payload(
+                lat, lng, air_quality_factory=air_quality_factory
+            )
+
+        fake_response = SimpleNamespace(status=None, content_type=None)
+        fake_request = SimpleNamespace(query={"lat": "37.7749", "lng": "-122.4194"})
+        with (
+            patch.object(app_module, "response", fake_response),
+            patch.object(app_module, "request", fake_request),
+            patch.object(
+                app_module, "air_quality_payload", side_effect=upstream_payload
+            ),
+        ):
+            payload = json.loads(app_module.show_data())
+
+        self.assertEqual(fake_response.status, 503)
+        self.assertEqual(payload, {"error": "service unavailable"})
+        self.assertNotIn("account detail", json.dumps(payload))
 
     def test_search_does_not_expose_exception_details(self):
         cases = [

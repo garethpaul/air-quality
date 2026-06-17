@@ -80,6 +80,8 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
   encodings fail before response streaming through the generic JSON error.
 - Requests transport failures at connection, status, and streamed-read stages
   become stable service errors without exposing provider exception details.
+- Response-adapter JSON failures become stable service errors without exposing
+  provider details, while adapters that return decoded mappings remain valid.
 - Geocoder transport failures during Mapbox dispatch or JSON decoding become
   stable service errors without exposing provider or credential details;
   successful malformed payloads remain invalid requests.

@@ -1094,6 +1094,41 @@ class AirQualityTest(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     quality.getData()
 
+    def test_response_json_failure_is_normalized_without_detail(self):
+        class BrokenJsonResponse(object):
+            def json(self):
+                raise LookupError("provider payload contained account detail")
+
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: BrokenJsonResponse(),
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA response must be valid JSON$"
+        ) as raised:
+            quality.getData()
+
+        self.assertIsNone(raised.exception.__cause__)
+        self.assertTrue(raised.exception.__suppress_context__)
+        self.assertNotIn("account detail", str(raised.exception))
+
+    def test_direct_mapping_http_adapter_remains_supported(self):
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: {
+                "results": [{"Lat": 37.8, "Lon": -122.41, "PM2_5Value": "12.0"}]
+            },
+        )
+
+        self.assertEqual(quality.getData(), MODERATE_12_PAYLOAD)
+
     def test_malformed_result_items_are_ignored(self):
         quality = air.AirQuality(
             37.794678,

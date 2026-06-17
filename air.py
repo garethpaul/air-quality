@@ -134,6 +134,16 @@ def _require_json_utf8_encoding(encoding):
         raise RuntimeError("AIRQUALITY_DATA response must be valid JSON")
 
 
+def _decode_response_payload(response):
+    if not hasattr(response, "json"):
+        return response
+
+    try:
+        return response.json()
+    except Exception:
+        raise RuntimeError("AIRQUALITY_DATA response must be valid JSON") from None
+
+
 def _default_http_get(url):
     import requests
 
@@ -212,7 +222,7 @@ class AirQuality(object):
             raise RuntimeError("AIRQUALITY_DATA must be set when data is not cached")
 
         response = self.http_get(data_url)
-        payload = response.json() if hasattr(response, "json") else response
+        payload = _decode_response_payload(response)
         if not isinstance(payload, dict) or not isinstance(
             payload.get("results"), list
         ):
