@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 from unittest.mock import patch
 
-from geocode import GeoCode
+from geocode import GEOCODER_TIMEOUT_SECONDS, GeoCode, _TimeoutSession
 from test_helpers import FailingCache, JsonResponse, MemoryCache
 
 
@@ -110,6 +110,43 @@ class GeoCodeTest(unittest.TestCase):
         self.assertEqual(
             cache.decoded("geocode_query_1_San Francisco, CA"),
             {"lat": 37.794678, "lng": -122.41143},
+        )
+
+    def test_default_geocoder_timeout_cannot_be_overridden(self):
+        requests = []
+
+        class RecordingSession(object):
+            def get(self, url, **kwargs):
+                requests.append((url, kwargs))
+                return object()
+
+        session = _TimeoutSession(RecordingSession())
+
+        session.get("https://api.mapbox.com/default")
+        session.get("https://api.mapbox.com/none", timeout=None)
+        session.get("https://api.mapbox.com/short", timeout=1)
+        session.get("https://api.mapbox.com/long", timeout=60, stream=True)
+
+        self.assertEqual(
+            requests,
+            [
+                (
+                    "https://api.mapbox.com/default",
+                    {"timeout": GEOCODER_TIMEOUT_SECONDS},
+                ),
+                (
+                    "https://api.mapbox.com/none",
+                    {"timeout": GEOCODER_TIMEOUT_SECONDS},
+                ),
+                (
+                    "https://api.mapbox.com/short",
+                    {"timeout": GEOCODER_TIMEOUT_SECONDS},
+                ),
+                (
+                    "https://api.mapbox.com/long",
+                    {"timeout": GEOCODER_TIMEOUT_SECONDS, "stream": True},
+                ),
+            ],
         )
 
     def test_injected_geocoder_session_is_not_wrapped(self):

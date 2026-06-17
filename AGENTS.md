@@ -85,6 +85,7 @@
 - Default `AIRQUALITY_DATA` HTTP fetches use a bounded timeout; tests verify the timeout without live network access.
 - Default Mapbox geocoder requests use a five-second timeout while preserving
   SDK session authentication and explicitly injected geocoder clients.
+  Caller-provided timeout values cannot weaken the service-owned timeout.
 - Bottle debug mode is disabled by default for every repository launch path;
   preserve the local and Heroku startup regressions when changing process
   configuration.

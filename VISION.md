@@ -48,6 +48,7 @@ Priority:
 - Normalize geocoder transport failures without exposing provider details
 - Default Mapbox geocoder requests use a five-second timeout while preserving
   SDK session authentication and explicitly injected geocoder clients.
+  Caller-provided timeout values cannot weaken the service-owned timeout.
 - Normalize malformed Mapbox payloads as service failures while preserving
   valid empty results as a client-visible no-result outcome
 - Ignore non-finite upstream sensor values before distance and AQI calculations

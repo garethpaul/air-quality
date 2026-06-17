@@ -20,7 +20,7 @@ class _TimeoutSession(object):
         self._session = session
 
     def get(self, *args, **kwargs):
-        kwargs.setdefault("timeout", GEOCODER_TIMEOUT_SECONDS)
+        kwargs["timeout"] = GEOCODER_TIMEOUT_SECONDS
         return self._session.get(*args, **kwargs)
 
     def __getattr__(self, name):
