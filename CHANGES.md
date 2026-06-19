@@ -37,6 +37,7 @@
 
 - Near-antipodal sensor distances clamp floating-point drift to the haversine
   domain instead of raising a math-domain error.
+- The exact development formatter/linter pin now uses Ruff 0.15.16.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean scoring helper inputs are rejected before numeric conversion.
 - Non-finite scoring helper inputs are rejected before interpolation or

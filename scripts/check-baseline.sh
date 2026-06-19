@@ -68,6 +68,7 @@ for path in \
   "docs/plans/2026-06-15-air-quality-constructor-coordinate-validation.md" \
   "docs/plans/2026-06-15-air-quality-constructor-validation-stack-reconciliation.md" \
   "docs/plans/2026-06-15-air-quality-route-coordinate-type-guards.md" \
+  "docs/plans/2026-06-15-ruff-0-15-16.md" \
   "docs/plans/2026-06-16-air-quality-signed-zero-coordinates.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-signed-zero.md" \
   "docs/plans/2026-06-16-air-quality-permanent-geocoding-cache.md" \
@@ -1618,10 +1619,30 @@ for requirement in \
   fi
 done
 
-if ! grep -Fxq 'ruff==0.15.15' "$ROOT_DIR/requirements-dev.txt"; then
+if ! grep -Fxq 'ruff==0.15.16' "$ROOT_DIR/requirements-dev.txt"; then
   printf '%s\n' "requirements-dev.txt must keep the exact Ruff pin." >&2
   exit 1
 fi
+
+for ruff_upgrade_document in "$ROOT_DIR/CHANGES.md" "$README"; do
+  if ! grep -Fq 'Ruff 0.15.16' "$ruff_upgrade_document"; then
+    printf '%s\n' "$ruff_upgrade_document must document Ruff 0.15.16." >&2
+    exit 1
+  fi
+done
+
+for ruff_upgrade_plan_contract in \
+  'status: completed' \
+  'Ruff 0.15.16' \
+  'requirements-dev.txt' \
+  'make check' \
+  '108 tests'; do
+  if ! grep -Fq "$ruff_upgrade_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-15-ruff-0-15-16.md"; then
+    printf '%s\n' "Ruff upgrade plan must preserve completion evidence: $ruff_upgrade_plan_contract" >&2
+    exit 1
+  fi
+done
 
 for ci_contract in \
   'python-version: ["3.12", "3.14"]' \
