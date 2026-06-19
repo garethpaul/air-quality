@@ -21,6 +21,11 @@ Priority:
 - Keep the API behavior predictable for coordinate and search-query requests
 - Maintain clear local setup with Python, Redis, Mapbox credentials, and the
   `AIRQUALITY_DATA` source
+- Keep a provider-neutral small-instance deployment runbook with explicit
+  preflight, TLS proxy, health-probe, secret, and rollback boundaries
+- Bottle debug mode is disabled by default for every repository launch path
+- Heroku listener ports are validated before Bottle launch, with only decimal
+  values from 1 through 65535 accepted
 - Preserve test, lint, and build commands that work in a fresh checkout
 - Keep `make check` and `scripts/check-baseline.sh` green before pushing
   changes
@@ -30,12 +35,45 @@ Priority:
   before serializing responses
 - Keep upstream HTTP calls bounded by default
 - Bound upstream sensor response bytes before JSON decoding
+- Reject oversized streamed chunks before extending the retained response buffer
+- Require non-negative Content-Length syntax using only ASCII decimal digits
+- Require a final `application/json` or `application/*+json` response media type
+- Normalize unsupported response encodings before sensor payload processing
+- Require that upstream network JSON must use UTF-8 before response streaming
 - Keep PM2.5 AQI calculations aligned with current EPA breakpoints
 - Accept valid nonnegative PM2.5 readings and reject invalid sensor coordinates
 - Bound search-query inputs before cache-key construction or Mapbox lookup
+- Reject Unicode control characters from search queries while preserving
+  visible internationalized text
+- Normalize geocoder transport failures without exposing provider details
+- Normalize response-adapter JSON failures as service errors while preserving
+  decoded mapping adapters
+- Default Mapbox geocoder requests use a five-second timeout while preserving
+  SDK session authentication and explicitly injected geocoder clients.
+  Caller-provided timeout values cannot weaken the service-owned timeout.
+- Normalize malformed Mapbox payloads as service failures while preserving
+  valid empty results as a client-visible no-result outcome
 - Ignore non-finite upstream sensor values before distance and AQI calculations
+- Ignore overflowing upstream sensor values before distance and AQI calculations
+- Near-antipodal sensor distances clamp floating-point drift to the haversine
+  domain instead of failing valid location comparisons.
+- Boolean upstream sensor values are ignored before distance and AQI calculations.
+- Reject non-finite scoring helper inputs before interpolation or category
+  construction.
+- Zero-width AQI interpolation ranges are rejected before division.
+- Descending AQI interpolation ranges are rejected before division.
+- Nonnegative AQI interpolation uses explicit half-up integer rounding.
+- Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+- Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
+- Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
+- Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
+  before use or cache serialization.
+- Rewrite valid cached geocoder numeric strings as canonical JSON numbers
 - Reject non-finite or out-of-range geocoder coordinates before caching
+- Overflowing Mapbox center values are rejected before coordinate caching.
 - Ignore corrupt cached air-quality payloads before returning API data
+- Overflowing cached numeric values are ignored and refreshed through the
+  existing validated upstream paths
 - Keep cached air-quality responses limited to validated public response fields
 - Ignore corrupt cached geocode coordinates before search lookups
 - Keep current direct dependencies verified on Python 3.12 and 3.14
@@ -43,9 +81,10 @@ Priority:
 Next priorities:
 
 - Continue improving data-source validation and error reporting
-- Add clearer deployment guidance for small hosted instances
+- Exercise the deployment runbook on an authorized hosted instance without
+  committing provider-specific credentials or configuration
 - Keep dependencies current enough to run on supported Python versions
-- Expand tests around empty datasets, invalid coordinates, and Mapbox failures
+- Expand tests around distinct empty datasets and invalid coordinate shapes
 
 Contribution rules:
 
@@ -75,6 +114,13 @@ or unvalidated upstream data.
 
 Streamed upstream responses should be closed deterministically on success and
 failure so repeated requests do not retain connection resources.
+
+The default sensor client should retain an HTTPS-only data source boundary
+before requests, before following redirects, and on final response URLs so
+deployment configuration cannot silently downgrade transport security.
+It should also require globally reachable unicast literal and DNS-resolved
+targets while documenting that deployment DNS remains trusted between
+preflight and connect.
 
 ## What We Will Not Merge (For Now)
 

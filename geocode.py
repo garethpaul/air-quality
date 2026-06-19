@@ -3,6 +3,29 @@ import math
 import os
 from collections.abc import Mapping
 
+from air import _canonicalize_zero
+
+CACHE_ERROR_MESSAGE = "cache request failed"
+GEOCODER_ERROR_MESSAGE = "geocoder request failed"
+GEOCODER_TIMEOUT_SECONDS = 5.0
+MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"
+
+
+class _NoGeocodingResults(ValueError):
+    pass
+
+
+class _TimeoutSession(object):
+    def __init__(self, session):
+        self._session = session
+
+    def get(self, *args, **kwargs):
+        kwargs["timeout"] = GEOCODER_TIMEOUT_SECONDS
+        return self._session.get(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._session, name)
+
 
 class GeoCode(object):
     def __init__(self, query, cache_client=None, geocoder=None):
@@ -16,13 +39,23 @@ class GeoCode(object):
         if data is not None:
             return data
 
-        response = self.geocoder_client().forward(self.query)
-        data = self.parse_first_feature_center(response.json())
-        self.cache().set(key, json.dumps(data))
+        try:
+            response = self.geocoder_client().forward(self.query)
+            payload = response.json()
+        except Exception:
+            raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None
+
+        try:
+            data = self.parse_first_feature_center(payload)
+        except _NoGeocodingResults:
+            raise
+        except ValueError:
+            raise RuntimeError(GEOCODER_ERROR_MESSAGE) from None
+        self.cache_set(key, json.dumps(data))
         return data
 
     def cached_data(self, key):
-        cache = self.cache().get(key)
+        cache = self.cache_get(key)
         if cache is None:
             return None
 
@@ -34,10 +67,13 @@ class GeoCode(object):
         if not isinstance(data, Mapping):
             return None
 
+        if isinstance(data.get("lat"), bool) or isinstance(data.get("lng"), bool):
+            return None
+
         try:
             lat = float(data["lat"])
             lng = float(data["lng"])
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, OverflowError, TypeError, ValueError):
             return None
 
         if not math.isfinite(lat) or not math.isfinite(lng):
@@ -46,7 +82,29 @@ class GeoCode(object):
         if lat < -90 or lat > 90 or lng < -180 or lng > 180:
             return None
 
-        return {"lat": lat, "lng": lng}
+        normalized = {
+            "lat": _canonicalize_zero(lat),
+            "lng": _canonicalize_zero(lng),
+        }
+        if any(isinstance(data[field], str) for field in ("lat", "lng")) or any(
+            value == 0.0 and math.copysign(1.0, value) < 0 for value in (lat, lng)
+        ):
+            self.cache_set(key, json.dumps(normalized))
+        return normalized
+
+    def cache_get(self, key):
+        cache = self.cache()
+        try:
+            return cache.get(key)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
+
+    def cache_set(self, key, value):
+        cache = self.cache()
+        try:
+            cache.set(key, value)
+        except Exception:
+            raise RuntimeError(CACHE_ERROR_MESSAGE) from None
 
     @staticmethod
     def parse_first_feature_center(payload):
@@ -55,7 +113,9 @@ class GeoCode(object):
 
         features = payload.get("features", [])
         if not isinstance(features, list) or not features:
-            raise ValueError("No geocoding results were returned")
+            if isinstance(features, list):
+                raise _NoGeocodingResults("No geocoding results were returned")
+            raise ValueError("geocoder features must be a list")
 
         first_feature = features[0]
         if not isinstance(first_feature, Mapping):
@@ -65,10 +125,13 @@ class GeoCode(object):
         if not isinstance(center, list) or len(center) < 2:
             raise ValueError("geocoder feature must include lng/lat center")
 
+        if isinstance(center[0], bool) or isinstance(center[1], bool):
+            raise ValueError("geocoder center values must be numeric")
+
         try:
             lng = float(center[0])
             lat = float(center[1])
-        except (TypeError, ValueError):
+        except (OverflowError, TypeError, ValueError):
             raise ValueError("geocoder center values must be numeric")
 
         if not math.isfinite(lat) or not math.isfinite(lng):
@@ -77,7 +140,10 @@ class GeoCode(object):
         if lat < -90 or lat > 90 or lng < -180 or lng > 180:
             raise ValueError("geocoder center values must be valid coordinates")
 
-        return {"lat": lat, "lng": lng}
+        return {
+            "lat": _canonicalize_zero(lat),
+            "lng": _canonicalize_zero(lng),
+        }
 
     def cache(self):
         if self.r is None:
@@ -94,5 +160,6 @@ class GeoCode(object):
         if self.geocoder is None:
             from mapbox import Geocoder
 
-            self.geocoder = Geocoder()
+            self.geocoder = Geocoder(name=MAPBOX_PERMANENT_DATASET)
+            self.geocoder.session = _TimeoutSession(self.geocoder.session)
         return self.geocoder

@@ -1,7 +1,107 @@
 # Changes
 
+## 2026-06-17
+
+- Response-adapter JSON failures now use the unchained generic service-error
+  boundary while adapters that return decoded mappings remain supported.
+
+## 2026-06-16
+
+- Default Mapbox geocoder requests use a five-second timeout while preserving
+  SDK session authentication and explicitly injected geocoder clients.
+  Caller-provided timeout values cannot weaken the service-owned timeout.
+- Unicode control characters in search queries are rejected before geocoder
+  construction or cache-key use while visible internationalized text remains valid.
+- AQI interpolation now uses half-up integer rounding for nonnegative values
+  instead of inheriting Python's ties-to-even behavior.
+- Heroku listener ports are validated as decimal values from 1 through 65535
+  before Bottle launch, while an absent `PORT` retains the 5000 default.
+- Malformed Mapbox response shapes and coordinate values now use the generic
+  geocoder service-error boundary while valid empty results retain the
+  no-result client error.
+- Upstream network JSON now requires UTF-8 and rejects non-UTF-8 or unknown
+  response encodings before response streaming.
+- Bottle debug mode is disabled by default for local and Heroku launch paths,
+  with deterministic startup argument regressions.
+- Accepted signed-zero coordinates normalize to positive zero so equivalent
+  requests share one cache key.
+- Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
+  before use or cache serialization.
+- Valid cached geocoder numeric strings are rewritten as canonical JSON numbers
+  while canonical numeric cache hits avoid redundant Redis writes.
+- Cached Mapbox results use the `mapbox.places-permanent` dataset so Redis
+  storage is explicitly requested under the provider's permanent-geocoding
+  terms.
+
+## 2026-06-15
+
+- Near-antipodal sensor distances clamp floating-point drift to the haversine
+  domain instead of raising a math-domain error.
+- The exact development formatter/linter pin now uses Ruff 0.15.16.
+- Boolean upstream sensor values are ignored before distance and AQI calculations.
+- Boolean scoring helper inputs are rejected before numeric conversion.
+- Non-finite scoring helper inputs are rejected before interpolation or
+  category construction.
+- Zero-width AQI interpolation ranges are rejected before division.
+- Descending AQI interpolation ranges are rejected before division.
+- Negative AQI scores are classified as Out of Range instead of Good.
+- Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+- Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
+- Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+  normalized to numeric locations.
+- Cached AQI guidance is accepted only when its 0-500 score, category, and
+  caution match the canonical response.
+- Overflowing cached numeric values are ignored and refreshed for both AQI
+  scores and geocoder coordinates.
+
+## 2026-06-14
+
+- Rejected oversized upstream chunks before extending the retained response
+  buffer.
+- Required supplied upstream `Content-Length` values to use only ASCII decimal
+  digits before response streaming.
+- Added a provider-neutral small-instance deployment runbook covering required
+  configuration, non-root execution, TLS proxying, bounded health probes,
+  secret handling, and rollback.
+- Overflowing Mapbox center values are rejected before coordinate caching.
+- Required final upstream sensor responses to declare `application/json` or a
+  valid `application/*+json` media type before body streaming.
+- Rejected missing, malformed, comma-joined, and non-JSON media types with a
+  stable local error while retaining deterministic response cleanup.
+- Ignored overflowing upstream sensor latitude, longitude, and PM2.5 values
+  before distance and AQI calculations instead of raising conversion errors.
+
+## 2026-06-13
+
+- Geocoder transport failures during Mapbox dispatch and JSON decoding now use
+  a generic unchained service-error boundary while successful malformed
+  payloads retain their validation-error contract.
+- Rejected private, loopback, link-local, multicast, shared, reserved,
+  unresolved, and mixed-address `AIRQUALITY_DATA` targets before initial and
+  redirected Requests dispatch, while retaining generic errors and response
+  cleanup.
+- Enforced an HTTPS-only data source before default sensor requests, before
+  following redirects, and on final response URLs, with generic errors and
+  deterministic response cleanup.
+- Added no-network direct-plaintext and redirect-downgrade regressions plus
+  mutation-sensitive portable contracts.
+- Cache command failures during AQI and geocode reads or writes now use a
+  generic unchained service-error boundary instead of leaking Redis exception
+  details through unexpected route failures.
+- Added no-network regressions and portable contracts for all four cache
+  command boundaries while preserving keys, TTLs, and corrupt-cache refreshes.
+- Requests transport failures during connection, HTTP status validation, and
+  streamed reads now use the stable service-error boundary while preserving
+  exact response cleanup for every created response.
+- Added focused no-network regressions and portable contracts for generic,
+  unchained upstream request errors.
+
 ## 2026-06-12
 
+- Replaced exception-derived route responses with stable public JSON errors and
+  added route-level regression coverage for hidden internal details.
+- Added immutable-pinned actions and Python CodeQL analysis plus fail-closed
+  workflow contracts.
 - Closed streamed `AIRQUALITY_DATA` responses after successful reads and every
   status, size, decoding, and JSON-validation failure path.
 - Added dependency-free regression coverage for exact response cleanup.
@@ -22,6 +122,8 @@
   and controlled JSON decoding errors.
 - Pinned GitHub Actions to Ubuntu 24.04 with superseded-run cancellation and
   made Make verification independent of the caller's working directory.
+- Disabled checkout credential persistence and added an external-directory CI
+  invocation guarded by an exact action allowlist.
 
 ## 2026-06-09
 

@@ -39,18 +39,91 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 Cached upstream and geocode data should be validated before reuse. Corrupt
 geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
+Unicode control characters are rejected from search queries before cache-key
+construction or Mapbox lookup; visible internationalized text remains valid.
+Default Mapbox geocoder requests use a five-second timeout while preserving
+SDK session authentication and explicitly injected geocoder clients.
+Caller-provided timeout values cannot weaken the service-owned timeout.
+Overflowing cached numeric values are ignored and refreshed before conversion
+errors can escape the cache validation boundary.
+Cached AQI guidance is accepted only when its 0-500 score, category, and
+caution match the canonical response.
 
 The default sensor-data client uses a timeout and a 1 MiB streamed response
-limit. HTTP failures, oversized bodies, and malformed JSON should fail before
-sensor payload processing. The response is closed after successful reads and
-all validation failures so pooled connections are not retained indefinitely.
+limit, checked before extending the retained response buffer. HTTP failures,
+oversized bodies, malformed JSON, and supplied values
+that violate non-negative Content-Length syntax (ASCII decimal digits only)
+should fail before sensor payload processing, as should missing or non-JSON
+`application/json` or `application/*+json` response media types and
+unsupported response encodings.
+Upstream network JSON must use UTF-8; non-UTF-8 and unknown response encodings
+fail before response streaming through the generic JSON error.
+Non-finite and overflowing upstream sensor values are ignored before distance
+or AQI calculations.
+Boolean upstream sensor values are ignored before distance and AQI calculations.
+Boolean scoring helper inputs are rejected before numeric conversion.
+Non-finite scoring helper inputs are rejected before interpolation or category
+construction.
+Zero-width AQI interpolation ranges are rejected before division.
+Descending AQI interpolation ranges are rejected before division.
+Nonnegative AQI interpolation uses explicit half-up integer rounding instead
+of Python's ties-to-even `round()` behavior.
+Negative AQI scores are classified as Out of Range instead of Good.
+Near-antipodal sensor distances clamp floating-point drift to the haversine
+domain instead of turning valid coordinates into a service failure.
+Direct AirQuality construction rejects boolean, nonnumeric, non-finite, and out-of-range coordinates.
+Route coordinate validation rejects boolean and overflowing numeric values before AirQuality construction.
+Accepted signed-zero coordinates normalize to positive zero so equivalent requests share one cache key.
+Mapbox and cached geocoder signed-zero coordinates normalize to positive zero
+before use or cache serialization.
+Valid cached geocoder numeric strings are rewritten as canonical JSON numbers
+after validation; malformed values still refresh through Mapbox.
+Cached Mapbox results use the `mapbox.places-permanent` dataset. Deployment
+owners must confirm permanent-geocoding entitlement and provider billing terms
+before enabling geocoding; temporary Mapbox results must not enter Redis.
+Overflowing Mapbox center values are rejected before coordinate caching.
+Boolean Mapbox and cached geocoder coordinates are rejected instead of being
+normalized to numeric locations.
+The response is closed after successful reads and all validation failures so
+pooled connections are not retained indefinitely.
+Requests transport failures are normalized to a generic local service error
+without preserving provider URLs, status text, or exception details in the
+public error path.
+Response-adapter JSON failures are normalized to the same unchained service
+error without preserving provider content; decoded mapping adapters remain
+supported.
+Geocoder transport failures during Mapbox client creation, request dispatch,
+or JSON decoding are normalized to a generic local service error without
+preserving provider, token, or exception details in the public error path.
+Malformed Mapbox response roots, features, centers, and coordinate values use
+the same generic unchained service-error boundary. A valid empty feature list
+remains the explicit no-result client-error path.
+Cache command failures are normalized to the same generic service boundary
+without retrying, bypassing Redis, or preserving Redis URLs and dependency
+exception details in the public error path.
+The default `AIRQUALITY_DATA` client enforces an HTTPS-only data source before
+the request, before each redirect is followed, and on the final response URL.
+Plaintext endpoints and redirect downgrades fail with a generic local error
+while created responses are still closed. Credential-bearing URL authorities
+are rejected before DNS resolution. Literal and DNS-resolved targets also fail
+unless every IPv4 or IPv6 address is globally reachable. This policy
+additionally rejects multicast targets, which Python classifies as global but
+which are not valid unicast service endpoints. This preflight does not pin the
+subsequent Requests connection to a validated address, so deployment DNS
+remains part of the trusted infrastructure boundary.
+Bottle debug mode is disabled by default for every repository launch path so
+provider-neutral deployment cannot expose debug responses accidentally.
+Heroku listener ports are validated as decimal values from 1 through 65535
+before Bottle launch, preventing malformed or out-of-range configuration from
+reaching the server launcher.
 
 ## Dependency and Supply Chain Security
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
 The maintained dependency baseline uses exact direct pins and is exercised on
-Python 3.12 and 3.14 in immutable, read-only GitHub Actions jobs. AWS SDK
+Python 3.12 and 3.14 in immutable, read-only GitHub Actions jobs with checkout
+credential persistence disabled. AWS SDK
 packages are resolved through Mapbox instead of being duplicated as
 application-level pins.
 
@@ -67,3 +140,9 @@ Good-faith research is welcome when it stays within these boundaries:
 ## Maintainer Response
 
 The maintainer will review complete reports as availability allows, prioritize issues by exploitability and impact, and coordinate a fix or mitigation when the affected code is still maintained. For sample, archived, or educational repositories, the likely remediation may be documentation, dependency updates, or clearly marking unsupported code rather than a production-style patch release.
+
+## Automated Analysis
+
+GitHub Actions runs immutable-pinned CodeQL analysis for workflow and Python
+sources. Public route errors use stable messages and do not serialize caught
+exception details, environment values, provider responses, or stack traces.

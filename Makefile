@@ -1,4 +1,4 @@
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PYTHON_FILES := $(shell git -C "$(ROOT)" ls-files '*.py')
 
 .PHONY: check lint test build

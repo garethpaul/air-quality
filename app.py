@@ -1,11 +1,15 @@
 import math
 import os
+import unicodedata
 from json import dumps
 
-from air import AirQuality
+from air import AirQuality, _canonicalize_zero
 from geocode import GeoCode
 
 SEARCH_QUERY_MAX_LENGTH = 200
+INVALID_REQUEST_MESSAGE = "invalid request"
+SERVICE_UNAVAILABLE_MESSAGE = "service unavailable"
+SERVER_PORT_ERROR_MESSAGE = "invalid server port configuration"
 
 try:
     from bottle import request, response, route, run
@@ -25,9 +29,12 @@ def parse_coordinate(value, name):
     if value is None or str(value).strip() == "":
         raise ValueError("{0} is required".format(name))
 
+    if isinstance(value, bool):
+        raise ValueError("{0} must be a number".format(name))
+
     try:
         coordinate = float(value)
-    except (TypeError, ValueError):
+    except (OverflowError, TypeError, ValueError):
         raise ValueError("{0} must be a number".format(name))
 
     if not math.isfinite(coordinate):
@@ -44,7 +51,7 @@ def parse_coordinate(value, name):
     if coordinate < lower or coordinate > upper:
         raise ValueError("{0} must be between {1} and {2}".format(name, lower, upper))
 
-    return coordinate
+    return _canonicalize_zero(coordinate)
 
 
 def air_quality_payload(lat, lng, air_quality_factory=AirQuality):
@@ -68,6 +75,9 @@ def parse_search_query(query):
         raise ValueError(
             "query must be {0} characters or fewer".format(SEARCH_QUERY_MAX_LENGTH)
         )
+
+    if any(unicodedata.category(character) == "Cc" for character in query_string):
+        raise ValueError("query must not contain control characters")
 
     return query_string
 
@@ -93,26 +103,41 @@ def json_error(message, status=400):
     return json_response({"error": message}, status=status)
 
 
+def _parse_server_port(value):
+    if value is None:
+        return 5000
+
+    port_text = value.strip()
+    if not port_text or not port_text.isascii() or not port_text.isdecimal():
+        raise RuntimeError(SERVER_PORT_ERROR_MESSAGE)
+
+    port = int(port_text)
+    if port < 1 or port > 65535:
+        raise RuntimeError(SERVER_PORT_ERROR_MESSAGE)
+
+    return port
+
+
 @route("/")
 def show_data():
     try:
         return json_response(
             air_quality_payload(request.query.get("lat"), request.query.get("lng"))
         )
-    except ValueError as exc:
-        return json_error(str(exc), status=400)
-    except RuntimeError as exc:
-        return json_error(str(exc), status=503)
+    except ValueError:
+        return json_error(INVALID_REQUEST_MESSAGE, status=400)
+    except RuntimeError:
+        return json_error(SERVICE_UNAVAILABLE_MESSAGE, status=503)
 
 
 @route("/s")
 def search():
     try:
         return json_response(search_payload(request.query.get("query")))
-    except ValueError as exc:
-        return json_error(str(exc), status=400)
-    except RuntimeError as exc:
-        return json_error(str(exc), status=503)
+    except ValueError:
+        return json_error(INVALID_REQUEST_MESSAGE, status=400)
+    except RuntimeError:
+        return json_error(SERVICE_UNAVAILABLE_MESSAGE, status=503)
 
 
 def main():
@@ -120,9 +145,13 @@ def main():
         raise RuntimeError("Bottle must be installed to run the web service")
 
     if os.environ.get("APP_LOCATION") == "heroku":
-        run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+        host = "0.0.0.0"
+        port = _parse_server_port(os.environ.get("PORT"))
     else:
-        run(host="localhost", port=8080, debug=True)
+        host = "localhost"
+        port = 8080
+
+    run(host=host, port=port, debug=False)
 
 
 if __name__ == "__main__":
