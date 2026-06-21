@@ -50,6 +50,7 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14.
 GitHub Actions uses credential-free checkout and runs `/usr/bin/make check` from outside the repository directory so verification does not depend on a PATH-selected Make executable. CircleCI uses the same system Make entry point for lint, test, and build targets.
 The portable baseline binds credential isolation to the canonical checkout
 step in each workflow, so unrelated text cannot mask persisted credentials.
+Caller-supplied additional makefiles remain outside the repository-controlled boundary: GNU Make still executes appended double-colon recipes and target-specific override directives from later `-f` files.
 
 ## Running or Using the Project
 

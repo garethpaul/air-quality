@@ -190,6 +190,17 @@ rm -f "$LATER_SHELL_LOG" "$LOG"
 (cd "$CONTROL_DIR" && PATH="$AUTHORITY_PATH" AIR_QUALITY_COMMAND_LOG="$LOG" AIR_QUALITY_LATER_SHELL_LOG="$LATER_SHELL_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" -f "$LATER_OVERRIDE" check "PYTHON=$FAKE_PYTHON" "GIT=$FAKE_GIT") >"$TEMP_ROOT/later-override.out" 2>&1
 [ -s "$LATER_SHELL_LOG" ]
 
+LATER_APPEND="$TEMP_ROOT/later-append.mk"
+LATER_APPEND_MARKER="$TEMP_ROOT/later-append-marker"
+cat >"$LATER_APPEND" <<LATER_APPEND_MAKE
+audit build check lint root-test test: MAKEFILE_LIST := $MAKEFILE
+lint::
+	@/usr/bin/touch '$LATER_APPEND_MARKER'
+LATER_APPEND_MAKE
+rm -f "$LATER_APPEND_MARKER" "$LOG"
+(cd "$CONTROL_DIR" && PATH="$AUTHORITY_PATH" AIR_QUALITY_COMMAND_LOG="$LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" -f "$LATER_APPEND" lint "PYTHON=$FAKE_PYTHON" "GIT=$FAKE_GIT") >"$TEMP_ROOT/later-append.out" 2>&1
+[ -e "$LATER_APPEND_MARKER" ]
+
 PATH_PYTHON="$TEMP_ROOT/python"
 PATH_PYTHON_LOG="$TEMP_ROOT/path-python.log"
 cp "$FAKE_PYTHON" "$PATH_PYTHON"
@@ -215,4 +226,4 @@ for flag in -n --just-print --dry-run --recon -t --touch -q --question -i --igno
   grep -Fq 'non-executing or error-ignoring MAKEFLAGS are not supported' "$TEMP_ROOT/flag.out"
 done
 
-printf '%s\n' 'Make authority tests passed: 30 target/authority cases, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, override/startup/PATH-Python boundary controls, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'
+printf '%s\n' 'Make authority tests passed: 30 target/authority cases, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, target-specific override shell boundary control, caller-added double-colon recipe boundary control, startup/PATH-Python boundary controls, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'

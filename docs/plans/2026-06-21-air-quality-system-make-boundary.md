@@ -15,7 +15,8 @@ Makefile had any opportunity to enforce repository verification behavior.
 - Froze literal Python and Git selections, `/bin/sh`, and the canonical
   repository root across every public target.
 - Rejected startup files, replaced Makefile lists, unsafe execution modes,
-  executable Make syntax, PATH-selected Git, and later recipe replacement.
+  executable Make syntax, PATH-selected Git, and later single-colon recipe
+  replacement.
 - Added an executable adversarial authority harness to `make check`.
 - Updated contributor and deployment commands to use the same executable.
 - Extended the portable baseline contract to reject workflow or README drift
@@ -28,11 +29,13 @@ Makefile had any opportunity to enforce repository verification behavior.
 - Run the baseline checker against hostile workflow mutations that replace the
   trusted executable with `make`.
 - Run `scripts/test-makefile-root.sh` to cover 30 target/authority cases, six
-  raw Make-syntax controls, startup and list boundaries, six later recipe
-  replacements, PATH boundaries, and ten unsupported modes.
+  raw Make-syntax controls, startup and list boundaries, six later single-colon
+  recipe replacements, explicit caller-added recipe and override-shell boundary
+  controls, PATH boundaries, and ten unsupported modes.
 
 ## Scope Boundary
 
 This change does not alter API behavior, dependencies, deployment
 configuration, credentials, or Redis/Mapbox integration. Explicit literal
 Python and Git selections remain supported caller authority.
+Caller-supplied additional makefiles remain outside the repository-controlled boundary: GNU Make still executes appended double-colon recipes and target-specific override directives from later `-f` files.

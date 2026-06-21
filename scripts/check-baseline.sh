@@ -1504,10 +1504,22 @@ for make_authority_test_contract in \
   '2 MAKEFILE_LIST rejections' \
   '2 startup-boundary cases' \
   '6 later recipe-replacement rejections' \
+  'target-specific override shell boundary control' \
+  'caller-added double-colon recipe boundary control' \
   'PATH-Git rejection' \
   '10 mode rejections'; do
   if ! grep -Fq "$make_authority_test_contract" "$MAKE_AUTHORITY_SCRIPT"; then
     printf '%s\n' "Make authority harness must keep contract: $make_authority_test_contract" >&2
+    exit 1
+  fi
+done
+
+for make_boundary_document in \
+  "$README" \
+  "$ROOT_DIR/SECURITY.md" \
+  "$DOCS_PLANS/2026-06-21-air-quality-system-make-boundary.md"; do
+  if ! grep -Fq 'Caller-supplied additional makefiles remain outside the repository-controlled boundary: GNU Make still executes appended double-colon recipes and target-specific override directives from later `-f` files.' "$make_boundary_document"; then
+    printf '%s\n' "$make_boundary_document must document caller-added makefile authority." >&2
     exit 1
   fi
 done
