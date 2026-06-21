@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-21
+
+- Pinned `msgpack 1.2.1` to exclude `GHSA-6v7p-g79w-8964` from the
+  Mapbox/CacheControl graph and added a pinned `pip-audit` gate to `make check`.
+
 ## 2026-06-17
 
 - Response-adapter JSON failures now use the unchained generic service-error
