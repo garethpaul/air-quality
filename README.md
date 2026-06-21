@@ -46,7 +46,10 @@ python -m pip install -r requirements.txt
 ```
 
 The setup commands above are derived from repository files. GitHub Actions and
-CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Actions uses credential-free checkout and runs `make check` from outside the repository directory.
+CircleCI validate the locked dependency set on Python 3.12 and 3.14.
+GitHub Actions uses credential-free checkout and runs `make check` from outside the repository directory.
+The portable baseline binds credential isolation to the canonical checkout
+step in each workflow, so unrelated text cannot mask persisted credentials.
 
 ## Running or Using the Project
 
