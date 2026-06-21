@@ -4,6 +4,7 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 README="$ROOT_DIR/README.md"
 MAKEFILE="$ROOT_DIR/Makefile"
+MAKE_AUTHORITY_SCRIPT="$ROOT_DIR/scripts/test-makefile-root.sh"
 GITIGNORE="$ROOT_DIR/.gitignore"
 DOCS_PLANS="$ROOT_DIR/docs/plans"
 
@@ -82,6 +83,8 @@ for path in \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
   "docs/plans/2026-06-21-msgpack-security-audit.md" \
   "docs/plans/2026-06-21-air-quality-checkout-credential-contract.md" \
+  "docs/plans/2026-06-21-air-quality-system-make-boundary.md" \
+  "scripts/test-makefile-root.sh" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -1446,28 +1449,32 @@ if ! grep -Fq "scripts/check-baseline.sh" "$MAKEFILE"; then
   exit 1
 fi
 
-if ! grep -Fxq 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE"; then
-  printf '%s\n' "Makefile must protect the repository root." >&2
+for make_authority_contract in \
+  '.DEFAULT_GOAL := check' \
+  '.SECONDEXPANSION:' \
+  'override SHELL := /bin/sh' \
+  'override .SHELLFLAGS := -c' \
+  'override PYTHON := $(value PYTHON)' \
+  'GIT ?= /usr/bin/git' \
+  'override GIT := $(value GIT)' \
+  'MAKEFLAGS must not be overridden' \
+  'MAKEFILES must be empty' \
+  'MAKEFILE_LIST must not be overridden' \
+  'export ROOT' \
+  'root-test::' \
+  'scripts/test-makefile-root.sh'; do
+  if ! grep -Fq "$make_authority_contract" "$MAKEFILE"; then
+    printf '%s\n' "Makefile must keep authority contract: $make_authority_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "override PYTHON_FILES := \$(shell '\$(REPOSITORY_GIT_LITERAL)' -C '\$(REPOSITORY_ROOT_LITERAL)' ls-files '*.py')" "$MAKEFILE"; then
+  printf '%s\n' "Makefile must derive Python files through the rooted literal Git command." >&2
   exit 1
 fi
 
-if ! grep -Fxq 'PYTHON_FILES := $(shell git -C "$(ROOT)" ls-files '\''*.py'\'')' "$MAKEFILE"; then
-  printf '%s\n' "Makefile must derive Python files from the repository root." >&2
-  exit 1
-fi
-
-if [ "$(grep -Fc 'cd "$(ROOT)" &&' "$MAKEFILE")" -ne 5 ]; then
-  printf '%s\n' "All five package commands must execute from the repository root." >&2
-  exit 1
-fi
-
-make_tab=$(printf '\t')
-if ! grep -Fxq "${make_tab}\"\$(ROOT)/scripts/check-baseline.sh\"" "$MAKEFILE"; then
-  printf '%s\n' "Makefile must execute the rooted baseline script." >&2
-  exit 1
-fi
-
-for target in "lint:" "test:" "build:" "check:"; do
+for target in "lint::" "audit::" "test::" "build::" "root-test::" "check::"; do
   if ! grep -Fq "$target" "$MAKEFILE"; then
     printf '%s\n' "Makefile must expose the $target gate." >&2
     exit 1
@@ -1475,12 +1482,32 @@ for target in "lint:" "test:" "build:" "check:"; do
 done
 
 for make_contract in \
-  "python -m ruff format --check ." \
-  "python -m ruff check ." \
-  "python run_tests.py" \
-  "python -m compileall -q"; do
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -m ruff format --check ." \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -m ruff check ." \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' run_tests.py" \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -m compileall -q" \
+  'scripts/check-baseline.sh'; do
   if ! grep -Fq "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must keep contract: $make_contract" >&2
+    exit 1
+  fi
+done
+
+if [ ! -x "$MAKE_AUTHORITY_SCRIPT" ]; then
+  printf '%s\n' "Make authority harness must be executable." >&2
+  exit 1
+fi
+
+for make_authority_test_contract in \
+  '30 target/authority cases' \
+  '6 raw Make-syntax controls' \
+  '2 MAKEFILE_LIST rejections' \
+  '2 startup-boundary cases' \
+  '6 later recipe-replacement rejections' \
+  'PATH-Git rejection' \
+  '10 mode rejections'; do
+  if ! grep -Fq "$make_authority_test_contract" "$MAKE_AUTHORITY_SCRIPT"; then
+    printf '%s\n' "Make authority harness must keep contract: $make_authority_test_contract" >&2
     exit 1
   fi
 done
@@ -1633,9 +1660,9 @@ for development_requirement in 'pip-audit==2.10.0' 'ruff==0.15.16'; do
 done
 
 for audit_contract in \
-  '.PHONY: check lint audit test build' \
-  'check: lint audit test build' \
-  'python -m pip_audit --index-url https://pypi.org/simple -r requirements.txt'; do
+  '.PHONY: __repository-make-authority audit build check lint root-test test' \
+  'check:: root-test lint audit test build' \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -m pip_audit --index-url https://pypi.org/simple -r requirements.txt"; do
   if ! grep -Fq "$audit_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must keep dependency audit contract: $audit_contract" >&2
     exit 1
@@ -1664,7 +1691,10 @@ done
 
 for ci_contract in \
   'python-version: ["3.12", "3.14"]' \
-  'cimg/python:<< parameters.python-version >>'; do
+  'cimg/python:<< parameters.python-version >>' \
+  '/usr/bin/make lint' \
+  '/usr/bin/make test' \
+  '/usr/bin/make build'; do
   if ! grep -Fq "$ci_contract" "$ROOT_DIR/.circleci/config.yml"; then
     printf '%s\n' "CircleCI must keep contract: $ci_contract" >&2
     exit 1
@@ -1681,8 +1711,8 @@ for workflow_contract in \
   'concurrency:' \
   'cancel-in-progress: true' \
   'runs-on: ubuntu-24.04' \
-  'run: make check' \
-  'make -f "$GITHUB_WORKSPACE/Makefile" check'; do
+  'run: /usr/bin/make check' \
+  '/usr/bin/make -f "$GITHUB_WORKSPACE/Makefile" check'; do
   if ! grep -Fq "$workflow_contract" "$ROOT_DIR/.github/workflows/check.yml"; then
     printf '%s\n' "GitHub Actions must keep contract: $workflow_contract" >&2
     exit 1
@@ -1812,7 +1842,7 @@ if [ "$workflow_count" -ne 2 ]; then
   exit 1
 fi
 
-if ! grep -Fq 'GitHub Actions uses credential-free checkout and runs `make check` from outside the repository directory.' "$README"; then
+if ! grep -Fq 'GitHub Actions uses credential-free checkout and runs `/usr/bin/make check` from outside the repository directory so verification does not depend on a PATH-selected Make executable.' "$README"; then
   printf '%s\n' "README must document external-working-directory verification." >&2
   exit 1
 fi

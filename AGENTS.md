@@ -17,10 +17,10 @@
 
 - Supported runtime: Python 3.12
 - Install dependencies: `python3 -m pip install -r requirements-dev.txt`; `python3 -m pip install -r requirements.txt`
-- Full baseline: `make check`
-- Lint/static checks: `make lint`
-- Tests: `make test`
-- Build: `make build`
+- Full baseline: `/usr/bin/make check`
+- Lint/static checks: `/usr/bin/make lint`
+- Tests: `/usr/bin/make test`
+- Build: `/usr/bin/make build`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
 
 ## Coding conventions
@@ -32,7 +32,7 @@
 ## Testing guidance
 
 - Test-related files detected: `air_tests.py`, `app_tests.py`, `geocode_tests.py`, `run_tests.py`, `test_helpers.py`
-- Start with the narrowest relevant test or Make target, then run `make check` before handing off if the change is not documentation-only.
+- Start with the narrowest relevant test or Make target, then run `/usr/bin/make check` before handing off if the change is not documentation-only.
 - Keep README verification notes in sync when commands, fixtures, or supported toolchains change.
 
 ## PR / change guidance

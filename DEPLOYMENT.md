@@ -45,7 +45,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install --requirement requirements.txt
 .venv/bin/python -m pip check
 .venv/bin/python run_tests.py
-make check
+/usr/bin/make check
 ```
 
 Confirm separately that:

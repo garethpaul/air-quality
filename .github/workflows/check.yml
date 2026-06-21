@@ -35,6 +35,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt -r requirements-dev.txt
       - name: Run repository verification
-        run: make check
+        run: /usr/bin/make check
       - name: Verify external working directory
-        run: cd "$(mktemp -d)" && make -f "$GITHUB_WORKSPACE/Makefile" check
+        run: cd "$(mktemp -d)" && /usr/bin/make -f "$GITHUB_WORKSPACE/Makefile" check

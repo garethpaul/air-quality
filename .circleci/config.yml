@@ -26,17 +26,17 @@ jobs:
           name: Lint and format check
           command: |
             . venv/bin/activate
-            make lint
+            /usr/bin/make lint
       - run:
           name: Test
           command: |
             . venv/bin/activate
-            make test
+            /usr/bin/make test
       - run:
           name: Build
           command: |
             . venv/bin/activate
-            make build
+            /usr/bin/make build
       - save_cache:
           paths:
             - ./venv
