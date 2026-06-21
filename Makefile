@@ -89,17 +89,17 @@ __repository-make-authority::
 
 define REPOSITORY_PUBLIC_RECIPES
 lint::
-	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -m ruff format --check .
-	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -m ruff check .
+	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B -m ruff format --check .
+	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B -m ruff check .
 
 audit::
-	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -m pip_audit --index-url https://pypi.org/simple -r requirements.txt
+	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B -m pip_audit --index-url https://pypi.org/simple -r requirements.txt
 
 test::
-	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' run_tests.py
+	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B run_tests.py
 
 build::
-	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -m compileall -q $(PYTHON_FILES)
+	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B -m compileall -q $(PYTHON_FILES)
 
 root-test::
 	/bin/sh '$(REPOSITORY_ROOT_LITERAL)/scripts/test-makefile-root.sh'

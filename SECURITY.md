@@ -122,9 +122,14 @@ reaching the server launcher.
 Repository verification uses the system `/usr/bin/make` entry point. The
 Makefile resolves the active environment's default Python once, anchors Git to
 `/usr/bin/git`, and freezes literal tool selections before later makefiles can
-replace them. Its shell, root, startup-file, recipe, and execution-mode
-boundaries remain repository-controlled; explicit literal Python and Git
-selections remain supported caller authority.
+replace them. Its shell, root, startup-file, single-colon recipe replacement,
+and execution-mode boundaries remain repository-controlled for the repository
+entry point. Caller-supplied additional makefiles remain outside the repository-controlled boundary: GNU Make still executes appended double-colon recipes and target-specific override directives from later `-f` files.
+Explicit literal Python and Git selections remain supported caller authority.
+The selected Python interpreter runs verification with `-I -B`, excluding
+`PYTHONPATH`, user-site packages, and bytecode output from repository gates.
+The test runner restores only its resolved repository directory for local test
+module imports.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
