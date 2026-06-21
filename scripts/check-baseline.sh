@@ -79,6 +79,7 @@ for path in \
   "docs/plans/2026-06-16-search-query-control-character-guard.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
+  "docs/plans/2026-06-21-msgpack-security-audit.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -1451,8 +1452,8 @@ if ! grep -Fxq 'PYTHON_FILES := $(shell git -C "$(ROOT)" ls-files '\''*.py'\'')'
   exit 1
 fi
 
-if [ "$(grep -Fc 'cd "$(ROOT)" &&' "$MAKEFILE")" -ne 4 ]; then
-  printf '%s\n' "All four package commands must execute from the repository root." >&2
+if [ "$(grep -Fc 'cd "$(ROOT)" &&' "$MAKEFILE")" -ne 5 ]; then
+  printf '%s\n' "All five package commands must execute from the repository root." >&2
   exit 1
 fi
 
@@ -1612,6 +1613,7 @@ for requirement in \
   'bottle==0.13.4' \
   'requests==2.34.2' \
   'mapbox==0.18.1' \
+  'msgpack==1.2.1' \
   'redis==8.0.0'; do
   if ! grep -Fxq "$requirement" "$ROOT_DIR/requirements.txt"; then
     printf '%s\n' "requirements.txt must keep exact direct pin: $requirement" >&2
@@ -1619,10 +1621,22 @@ for requirement in \
   fi
 done
 
-if ! grep -Fxq 'ruff==0.15.16' "$ROOT_DIR/requirements-dev.txt"; then
-  printf '%s\n' "requirements-dev.txt must keep the exact Ruff pin." >&2
-  exit 1
-fi
+for development_requirement in 'pip-audit==2.10.0' 'ruff==0.15.16'; do
+  if ! grep -Fxq "$development_requirement" "$ROOT_DIR/requirements-dev.txt"; then
+    printf '%s\n' "requirements-dev.txt must keep exact pin: $development_requirement" >&2
+    exit 1
+  fi
+done
+
+for audit_contract in \
+  '.PHONY: check lint audit test build' \
+  'check: lint audit test build' \
+  'python -m pip_audit --index-url https://pypi.org/simple -r requirements.txt'; do
+  if ! grep -Fq "$audit_contract" "$MAKEFILE"; then
+    printf '%s\n' "Makefile must keep dependency audit contract: $audit_contract" >&2
+    exit 1
+  fi
+done
 
 for ruff_upgrade_document in "$ROOT_DIR/CHANGES.md" "$README"; do
   if ! grep -Fq 'Ruff 0.15.16' "$ruff_upgrade_document"; then

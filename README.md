@@ -55,8 +55,12 @@ CircleCI validate the locked dependency set on Python 3.12 and 3.14. GitHub Acti
 
 ## Testing and Verification
 
-- `make check` - run lint, tests, and Python bytecode compilation
+- `make check` - run lint, a pinned dependency audit, tests, Python bytecode
+  compilation, and repository baseline contracts
 - `make lint` - check formatting and static issues with Ruff 0.15.16
+- `make audit` - audit the runtime graph with pip-audit 2.10.0; the direct
+  `msgpack 1.2.1` constraint excludes `GHSA-6v7p-g79w-8964` from the
+  Mapbox/CacheControl dependency graph
 - `make test` - run the dependency-free unittest suite
 - AQI tests enforce the EPA PM2.5 breakpoints effective May 6, 2024, accept
   nonnegative sensor concentrations, and reject out-of-range sensor locations.
