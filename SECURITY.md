@@ -119,6 +119,13 @@ reaching the server launcher.
 
 ## Dependency and Supply Chain Security
 
+Repository verification uses the system `/usr/bin/make` entry point. The
+Makefile resolves the active environment's default Python once, anchors Git to
+`/usr/bin/git`, and freezes literal tool selections before later makefiles can
+replace them. Its shell, root, startup-file, recipe, and execution-mode
+boundaries remain repository-controlled; explicit literal Python and Git
+selections remain supported caller authority.
+
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
 The maintained dependency baseline uses exact direct pins and is exercised on

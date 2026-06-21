@@ -47,7 +47,7 @@ python -m pip install -r requirements.txt
 
 The setup commands above are derived from repository files. GitHub Actions and
 CircleCI validate the locked dependency set on Python 3.12 and 3.14.
-GitHub Actions uses credential-free checkout and runs `make check` from outside the repository directory.
+GitHub Actions uses credential-free checkout and runs `/usr/bin/make check` from outside the repository directory so verification does not depend on a PATH-selected Make executable. CircleCI uses the same system Make entry point for lint, test, and build targets.
 The portable baseline binds credential isolation to the canonical checkout
 step in each workflow, so unrelated text cannot mask persisted credentials.
 
@@ -58,16 +58,16 @@ step in each workflow, so unrelated text cannot mask persisted credentials.
 
 ## Testing and Verification
 
-- `make check` - run lint, a pinned dependency audit, tests, Python bytecode
+- `/usr/bin/make check` - run lint, a pinned dependency audit, tests, Python bytecode
   compilation, and repository baseline contracts
-- `make lint` - check formatting and static issues with Ruff 0.15.16
-- `make audit` - audit the runtime graph with pip-audit 2.10.0; the direct
+- `/usr/bin/make lint` - check formatting and static issues with Ruff 0.15.16
+- `/usr/bin/make audit` - audit the runtime graph with pip-audit 2.10.0; the direct
   `msgpack 1.2.1` constraint excludes `GHSA-6v7p-g79w-8964` from the
   Mapbox/CacheControl dependency graph
-- `make test` - run the dependency-free unittest suite
+- `/usr/bin/make test` - run the dependency-free unittest suite
 - AQI tests enforce the EPA PM2.5 breakpoints effective May 6, 2024, accept
   nonnegative sensor concentrations, and reject out-of-range sensor locations.
-- `make build` - compile tracked Python files
+- `/usr/bin/make build` - compile tracked Python files
 - `scripts/check-baseline.sh` - verify required files, Make targets,
   completed plan metadata, CI contracts, README notes, and local secret/editor
   ignore hygiene
@@ -235,6 +235,8 @@ before Bottle launch; an absent `PORT` retains the 5000 default.
   public-address policy and its DNS-rebinding boundary.
 - See `docs/plans/2026-06-15-antipodal-distance-clamp.md` for the bounded
   haversine intermediate and near-antipodal regression.
+- See `docs/plans/2026-06-21-air-quality-system-make-boundary.md` for the
+  trusted hosted, contributor, and deployment Make entry point.
 
 ## Contributing
 

@@ -2,6 +2,9 @@
 
 ## 2026-06-21
 
+- Bound GitHub Actions, CircleCI, contributor, and deployment verification to
+  `/usr/bin/make` and added baseline contracts preventing PATH-selected Make
+  drift.
 - Pinned `msgpack 1.2.1` to exclude `GHSA-6v7p-g79w-8964` from the
   Mapbox/CacheControl graph and added a pinned `pip-audit` gate to `make check`.
 - Bound checkout credential isolation to the canonical immutable checkout step
