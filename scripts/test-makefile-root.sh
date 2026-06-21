@@ -207,6 +207,25 @@ cp "$FAKE_PYTHON" "$PATH_PYTHON"
 rm -f "$PATH_PYTHON_LOG"
 (cd "$CONTROL_DIR" && PATH="$TEMP_ROOT:/usr/bin:/bin" AIR_QUALITY_COMMAND_LOG="$PATH_PYTHON_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" lint "GIT=$FAKE_GIT") >"$TEMP_ROOT/path-python.out" 2>&1
 grep -Fq "$PATH_PYTHON" "$PATH_PYTHON_LOG"
+grep -Fq -- '-I -B -m ruff format --check .' "$PATH_PYTHON_LOG"
+
+PYTHONPATH_DIR="$TEMP_ROOT/pythonpath"
+PYTHONPATH_MARKER="$TEMP_ROOT/pythonpath-marker"
+mkdir -p "$PYTHONPATH_DIR"
+cat >"$PYTHONPATH_DIR/sitecustomize.py" <<'PYTHON'
+import os
+from pathlib import Path
+
+Path(os.environ["AIR_QUALITY_PYTHONPATH_MARKER"]).write_text("loaded", encoding="utf-8")
+os._exit(0)
+PYTHON
+cat >"$CHECKOUT/run_tests.py" <<'PYTHON'
+print("isolated Python executed the repository tests")
+PYTHON
+rm -f "$PYTHONPATH_MARKER"
+(cd "$CONTROL_DIR" && PATH="/usr/bin:/bin" PYTHONPATH="$PYTHONPATH_DIR" AIR_QUALITY_PYTHONPATH_MARKER="$PYTHONPATH_MARKER" /usr/bin/make --no-print-directory -f "$MAKEFILE" test PYTHON=/usr/bin/python3 "GIT=$FAKE_GIT") >"$TEMP_ROOT/pythonpath.out" 2>&1
+[ ! -e "$PYTHONPATH_MARKER" ]
+grep -Fq 'isolated Python executed the repository tests' "$TEMP_ROOT/pythonpath.out"
 
 PATH_GIT="$TEMP_ROOT/git"
 PATH_GIT_LOG="$TEMP_ROOT/path-git.log"
@@ -226,4 +245,4 @@ for flag in -n --just-print --dry-run --recon -t --touch -q --question -i --igno
   grep -Fq 'non-executing or error-ignoring MAKEFLAGS are not supported' "$TEMP_ROOT/flag.out"
 done
 
-printf '%s\n' 'Make authority tests passed: 30 target/authority cases, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, target-specific override shell boundary control, caller-added double-colon recipe boundary control, startup/PATH-Python boundary controls, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'
+printf '%s\n' 'Make authority tests passed: 30 target/authority cases, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, target-specific override shell boundary control, caller-added double-colon recipe boundary control, startup/PATH-Python boundary controls, PYTHONPATH isolation, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'

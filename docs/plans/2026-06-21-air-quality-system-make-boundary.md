@@ -14,6 +14,11 @@ Makefile had any opportunity to enforce repository verification behavior.
   `/usr/bin/make`.
 - Froze literal Python and Git selections, `/bin/sh`, and the canonical
   repository root across every public target.
+- Isolated selected Python invocations with `-I -B` so `PYTHONPATH`, user-site
+  packages, and bytecode output cannot replace repository verification.
+- Made the isolated test runner add only its resolved repository directory to
+  `sys.path`, preserving local test-module discovery without restoring caller
+  import paths.
 - Rejected startup files, replaced Makefile lists, unsafe execution modes,
   executable Make syntax, PATH-selected Git, and later single-colon recipe
   replacement.

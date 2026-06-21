@@ -1482,16 +1482,22 @@ for target in "lint::" "audit::" "test::" "build::" "root-test::" "check::"; do
 done
 
 for make_contract in \
-  "'\$(REPOSITORY_PYTHON_LITERAL)' -m ruff format --check ." \
-  "'\$(REPOSITORY_PYTHON_LITERAL)' -m ruff check ." \
-  "'\$(REPOSITORY_PYTHON_LITERAL)' run_tests.py" \
-  "'\$(REPOSITORY_PYTHON_LITERAL)' -m compileall -q" \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m ruff format --check ." \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m ruff check ." \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m pip_audit" \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B run_tests.py" \
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m compileall -q" \
   'scripts/check-baseline.sh'; do
   if ! grep -Fq "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must keep contract: $make_contract" >&2
     exit 1
   fi
 done
+
+if ! grep -Fq 'sys.path.insert(0, str(Path(__file__).resolve().parent))' "$ROOT_DIR/run_tests.py"; then
+  printf '%s\n' "The isolated test runner must import only from its repository directory." >&2
+  exit 1
+fi
 
 if [ ! -x "$MAKE_AUTHORITY_SCRIPT" ]; then
   printf '%s\n' "Make authority harness must be executable." >&2
@@ -1506,6 +1512,7 @@ for make_authority_test_contract in \
   '6 later recipe-replacement rejections' \
   'target-specific override shell boundary control' \
   'caller-added double-colon recipe boundary control' \
+  'PYTHONPATH isolation' \
   'PATH-Git rejection' \
   '10 mode rejections'; do
   if ! grep -Fq "$make_authority_test_contract" "$MAKE_AUTHORITY_SCRIPT"; then
@@ -1674,7 +1681,7 @@ done
 for audit_contract in \
   '.PHONY: __repository-make-authority audit build check lint root-test test' \
   'check:: root-test lint audit test build' \
-  "'\$(REPOSITORY_PYTHON_LITERAL)' -m pip_audit --index-url https://pypi.org/simple -r requirements.txt"; do
+  "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m pip_audit --index-url https://pypi.org/simple -r requirements.txt"; do
   if ! grep -Fq "$audit_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must keep dependency audit contract: $audit_contract" >&2
     exit 1

@@ -22,6 +22,7 @@
 - Tests: `/usr/bin/make test`
 - Build: `/usr/bin/make build`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
+- Keep repository Python verification isolated with `-I -B`; do not reintroduce `PYTHONPATH` or user-site import authority.
 
 ## Coding conventions
 
