@@ -39,6 +39,7 @@ for path in \
   "requirements-dev.txt" \
   "run_tests.py" \
   "test_helpers.py" \
+  "scripts/check-workflow-checkout.py" \
   "docs/plans/2026-06-08-air-quality-engineering-bar.md" \
   "docs/plans/2026-06-09-air-quality-geocode-cache-validation.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
@@ -80,9 +81,12 @@ for path in \
   "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
   "docs/plans/2026-06-21-msgpack-security-audit.md" \
+  "docs/plans/2026-06-21-air-quality-checkout-credential-contract.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+python "$ROOT_DIR/scripts/check-workflow-checkout.py"
 
 for permanent_geocoder_source_contract in \
   'MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"' \

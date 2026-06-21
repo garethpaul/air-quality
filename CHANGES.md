@@ -4,6 +4,9 @@
 
 - Pinned `msgpack 1.2.1` to exclude `GHSA-6v7p-g79w-8964` from the
   Mapbox/CacheControl graph and added a pinned `pip-audit` gate to `make check`.
+- Bound checkout credential isolation to the canonical immutable checkout step
+  in both GitHub workflows and added writable, missing-block, decoy-only,
+  duplicate-setting, and additional-checkout hostile contract coverage.
 
 ## 2026-06-17
 
