@@ -36,6 +36,10 @@ def verify_contract_mutations():
             "          persist-credentials: false", ""
         )
         + "\n      - run: echo 'persist-credentials: false'",
+        "additional checkout": CHECKOUT_BLOCK
+        + "\n      - name: Unsafe second checkout"
+        + "\n        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "duplicate setting": CHECKOUT_BLOCK + "\n          persist-credentials: true",
     }
     for name, mutation in mutations.items():
         require(

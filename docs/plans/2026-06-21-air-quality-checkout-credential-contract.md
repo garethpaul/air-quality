@@ -18,7 +18,8 @@ command could therefore hide checkout with default or writable credentials.
 - Add a dependency-free workflow checkout contract helper.
 - Require exactly one canonical checkout block and one credential setting in
   each workflow.
-- Reject writable credentials, a missing `with` block, and decoy-only text.
+- Reject writable credentials, a missing `with` block, decoy-only text,
+  duplicate settings, and additional checkout steps.
 - Run the helper from the existing baseline and document the guarantee.
 
 ## Verification
@@ -27,6 +28,6 @@ command could therefore hide checkout with default or writable credentials.
   3.12 environment and run the package compatibility check.
 - Run `make check` from the repository root and through the absolute Makefile
   from an external working directory.
-- Confirm all three hostile checkout mutations fail the helper contract.
+- Confirm all five hostile checkout mutations fail the helper contract.
 - Run `git diff --check`, strict repository integrity checks, and a changed-file
   credential-shape scan.
