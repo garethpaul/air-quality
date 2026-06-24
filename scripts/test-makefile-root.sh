@@ -35,7 +35,7 @@ printf '%s\n' air.py app.py geocode.py run_tests.py
 SCRIPT
 chmod +x "$FAKE_GIT"
 
-for script in check-baseline.sh test-makefile-root.sh; do
+for script in check-baseline.sh test-baseline-python-selection.sh test-makefile-root.sh; do
   cat >"$CHECKOUT/scripts/$script" <<'SCRIPT'
 #!/bin/sh
 printf 'script|%s|%s|%s\n' "$PWD" "$0" "$*" >> "$AIR_QUALITY_COMMAND_LOG"
@@ -223,7 +223,7 @@ cat >"$CHECKOUT/run_tests.py" <<'PYTHON'
 print("isolated Python executed the repository tests")
 PYTHON
 rm -f "$PYTHONPATH_MARKER"
-(cd "$CONTROL_DIR" && PATH="/usr/bin:/bin" PYTHONPATH="$PYTHONPATH_DIR" AIR_QUALITY_PYTHONPATH_MARKER="$PYTHONPATH_MARKER" /usr/bin/make --no-print-directory -f "$MAKEFILE" test PYTHON=/usr/bin/python3 "GIT=$FAKE_GIT") >"$TEMP_ROOT/pythonpath.out" 2>&1
+(cd "$CONTROL_DIR" && PATH="/usr/bin:/bin" PYTHONPATH="$PYTHONPATH_DIR" AIR_QUALITY_COMMAND_LOG="$LOG" AIR_QUALITY_PYTHONPATH_MARKER="$PYTHONPATH_MARKER" /usr/bin/make --no-print-directory -f "$MAKEFILE" test PYTHON=/usr/bin/python3 "GIT=$FAKE_GIT") >"$TEMP_ROOT/pythonpath.out" 2>&1
 [ ! -e "$PYTHONPATH_MARKER" ]
 grep -Fq 'isolated Python executed the repository tests' "$TEMP_ROOT/pythonpath.out"
 
