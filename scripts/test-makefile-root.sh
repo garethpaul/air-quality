@@ -35,7 +35,7 @@ printf '%s\n' air.py app.py geocode.py run_tests.py
 SCRIPT
 chmod +x "$FAKE_GIT"
 
-for script in check-baseline.sh test-makefile-root.sh; do
+for script in check-baseline.sh test-baseline-python-selection.sh test-makefile-root.sh; do
   cat >"$CHECKOUT/scripts/$script" <<'SCRIPT'
 #!/bin/sh
 printf 'script|%s|%s|%s\n' "$PWD" "$0" "$*" >> "$AIR_QUALITY_COMMAND_LOG"
@@ -223,9 +223,41 @@ cat >"$CHECKOUT/run_tests.py" <<'PYTHON'
 print("isolated Python executed the repository tests")
 PYTHON
 rm -f "$PYTHONPATH_MARKER"
-(cd "$CONTROL_DIR" && PATH="/usr/bin:/bin" PYTHONPATH="$PYTHONPATH_DIR" AIR_QUALITY_PYTHONPATH_MARKER="$PYTHONPATH_MARKER" /usr/bin/make --no-print-directory -f "$MAKEFILE" test PYTHON=/usr/bin/python3 "GIT=$FAKE_GIT") >"$TEMP_ROOT/pythonpath.out" 2>&1
+(cd "$CONTROL_DIR" && PATH="/usr/bin:/bin" PYTHONPATH="$PYTHONPATH_DIR" AIR_QUALITY_COMMAND_LOG="$LOG" AIR_QUALITY_PYTHONPATH_MARKER="$PYTHONPATH_MARKER" /usr/bin/make --no-print-directory -f "$MAKEFILE" test PYTHON=/usr/bin/python3 "GIT=$FAKE_GIT") >"$TEMP_ROOT/pythonpath.out" 2>&1
 [ ! -e "$PYTHONPATH_MARKER" ]
 grep -Fq 'isolated Python executed the repository tests' "$TEMP_ROOT/pythonpath.out"
+
+NAMED_PYTHON_DIR="$TEMP_ROOT/named-python"
+NAMED_PYTHON="$NAMED_PYTHON_DIR/reviewed-python"
+mkdir -p "$NAMED_PYTHON_DIR"
+cat >"$NAMED_PYTHON" <<'SCRIPT'
+#!/bin/sh
+exec /usr/bin/python3 "$@"
+SCRIPT
+chmod +x "$NAMED_PYTHON"
+PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON=reviewed-python \
+  /bin/sh "$ROOT_DIR/scripts/test-baseline-python-selection.sh" \
+  >"$TEMP_ROOT/named-python.out" 2>&1
+grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/named-python.out"
+
+RELATIVE_ROOT="$TEMP_ROOT/relative-python-root"
+mkdir -p "$RELATIVE_ROOT/bin" "$RELATIVE_ROOT/scripts"
+cp "$ROOT_DIR/scripts/test-baseline-python-selection.sh" \
+  "$RELATIVE_ROOT/scripts/test-baseline-python-selection.sh"
+cat >"$RELATIVE_ROOT/scripts/check-baseline.sh" <<'SCRIPT'
+#!/bin/sh
+"$PYTHON" -I -B -c 'print("relative reviewed Python executed")'
+SCRIPT
+chmod +x "$RELATIVE_ROOT/scripts/check-baseline.sh"
+cat >"$RELATIVE_ROOT/bin/reviewed-python" <<'SCRIPT'
+#!/bin/sh
+exec /usr/bin/python3 "$@"
+SCRIPT
+chmod +x "$RELATIVE_ROOT/bin/reviewed-python"
+(cd "$CONTROL_DIR" && REPOSITORY_PYTHON=./bin/reviewed-python \
+  /bin/sh "$RELATIVE_ROOT/scripts/test-baseline-python-selection.sh") \
+  >"$TEMP_ROOT/relative-python.out" 2>&1
+grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/relative-python.out"
 
 PATH_GIT="$TEMP_ROOT/git"
 PATH_GIT_LOG="$TEMP_ROOT/path-git.log"

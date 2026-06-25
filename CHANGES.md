@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-24
+
+- Bound the baseline workflow contract helper to Make's reviewed Python
+  interpreter and added a hostile-PATH regression so systems where `python`
+  still names Python 2 cannot break or redirect `make check`.
+- Preserved caller-selected interpreter command names and repository-relative
+  paths by resolving them before the hostile-PATH regression runs; Codex review
+  reproduced both prior failures and the Make authority harness now covers them.
+
 ## 2026-06-21
 
 - Bound GitHub Actions, CircleCI, contributor, and deployment verification to

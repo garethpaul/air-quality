@@ -8,6 +8,14 @@ MAKE_AUTHORITY_SCRIPT="$ROOT_DIR/scripts/test-makefile-root.sh"
 GITIGNORE="$ROOT_DIR/.gitignore"
 DOCS_PLANS="$ROOT_DIR/docs/plans"
 
+if [ -z "${PYTHON:-}" ]; then
+  PYTHON=$(command -v python3 || true)
+fi
+if [ -z "$PYTHON" ]; then
+  printf '%s\n' "Python 3 is required; set PYTHON to the reviewed interpreter." >&2
+  exit 1
+fi
+
 require_file() {
   path=$1
   if [ ! -f "$ROOT_DIR/$path" ]; then
@@ -41,6 +49,7 @@ for path in \
   "run_tests.py" \
   "test_helpers.py" \
   "scripts/check-workflow-checkout.py" \
+  "scripts/test-baseline-python-selection.sh" \
   "docs/plans/2026-06-08-air-quality-engineering-bar.md" \
   "docs/plans/2026-06-09-air-quality-geocode-cache-validation.md" \
   "docs/plans/2026-06-09-scripted-baseline-check.md" \
@@ -89,7 +98,7 @@ for path in \
   require_file "$path"
 done
 
-python "$ROOT_DIR/scripts/check-workflow-checkout.py"
+"$PYTHON" -I -B "$ROOT_DIR/scripts/check-workflow-checkout.py"
 
 for permanent_geocoder_source_contract in \
   'MAPBOX_PERMANENT_DATASET = "mapbox.places-permanent"' \
@@ -1010,7 +1019,7 @@ for media_type_plan_contract in \
   fi
 done
 
-python - "$ROOT_DIR/air.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/air.py" <<'PY'
 from pathlib import Path
 import sys
 
@@ -1245,7 +1254,7 @@ for public_address_document in \
   fi
 done
 
-python - "$ROOT_DIR/geocode.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/geocode.py" <<'PY'
 from pathlib import Path
 import sys
 
@@ -1319,7 +1328,7 @@ for response_json_source_contract in \
   fi
 done
 
-python - "$ROOT_DIR/air.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/air.py" <<'PY'
 import ast
 import sys
 
@@ -1486,13 +1495,26 @@ for make_contract in \
   "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m ruff check ." \
   "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m pip_audit" \
   "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B run_tests.py" \
+  "REPOSITORY_PYTHON='\$(REPOSITORY_PYTHON_LITERAL)' /bin/sh" \
+  'scripts/test-baseline-python-selection.sh' \
   "'\$(REPOSITORY_PYTHON_LITERAL)' -I -B -m compileall -q" \
+  "PYTHON='\$(REPOSITORY_PYTHON_LITERAL)' /bin/sh" \
   'scripts/check-baseline.sh'; do
   if ! grep -Fq "$make_contract" "$MAKEFILE"; then
     printf '%s\n' "Makefile must keep contract: $make_contract" >&2
     exit 1
   fi
 done
+
+if ! grep -Fq '"$PYTHON" -I -B "$ROOT_DIR/scripts/check-workflow-checkout.py"' "$ROOT_DIR/scripts/check-baseline.sh"; then
+  printf '%s\n' "Baseline workflow checks must use the reviewed Python interpreter." >&2
+  exit 1
+fi
+
+if grep -Eq '^[[:space:]]*python([[:space:]]|$)' "$ROOT_DIR/scripts/check-baseline.sh"; then
+  printf '%s\n' "Baseline checks must not invoke a PATH-selected bare python." >&2
+  exit 1
+fi
 
 if ! grep -Fq 'sys.path.insert(0, str(Path(__file__).resolve().parent))' "$ROOT_DIR/run_tests.py"; then
   printf '%s\n' "The isolated test runner must import only from its repository directory." >&2
@@ -1925,7 +1947,7 @@ for server_port_source_contract in \
   fi
 done
 
-python - "$ROOT_DIR/app.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/app.py" <<'PY'
 from pathlib import Path
 import sys
 
@@ -1991,7 +2013,7 @@ for geocoder_payload_source_contract in \
   fi
 done
 
-python - "$ROOT_DIR/geocode.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/geocode.py" <<'PY'
 from pathlib import Path
 import sys
 
@@ -2061,7 +2083,7 @@ if grep -Fq 'linear = round(a)' "$ROOT_DIR/air.py"; then
   exit 1
 fi
 
-python - "$ROOT_DIR/air.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/air.py" <<'PY'
 from pathlib import Path
 import sys
 
@@ -2115,7 +2137,7 @@ for search_control_source_contract in \
   fi
 done
 
-python - "$ROOT_DIR/app.py" <<'PY'
+"$PYTHON" -I -B - "$ROOT_DIR/app.py" <<'PY'
 from pathlib import Path
 import sys
 

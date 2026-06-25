@@ -97,6 +97,7 @@ audit::
 
 test::
 	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B run_tests.py
+	REPOSITORY_PYTHON='$(REPOSITORY_PYTHON_LITERAL)' /bin/sh '$(REPOSITORY_ROOT_LITERAL)/scripts/test-baseline-python-selection.sh'
 
 build::
 	cd '$(REPOSITORY_ROOT_LITERAL)' && '$(REPOSITORY_PYTHON_LITERAL)' -I -B -m compileall -q $(PYTHON_FILES)
@@ -105,7 +106,7 @@ root-test::
 	/bin/sh '$(REPOSITORY_ROOT_LITERAL)/scripts/test-makefile-root.sh'
 
 check:: root-test lint audit test build
-	/bin/sh '$(REPOSITORY_ROOT_LITERAL)/scripts/check-baseline.sh'
+	PYTHON='$(REPOSITORY_PYTHON_LITERAL)' /bin/sh '$(REPOSITORY_ROOT_LITERAL)/scripts/check-baseline.sh'
 endef
 
 $(eval $(REPOSITORY_PUBLIC_RECIPES))
