@@ -5,9 +5,9 @@
 - Bound the baseline workflow contract helper to Make's reviewed Python
   interpreter and added a hostile-PATH regression so systems where `python`
   still names Python 2 cannot break or redirect `make check`.
-- Preserved caller-selected interpreter command names by resolving them before
-  the hostile-PATH regression runs; Codex review reproduced the prior failure
-  with a PATH-provided wrapper and the Make authority harness now covers it.
+- Preserved caller-selected interpreter command names and repository-relative
+  paths by resolving them before the hostile-PATH regression runs; Codex review
+  reproduced both prior failures and the Make authority harness now covers them.
 
 ## 2026-06-21
 

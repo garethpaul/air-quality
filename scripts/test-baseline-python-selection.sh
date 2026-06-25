@@ -6,7 +6,15 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 case "$REPOSITORY_PYTHON" in
   /*) REVIEWED_PYTHON=$REPOSITORY_PYTHON ;;
-  */*) REVIEWED_PYTHON=$(CDPATH= cd -- "$ROOT_DIR" && command -v "$REPOSITORY_PYTHON") ;;
+  */*)
+    REVIEWED_PYTHON=$(
+      CDPATH= cd -- "$ROOT_DIR"
+      python_dir=$(dirname -- "$REPOSITORY_PYTHON")
+      python_name=$(basename -- "$REPOSITORY_PYTHON")
+      CDPATH= cd -- "$python_dir"
+      printf '%s/%s\n' "$(pwd -P)" "$python_name"
+    )
+    ;;
   *) REVIEWED_PYTHON=$(command -v "$REPOSITORY_PYTHON") ;;
 esac
 if [ ! -x "$REVIEWED_PYTHON" ]; then

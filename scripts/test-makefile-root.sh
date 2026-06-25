@@ -240,6 +240,25 @@ PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON=reviewed-python \
   >"$TEMP_ROOT/named-python.out" 2>&1
 grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/named-python.out"
 
+RELATIVE_ROOT="$TEMP_ROOT/relative-python-root"
+mkdir -p "$RELATIVE_ROOT/bin" "$RELATIVE_ROOT/scripts"
+cp "$ROOT_DIR/scripts/test-baseline-python-selection.sh" \
+  "$RELATIVE_ROOT/scripts/test-baseline-python-selection.sh"
+cat >"$RELATIVE_ROOT/scripts/check-baseline.sh" <<'SCRIPT'
+#!/bin/sh
+"$PYTHON" -I -B -c 'print("relative reviewed Python executed")'
+SCRIPT
+chmod +x "$RELATIVE_ROOT/scripts/check-baseline.sh"
+cat >"$RELATIVE_ROOT/bin/reviewed-python" <<'SCRIPT'
+#!/bin/sh
+exec /usr/bin/python3 "$@"
+SCRIPT
+chmod +x "$RELATIVE_ROOT/bin/reviewed-python"
+(cd "$CONTROL_DIR" && REPOSITORY_PYTHON=./bin/reviewed-python \
+  /bin/sh "$RELATIVE_ROOT/scripts/test-baseline-python-selection.sh") \
+  >"$TEMP_ROOT/relative-python.out" 2>&1
+grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/relative-python.out"
+
 PATH_GIT="$TEMP_ROOT/git"
 PATH_GIT_LOG="$TEMP_ROOT/path-git.log"
 cat >"$PATH_GIT" <<'SCRIPT'
