@@ -76,7 +76,8 @@ Caller-supplied additional makefiles remain outside the repository-controlled bo
   packages, and bytecode output after the interpreter is selected.
 - The baseline metadata helper uses the same reviewed Python interpreter as
   Make; a hostile-PATH regression prevents a legacy `python` executable from
-  redirecting or breaking `make check`.
+  redirecting or breaking `make check`. Caller-selected interpreter command
+  names are resolved before that hostile PATH is installed.
 - Route failures return stable JSON messages instead of exposing caught
   exception details; hosted CodeQL analyzes actions and Python on every push
   and pull request and on a weekly schedule.

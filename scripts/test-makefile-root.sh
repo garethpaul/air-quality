@@ -227,6 +227,19 @@ rm -f "$PYTHONPATH_MARKER"
 [ ! -e "$PYTHONPATH_MARKER" ]
 grep -Fq 'isolated Python executed the repository tests' "$TEMP_ROOT/pythonpath.out"
 
+NAMED_PYTHON_DIR="$TEMP_ROOT/named-python"
+NAMED_PYTHON="$NAMED_PYTHON_DIR/reviewed-python"
+mkdir -p "$NAMED_PYTHON_DIR"
+cat >"$NAMED_PYTHON" <<'SCRIPT'
+#!/bin/sh
+exec /usr/bin/python3 "$@"
+SCRIPT
+chmod +x "$NAMED_PYTHON"
+PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON=reviewed-python \
+  /bin/sh "$ROOT_DIR/scripts/test-baseline-python-selection.sh" \
+  >"$TEMP_ROOT/named-python.out" 2>&1
+grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/named-python.out"
+
 PATH_GIT="$TEMP_ROOT/git"
 PATH_GIT_LOG="$TEMP_ROOT/path-git.log"
 cat >"$PATH_GIT" <<'SCRIPT'
