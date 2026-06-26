@@ -1055,7 +1055,21 @@ class AirQualityTest(unittest.TestCase):
                     },
                 )
 
-    def test_no_valid_sensor_raises_value_error(self):
+    def test_empty_sensor_results_raise_service_error(self):
+        quality = air.AirQuality(
+            37.794678,
+            -122.41143,
+            cache_client=MemoryCache(),
+            data_url="https://example.test/air.json",
+            http_get=lambda _url: JsonResponse({"results": []}),
+        )
+
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA response contains no valid PM2.5 readings$"
+        ):
+            quality.getData()
+
+    def test_all_invalid_sensor_results_raise_service_error(self):
         quality = air.AirQuality(
             37.794678,
             -122.41143,
@@ -1071,7 +1085,9 @@ class AirQualityTest(unittest.TestCase):
             ),
         )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(
+            RuntimeError, "^AIRQUALITY_DATA response contains no valid PM2.5 readings$"
+        ):
             quality.getData()
 
     def test_missing_results_list_raises_runtime_error(self):

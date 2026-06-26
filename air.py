@@ -350,7 +350,9 @@ class AirQuality(object):
                 nearest = item
 
         if nearest is None:
-            raise ValueError("No valid PM2.5 readings were returned")
+            raise RuntimeError(
+                "AIRQUALITY_DATA response contains no valid PM2.5 readings"
+            )
 
         return nearest
 

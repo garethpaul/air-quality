@@ -57,6 +57,7 @@ Priority:
   valid empty results as a client-visible no-result outcome
 - Ignore non-finite upstream sensor values before distance and AQI calculations
 - Ignore overflowing upstream sensor values before distance and AQI calculations
+- Classify empty or all-invalid upstream sensor datasets as service failures
 - Near-antipodal sensor distances clamp floating-point drift to the haversine
   domain instead of failing valid location comparisons.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
@@ -86,7 +87,7 @@ Next priorities:
 - Exercise the deployment runbook on an authorized hosted instance without
   committing provider-specific credentials or configuration
 - Keep dependencies current enough to run on supported Python versions
-- Expand tests around distinct empty datasets and invalid coordinate shapes
+- Expand tests around remaining invalid coordinate shapes
 
 Contribution rules:
 

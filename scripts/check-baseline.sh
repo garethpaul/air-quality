@@ -90,6 +90,8 @@ for path in \
   "docs/plans/2026-06-16-search-query-control-character-guard.md" \
   "docs/plans/2026-06-25-redis-8-0-1.md" \
   "docs/plans/2026-06-26-unicode-search-cache-key.md" \
+  "docs/plans/2026-06-26-empty-sensor-service-error-design.md" \
+  "docs/plans/2026-06-26-empty-sensor-service-error.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
   "docs/plans/2026-06-21-msgpack-security-audit.md" \
@@ -2229,6 +2231,45 @@ for redis_patch_plan_contract in \
   if ! grep -Fq "$redis_patch_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-25-redis-8-0-1.md"; then
     printf '%s\n' "Redis patch plan must preserve completion evidence: $redis_patch_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for empty_sensor_source_contract in \
+  'raise RuntimeError(' \
+  '"AIRQUALITY_DATA response contains no valid PM2.5 readings"'; do
+  if ! grep -Fq "$empty_sensor_source_contract" "$ROOT_DIR/air.py"; then
+    printf '%s\n' "Empty sensor datasets must keep the service-error contract: $empty_sensor_source_contract" >&2
+    exit 1
+  fi
+done
+
+for empty_sensor_test_contract in \
+  'test_empty_sensor_results_raise_service_error' \
+  'test_all_invalid_sensor_results_raise_service_error' \
+  'RuntimeError, "^AIRQUALITY_DATA response contains no valid PM2.5 readings$"'; do
+  if ! grep -Fq "$empty_sensor_test_contract" "$ROOT_DIR/air_tests.py"; then
+    printf '%s\n' "Empty sensor dataset tests must keep contract: $empty_sensor_test_contract" >&2
+    exit 1
+  fi
+done
+
+for empty_sensor_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fiq 'empty or all-invalid upstream sensor' "$ROOT_DIR/$empty_sensor_document"; then
+    printf '%s\n' "$empty_sensor_document must document empty/all-invalid upstream sensor service errors." >&2
+    exit 1
+  fi
+done
+
+for empty_sensor_plan_contract in \
+  'Status: Completed' \
+  'test_empty_sensor_results_raise_service_error' \
+  'test_all_invalid_sensor_results_raise_service_error' \
+  'all 111 dependency-free unit tests passed' \
+  'Root/external `make check`'; do
+  if ! grep -Fq "$empty_sensor_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-26-empty-sensor-service-error.md"; then
+    printf '%s\n' "Empty sensor service-error plan must preserve completion evidence: $empty_sensor_plan_contract" >&2
     exit 1
   fi
 done

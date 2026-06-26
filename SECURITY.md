@@ -95,6 +95,9 @@ public error path.
 Response-adapter JSON failures are normalized to the same unchained service
 error without preserving provider content; decoded mapping adapters remain
 supported.
+Empty or all-invalid upstream sensor result lists use the generic service
+unavailable boundary; they are not client request errors and must not expose
+provider payload details.
 Geocoder transport failures during Mapbox client creation, request dispatch,
 or JSON decoding are normalized to a generic local service error without
 preserving provider, token, or exception details in the public error path.
