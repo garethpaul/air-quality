@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-25
+
+- Updated the exact Redis Python client pin from 8.0.0 to the 8.0.1 bug-fix
+  release while preserving the supported Python 3.12 and 3.14 verification
+  matrix and the existing cache API behavior.
+- Kept the direct dependency set exact and protected the reviewed Redis patch
+  decision with baseline and hostile-mutation contracts.
+
 ## 2026-06-24
 
 - Bound the baseline workflow contract helper to Make's reviewed Python
