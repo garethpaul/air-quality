@@ -41,6 +41,9 @@ geocode cache entries should be refreshed from Mapbox rather than returned to
 callers or used as coordinates.
 Unicode control characters are rejected from search queries before cache-key
 construction or Mapbox lookup; visible internationalized text remains valid.
+Canonically equivalent Unicode search text is normalized to NFC before Mapbox
+lookup and cache-key construction so visually identical place names share one
+provider/cache identity.
 Default Mapbox geocoder requests use a five-second timeout while preserving
 SDK session authentication and explicitly injected geocoder clients.
 Caller-provided timeout values cannot weaken the service-owned timeout.

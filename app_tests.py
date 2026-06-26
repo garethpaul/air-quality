@@ -177,6 +177,18 @@ class AppRouteHelperTest(unittest.TestCase):
     def test_parse_search_query_preserves_internationalized_visible_text(self):
         self.assertEqual(parse_search_query("  São Paulo 東京  "), "São Paulo 東京")
 
+    def test_parse_search_query_normalizes_canonical_unicode(self):
+        self.assertEqual(parse_search_query("  Cafe\u0301  "), "Café")
+
+    def test_search_payload_uses_normalized_query(self):
+        search_payload(
+            "Cafe\u0301",
+            geocode_factory=FakeGeoCode,
+            air_quality_factory=FakeAirQuality,
+        )
+
+        self.assertEqual(FakeGeoCode.calls, ["Café"])
+
     def test_show_data_does_not_expose_exception_details(self):
         cases = [
             (ValueError("private validation detail"), 400, "invalid request"),
