@@ -124,6 +124,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   object with a `results` list of sensor readings; redirects must also remain
   HTTPS, every resolved address must be globally reachable, and malformed
   upstream payloads fail as service errors.
+- Empty or all-invalid upstream sensor result lists return the stable service
+  unavailable boundary rather than misclassifying valid coordinates as a bad
+  request.
 - Non-finite readings and overflowing upstream sensor values for latitude,
   longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
@@ -206,6 +209,10 @@ before Bottle launch; an absent `PORT` retains the 5000 default.
   `/s` query validation contract.
 - See `docs/plans/2026-06-09-air-quality-nonfinite-sensor-values.md` for
   upstream sensor finite-value guard coverage.
+- See `docs/plans/2026-06-26-empty-sensor-service-error.md` for empty and
+  all-invalid upstream dataset error classification.
+- See `docs/plans/2026-06-26-empty-sensor-service-error-design.md` for the HTTP
+  boundary evidence and considered approaches.
 - See `docs/plans/2026-06-09-air-quality-geocode-coordinate-validation.md` for
   geocoder coordinate finite/range validation.
 - See `docs/plans/2026-06-09-air-quality-cache-payload-validation.md` for

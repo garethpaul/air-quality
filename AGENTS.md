@@ -50,6 +50,8 @@
 - Unicode control characters are rejected from `/s` queries before cache-key construction or Mapbox lookup; visible internationalized text remains supported.
 - Canonically equivalent Unicode search text is normalized to NFC before Mapbox lookup and cache-key construction.
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
+- Empty or all-invalid upstream sensor result lists fail as service errors, not
+  client request errors.
 - Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.
 - Boolean scoring helper inputs are rejected before numeric conversion.
