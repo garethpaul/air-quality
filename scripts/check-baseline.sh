@@ -89,6 +89,7 @@ for path in \
   "docs/plans/2026-06-16-server-port-validation.md" \
   "docs/plans/2026-06-16-search-query-control-character-guard.md" \
   "docs/plans/2026-06-25-redis-8-0-1.md" \
+  "docs/plans/2026-06-26-unicode-search-cache-key.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
   "docs/plans/2026-06-21-msgpack-security-audit.md" \
@@ -2146,14 +2147,14 @@ source = Path(sys.argv[1]).read_text(encoding="utf-8")
 method = source.split("def parse_search_query(query):", 1)[1].split(
     "\n\ndef search_payload", 1
 )[0]
-trim = "query_string = query.strip()"
+normalization = 'query_string = unicodedata.normalize("NFC", query.strip())'
 length = "if len(query_string) > SEARCH_QUERY_MAX_LENGTH:"
 control = 'unicodedata.category(character) == "Cc"'
 result = "return query_string"
-if not all(token in method for token in (trim, length, control, result)):
-    raise SystemExit("Search query validation must keep trim, length, control, and return boundaries.")
-if not method.index(trim) < method.index(length) < method.index(control) < method.index(result):
-    raise SystemExit("Search control validation must run after trim/length and before return.")
+if not all(token in method for token in (normalization, length, control, result)):
+    raise SystemExit("Search query validation must keep trim/NFC, length, control, and return boundaries.")
+if not method.index(normalization) < method.index(length) < method.index(control) < method.index(result):
+    raise SystemExit("Search control validation must run after trim/NFC and before return.")
 PY
 
 for search_control_test_contract in \
@@ -2165,6 +2166,38 @@ for search_control_test_contract in \
   '"São Paulo 東京"'; do
   if ! grep -Fq "$search_control_test_contract" "$ROOT_DIR/app_tests.py"; then
     printf '%s\n' "Search control-character tests must keep contract: $search_control_test_contract" >&2
+    exit 1
+  fi
+done
+
+for search_normalization_test_contract in \
+  'test_parse_search_query_normalizes_canonical_unicode' \
+  'test_search_payload_uses_normalized_query' \
+  'parse_search_query("  Cafe\u0301  ")' \
+  'FakeGeoCode.calls, ["Café"]'; do
+  if ! grep -Fq "$search_normalization_test_contract" "$ROOT_DIR/app_tests.py"; then
+    printf '%s\n' "Unicode search normalization tests must keep contract: $search_normalization_test_contract" >&2
+    exit 1
+  fi
+done
+
+for search_normalization_document in AGENTS.md README.md SECURITY.md VISION.md CHANGES.md; do
+  if ! grep -Fiq 'Unicode search text is normalized to NFC' \
+    "$ROOT_DIR/$search_normalization_document"; then
+    printf '%s\n' "$search_normalization_document must document NFC search normalization." >&2
+    exit 1
+  fi
+done
+
+for search_normalization_plan_contract in \
+  'Status: Completed' \
+  'test_parse_search_query_normalizes_canonical_unicode' \
+  'test_search_payload_uses_normalized_query' \
+  'Repository and external-directory `make check`' \
+  'isolated hostile mutations'; do
+  if ! grep -Fq "$search_normalization_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-26-unicode-search-cache-key.md"; then
+    printf '%s\n' "Unicode search normalization plan must preserve completion evidence: $search_normalization_plan_contract" >&2
     exit 1
   fi
 done

@@ -1,5 +1,68 @@
 # Changes
 
+## 2026-06-26 06:05 PDT - P2 - Canonicalize Unicode search cache keys
+
+### Summary
+
+Normalized canonically equivalent place-name queries before Mapbox lookup so
+visually identical Unicode text cannot fragment Redis cache keys or duplicate
+provider work.
+Canonically equivalent Unicode search text is normalized to NFC before Mapbox
+lookup and cache-key construction.
+
+### Work completed
+
+- Added focused red/green regressions for decomposed `Café` input and the
+  query forwarded to the geocoder factory.
+- Applied standard-library NFC normalization at the existing trimmed search
+  boundary before length and control-character validation.
+- Added mutation-sensitive source, test, guidance, and plan contracts.
+- Synchronized contributor, security, product, and public behavior guidance.
+
+### Threads
+
+- None; repository history, plans, source, tests, issues, PRs, and hosted CI
+  were reviewed directly.
+
+### Files changed
+
+- `app.py` — NFC query normalization.
+- `app_tests.py` — canonical-equivalence and forwarded-query regressions.
+- `scripts/check-baseline.sh` — durable normalization contracts.
+- `AGENTS.md`, `README.md`, `SECURITY.md`, and `VISION.md` — maintained
+  behavior contract.
+- `docs/plans/2026-06-26-unicode-search-cache-key.md` — implementation and
+  verification record.
+
+### Validation
+
+- RED focused isolated tests — failed on decomposed query output and forwarding.
+- GREEN focused isolated tests — passed after the one-line boundary fix.
+- Ruff format/lint, `pip-audit` with no known vulnerabilities, all 110 unit
+  tests, and Python compilation — passed with isolated Python 3.14.
+- Seven isolated hostile source, ordering, regression, guidance, and plan
+  mutations —
+  all rejected.
+- Default pyenv and bare Homebrew interpreter attempts — failed respectively
+  because Python 3.14 was not installed in pyenv and development modules were
+  absent; the existing isolated Python 3.14 environment supplied the gate.
+- Repository and external-directory `make check` — passed Ruff format/lint,
+  `pip-audit`, 110 tests, compilation, Make authority, workflow checkout, and
+  portable baseline verification.
+
+### Bugs / findings
+
+- P2 correctness/cost: canonically equivalent visible place names previously
+  produced different geocoder cache keys and could duplicate Mapbox requests.
+
+### Blockers
+
+- None.
+
+### Next action
+
+- Complete exact-head review, hosted checks, and merge.
+
 ## 2026-06-25
 
 - Updated the exact Redis Python client pin from 8.0.0 to the 8.0.1 bug-fix

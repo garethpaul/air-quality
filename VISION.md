@@ -45,6 +45,8 @@ Priority:
 - Bound search-query inputs before cache-key construction or Mapbox lookup
 - Reject Unicode control characters from search queries while preserving
   visible internationalized text
+- Canonically equivalent Unicode search text is normalized to NFC before
+  Mapbox lookup and cache-key construction
 - Normalize geocoder transport failures without exposing provider details
 - Normalize response-adapter JSON failures as service errors while preserving
   decoded mapping adapters

@@ -119,6 +119,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty text `query` value of 200 characters or fewer.
 - Unicode control characters are rejected from `/s` queries before cache-key construction or Mapbox lookup; visible internationalized text remains supported.
+- Canonically equivalent Unicode search text is normalized to NFC before Mapbox lookup and cache-key construction.
 - The configured `AIRQUALITY_DATA` endpoint must use HTTPS and return a JSON
   object with a `results` list of sensor readings; redirects must also remain
   HTTPS, every resolved address must be globally reachable, and malformed

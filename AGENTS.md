@@ -48,6 +48,7 @@
 - Detected references to Mapbox. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - The `/` route requires finite numeric `lat` and `lng` values in valid coordinate ranges. The `/s` route requires a non-empty text `query` value of 200 characters or fewer.
 - Unicode control characters are rejected from `/s` queries before cache-key construction or Mapbox lookup; visible internationalized text remains supported.
+- Canonically equivalent Unicode search text is normalized to NFC before Mapbox lookup and cache-key construction.
 - The configured `AIRQUALITY_DATA` endpoint must return a JSON object with a `results` list of sensor readings; malformed upstream payloads fail as service errors instead of raw exceptions.
 - Non-finite readings and overflowing upstream sensor values for latitude, longitude, or PM2.5 are ignored before distance and AQI calculations.
 - Boolean upstream sensor values are ignored before distance and AQI calculations.

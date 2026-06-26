@@ -67,7 +67,7 @@ def parse_search_query(query):
     if not isinstance(query, str):
         raise ValueError("query must be a string")
 
-    query_string = query.strip()
+    query_string = unicodedata.normalize("NFC", query.strip())
     if not query_string:
         raise ValueError("query is required")
 
