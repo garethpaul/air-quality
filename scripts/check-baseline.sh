@@ -88,6 +88,7 @@ for path in \
   "docs/plans/2026-06-16-air-quality-geocoder-payload-errors.md" \
   "docs/plans/2026-06-16-server-port-validation.md" \
   "docs/plans/2026-06-16-search-query-control-character-guard.md" \
+  "docs/plans/2026-06-25-redis-8-0-1.md" \
   "docs/plans/2026-06-16-air-quality-geocoder-timeout.md" \
   "docs/plans/2026-06-17-air-quality-geocoder-timeout-enforcement.md" \
   "docs/plans/2026-06-21-msgpack-security-audit.md" \
@@ -1686,7 +1687,7 @@ for requirement in \
   'requests==2.34.2' \
   'mapbox==0.18.1' \
   'msgpack==1.2.1' \
-  'redis==8.0.0'; do
+  'redis==8.0.1'; do
   if ! grep -Fxq "$requirement" "$ROOT_DIR/requirements.txt"; then
     printf '%s\n' "requirements.txt must keep exact direct pin: $requirement" >&2
     exit 1
@@ -2183,6 +2184,18 @@ for search_control_plan_contract in \
   if ! grep -Fq "$search_control_plan_contract" \
     "$ROOT_DIR/docs/plans/2026-06-16-search-query-control-character-guard.md"; then
     printf '%s\n' "Search control-character plan must preserve completion evidence: $search_control_plan_contract" >&2
+    exit 1
+  fi
+done
+
+for redis_patch_plan_contract in \
+  'Status: Completed' \
+  'PyPI publishes redis-py 8.0.1 for Python 3.10 and newer' \
+  'Five isolated hostile mutations were rejected' \
+  'Repository and external-directory `make check`'; do
+  if ! grep -Fq "$redis_patch_plan_contract" \
+    "$ROOT_DIR/docs/plans/2026-06-25-redis-8-0-1.md"; then
+    printf '%s\n' "Redis patch plan must preserve completion evidence: $redis_patch_plan_contract" >&2
     exit 1
   fi
 done

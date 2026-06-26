@@ -2,4 +2,4 @@ bottle==0.13.4
 requests==2.34.2
 mapbox==0.18.1
 msgpack==1.2.1
-redis==8.0.0
+redis==8.0.1
