@@ -1,5 +1,42 @@
 # Changes
 
+## 2026-07-17 09:20 PDT - P2 - Verify that make check runners execute and can fail
+
+### Summary
+
+Every contract binding a runner into `make check` was a substring text pin, so
+each pin was satisfied by text that never executes. Commenting out a recipe
+line, relocating it verbatim to an unused target, reducing a harness to its own
+success `printf`, dropping a test module, or dropping the `run_tests.py` result
+check all left `make check` green. In the last case the gate printed
+`FAILED (failures=1)` and still exited zero. The runners all pass today, so this
+was a verification gap rather than an escaped defect: nothing is known to have
+slipped, but the gate could not have noticed.
+
+### Work completed
+
+- Required `make check` to dispatch each runner, matched whole-line against the
+  sandbox dispatch log so a neutered recipe cannot satisfy the contract.
+- Observed the Make authority harness's own dispatch from the baseline checker,
+  because a neutered `root-test` recipe never runs the harness that would
+  otherwise be its only oracle.
+- Added planted-defect controls: the authority harness must reject a no-op and a
+  caller-overridable-`ROOT` Makefile, the selection harness must reject a missing
+  and a non-executable interpreter, the workflow checkout checker must reject
+  `persist-credentials: true`, and `run_tests.py` must fail a planted failing
+  suite and execute every discovered `*_tests.py` module.
+
+### Threads
+
+- None; the gate, runners, and workflows were probed directly.
+
+### Files changed
+
+- `scripts/check-baseline.sh` — runner dispatch and planted-defect controls.
+- `scripts/test-makefile-root.sh` — whole-line dispatch log contracts, selection
+  harness rejection controls, and failure output surfacing.
+- `docs/plans/2026-07-17-verify-runner-execution-and-verdicts.md` — record.
+
 ## 2026-06-26 14:07 PDT - P2 - Classify empty sensor datasets as service failures
 
 ### Summary
