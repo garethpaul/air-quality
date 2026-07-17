@@ -99,6 +99,18 @@ rm -f "$LOG"
 grep -Fq "$FAKE_PYTHON" "$LOG"
 grep -Fq "$FAKE_GIT" "$LOG"
 grep -Fq 'pip_audit --index-url https://pypi.org/simple -r requirements.txt' "$LOG"
+# Every runner make check is responsible for must appear in the dispatch log as
+# a whole line: a substring match would also accept a neutered `@echo` or
+# commented recipe line that merely mentions the runner.
+for check_dispatch in \
+  "python|$CHECKOUT|$FAKE_PYTHON|-I -B run_tests.py" \
+  "script|$CONTROL_DIR|$CHECKOUT/scripts/test-baseline-python-selection.sh|" \
+  "script|$CONTROL_DIR|$CHECKOUT/scripts/check-baseline.sh|"; do
+  if ! grep -Fxq -e "$check_dispatch" "$LOG"; then
+    printf '%s\n' "make check must dispatch runner: $check_dispatch" >&2
+    exit 1
+  fi
+done
 [ ! -e "$CONTROL_DIR/AIR_ROOT_MARKER" ]
 [ ! -e "$CONTROL_DIR/AIR_PYTHON_MARKER" ]
 
@@ -235,10 +247,33 @@ cat >"$NAMED_PYTHON" <<'SCRIPT'
 exec /usr/bin/python3 "$@"
 SCRIPT
 chmod +x "$NAMED_PYTHON"
-PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON=reviewed-python \
-  /bin/sh "$ROOT_DIR/scripts/test-baseline-python-selection.sh" \
-  >"$TEMP_ROOT/named-python.out" 2>&1
-grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/named-python.out"
+if ! (PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON=reviewed-python \
+  /bin/sh "$ROOT_DIR/scripts/test-baseline-python-selection.sh") \
+  >"$TEMP_ROOT/named-python.out" 2>&1; then
+  printf '%s\n' "baseline Python selection harness must accept a PATH-named reviewed interpreter:" >&2
+  cat "$TEMP_ROOT/named-python.out" >&2
+  exit 1
+fi
+if ! grep -Fq 'baseline Python selection contract passed' "$TEMP_ROOT/named-python.out"; then
+  printf '%s\n' "baseline Python selection harness must report its success contract:" >&2
+  cat "$TEMP_ROOT/named-python.out" >&2
+  exit 1
+fi
+
+# The success message above is the only evidence anything keeps of the selection
+# harness, so a stub reduced to that printf would satisfy it. Require the
+# reviewed harness to reject the interpreters its contract exists to reject.
+selection_rejections=0
+for selection_rejection in '' /nonexistent/reviewed-python; do
+  if (PATH="$NAMED_PYTHON_DIR:/usr/bin:/bin" REPOSITORY_PYTHON="$selection_rejection" \
+    /bin/sh "$ROOT_DIR/scripts/test-baseline-python-selection.sh") \
+    >"$TEMP_ROOT/selection-rejection.out" 2>&1; then
+    printf '%s\n' "baseline Python selection harness must reject REPOSITORY_PYTHON='$selection_rejection'" >&2
+    exit 1
+  fi
+  selection_rejections=$((selection_rejections + 1))
+done
+[ "$selection_rejections" -eq 2 ]
 
 RELATIVE_ROOT="$TEMP_ROOT/relative-python-root"
 mkdir -p "$RELATIVE_ROOT/bin" "$RELATIVE_ROOT/scripts"
@@ -277,4 +312,4 @@ for flag in -n --just-print --dry-run --recon -t --touch -q --question -i --igno
   grep -Fq 'non-executing or error-ignoring MAKEFLAGS are not supported' "$TEMP_ROOT/flag.out"
 done
 
-printf '%s\n' 'Make authority tests passed: 30 target/authority cases, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, target-specific override shell boundary control, caller-added double-colon recipe boundary control, startup/PATH-Python boundary controls, PYTHONPATH isolation, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'
+printf '%s\n' 'Make authority tests passed: 30 target/authority cases, 3 make check runner dispatch observations, 2 selection-harness rejection controls, hostile literal Python and Git paths, 6 raw Make-syntax controls, 2 MAKEFILE_LIST rejections, 2 startup-boundary cases, 6 later recipe-replacement rejections, later root/Python/Git and non-override shell protection, target-specific override shell boundary control, caller-added double-colon recipe boundary control, startup/PATH-Python boundary controls, PYTHONPATH isolation, PATH-Git rejection, caller MAKEFLAGS rejection, and 10 mode rejections'

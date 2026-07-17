@@ -1510,8 +1510,8 @@ for make_contract in \
   fi
 done
 
-if ! grep -Fq '"$PYTHON" -I -B "$ROOT_DIR/scripts/check-workflow-checkout.py"' "$ROOT_DIR/scripts/check-baseline.sh"; then
-  printf '%s\n' "Baseline workflow checks must use the reviewed Python interpreter." >&2
+if ! grep -Fxq -e '"$PYTHON" -I -B "$ROOT_DIR/scripts/check-workflow-checkout.py"' "$ROOT_DIR/scripts/check-baseline.sh"; then
+  printf '%s\n' "Baseline workflow checks must use the reviewed Python interpreter on its own unconditional line." >&2
   exit 1
 fi
 
@@ -1530,8 +1530,180 @@ if [ ! -x "$MAKE_AUTHORITY_SCRIPT" ]; then
   exit 1
 fi
 
+BASELINE_SANDBOX=$(mktemp -d "${TMPDIR:-/tmp}/air-quality-baseline-sandbox.XXXXXX")
+trap 'rm -rf "$BASELINE_SANDBOX"' EXIT HUP INT TERM
+
+# Observing text cannot prove a runner ran: a commented-out, @echo-prefixed or
+# relocated recipe line keeps every content contract above satisfied. Dispatch
+# `make check` against logging stubs and require the authority harness to be
+# executed. The harness cannot make this assertion about its own invocation,
+# because a neutered `root-test` recipe never runs it.
+AUTHORITY_DISPATCH="$BASELINE_SANDBOX/authority-dispatch"
+AUTHORITY_CONTROL="$AUTHORITY_DISPATCH/control"
+AUTHORITY_CHECKOUT="$AUTHORITY_DISPATCH/checkout"
+AUTHORITY_LOG="$AUTHORITY_DISPATCH/commands.log"
+mkdir -p "$AUTHORITY_CONTROL" "$AUTHORITY_CHECKOUT/scripts"
+cp "$MAKEFILE" "$AUTHORITY_CHECKOUT/Makefile"
+AUTHORITY_PYTHON="$AUTHORITY_DISPATCH/dispatch-python"
+cat >"$AUTHORITY_PYTHON" <<'SCRIPT'
+#!/bin/sh
+printf 'python|%s|%s|%s\n' "$PWD" "$0" "$*" >> "$AIR_QUALITY_COMMAND_LOG"
+SCRIPT
+AUTHORITY_GIT="$AUTHORITY_DISPATCH/dispatch-git"
+cat >"$AUTHORITY_GIT" <<'SCRIPT'
+#!/bin/sh
+printf 'git|%s|%s|%s\n' "$PWD" "$0" "$*" >> "$AIR_QUALITY_COMMAND_LOG"
+printf '%s\n' air.py app.py geocode.py run_tests.py
+SCRIPT
+chmod 700 "$AUTHORITY_PYTHON" "$AUTHORITY_GIT"
+for dispatch_script in check-baseline.sh test-baseline-python-selection.sh test-makefile-root.sh; do
+  cat >"$AUTHORITY_CHECKOUT/scripts/$dispatch_script" <<'SCRIPT'
+#!/bin/sh
+printf 'script|%s|%s|%s\n' "$PWD" "$0" "$*" >> "$AIR_QUALITY_COMMAND_LOG"
+SCRIPT
+  chmod 700 "$AUTHORITY_CHECKOUT/scripts/$dispatch_script"
+done
+if ! (
+  unset GIT MAKEFILES MAKEFILE_LIST MAKEFLAGS MFLAGS MAKEOVERRIDES MAKELEVEL PYTHON ROOT SHELL
+  cd "$AUTHORITY_CONTROL" && AIR_QUALITY_COMMAND_LOG="$AUTHORITY_LOG" \
+    /usr/bin/make --no-print-directory -f "$AUTHORITY_CHECKOUT/Makefile" \
+    "PYTHON=$AUTHORITY_PYTHON" "GIT=$AUTHORITY_GIT" check
+) >"$AUTHORITY_DISPATCH/check.out" 2>&1; then
+  printf '%s\n' "Sandbox make check must succeed before its runner dispatch can be observed." >&2
+  cat "$AUTHORITY_DISPATCH/check.out" >&2
+  exit 1
+fi
+if ! grep -Fxq -e "script|$AUTHORITY_CONTROL|$AUTHORITY_CHECKOUT/scripts/test-makefile-root.sh|" \
+  "$AUTHORITY_LOG"; then
+  printf '%s\n' "make check must execute scripts/test-makefile-root.sh; the Make authority harness was not dispatched." >&2
+  exit 1
+fi
+
+# Dispatch proves the harness ran, not that it still tests anything: every
+# vocabulary contract below is satisfied by its closing success printf alone.
+# Hand the reviewed harness Makefiles that abandon the boundaries it exists to
+# defend -- one with no recipes at all, one whose ROOT the caller can override --
+# and require it to reject both.
+AUTHORITY_CONTROL_ROOT="$BASELINE_SANDBOX/authority-control"
+mkdir -p "$AUTHORITY_CONTROL_ROOT/scripts"
+cp "$MAKE_AUTHORITY_SCRIPT" "$AUTHORITY_CONTROL_ROOT/scripts/test-makefile-root.sh"
+chmod 700 "$AUTHORITY_CONTROL_ROOT/scripts/test-makefile-root.sh"
+authority_controls=0
+for authority_defect in no-op-recipes caller-overridable-root; do
+  case "$authority_defect" in
+    no-op-recipes)
+      printf '%s\n\t@:\n' 'audit build check lint root-test test:' \
+        >"$AUTHORITY_CONTROL_ROOT/Makefile"
+      ;;
+    caller-overridable-root)
+      /usr/bin/sed 's/^override ROOT := /ROOT ?= /' "$MAKEFILE" \
+        >"$AUTHORITY_CONTROL_ROOT/Makefile"
+      if ! grep -Fq 'ROOT ?= $(shell path=' "$AUTHORITY_CONTROL_ROOT/Makefile"; then
+        printf '%s\n' "Planted caller-overridable ROOT defect was not applied; the control proves nothing." >&2
+        exit 1
+      fi
+      ;;
+  esac
+  if /bin/sh "$AUTHORITY_CONTROL_ROOT/scripts/test-makefile-root.sh" \
+    >"$BASELINE_SANDBOX/authority-control.out" 2>&1; then
+    printf '%s\n' "Make authority harness must reject a Makefile with the $authority_defect defect; it accepted one." >&2
+    exit 1
+  fi
+  authority_controls=$((authority_controls + 1))
+done
+[ "$authority_controls" -eq 2 ]
+
+# A dispatch log proves the workflow checkout checker ran, not that it works:
+# a stub printing its success message satisfies every contract above. Hand the
+# reviewed checker a planted defect and require it to reject it.
+WORKFLOW_CHECKER_SANDBOX="$BASELINE_SANDBOX/workflow-checker"
+mkdir -p "$WORKFLOW_CHECKER_SANDBOX/scripts" "$WORKFLOW_CHECKER_SANDBOX/.github/workflows"
+cp "$ROOT_DIR/scripts/check-workflow-checkout.py" \
+  "$WORKFLOW_CHECKER_SANDBOX/scripts/check-workflow-checkout.py"
+for sandbox_workflow in check.yml codeql.yml; do
+  cp "$ROOT_DIR/.github/workflows/$sandbox_workflow" \
+    "$WORKFLOW_CHECKER_SANDBOX/.github/workflows/$sandbox_workflow"
+done
+if ! "$PYTHON" -I -B "$WORKFLOW_CHECKER_SANDBOX/scripts/check-workflow-checkout.py" >/dev/null 2>&1; then
+  printf '%s\n' "Workflow checkout checker must accept the canonical workflows when copied verbatim." >&2
+  exit 1
+fi
+/usr/bin/sed 's/persist-credentials: false/persist-credentials: true/' \
+  "$ROOT_DIR/.github/workflows/check.yml" \
+  >"$WORKFLOW_CHECKER_SANDBOX/.github/workflows/check.yml"
+if ! grep -Fq 'persist-credentials: true' \
+  "$WORKFLOW_CHECKER_SANDBOX/.github/workflows/check.yml"; then
+  printf '%s\n' "Planted checkout credential defect was not applied; the control proves nothing." >&2
+  exit 1
+fi
+if "$PYTHON" -I -B "$WORKFLOW_CHECKER_SANDBOX/scripts/check-workflow-checkout.py" >/dev/null 2>&1; then
+  printf '%s\n' "Workflow checkout checker must reject persist-credentials: true; it accepted a planted credential defect." >&2
+  exit 1
+fi
+
+# Executing the suite is not the same as being able to fail: without this
+# control, dropping the result check from run_tests.py leaves `make check` green
+# while its own output reports FAILED. Hand the reviewed runner a planted
+# failing suite and require a nonzero exit.
+RUNNER_CONTROL="$BASELINE_SANDBOX/runner-control"
+mkdir -p "$RUNNER_CONTROL"
+cp "$ROOT_DIR/run_tests.py" "$RUNNER_CONTROL/run_tests.py"
+cat >"$RUNNER_CONTROL/app_tests.py" <<'PYTHON'
+import unittest
+
+
+class PlantedFailureTest(unittest.TestCase):
+    def test_planted_failure(self):
+        self.assertEqual(1, 2)
+PYTHON
+if (cd "$RUNNER_CONTROL" && "$PYTHON" -I -B run_tests.py) \
+  >"$BASELINE_SANDBOX/runner-control.out" 2>&1; then
+  printf '%s\n' "run_tests.py must exit nonzero when its suite reports failures; it reported success for a planted failing suite." >&2
+  exit 1
+fi
+if ! grep -Fq 'test_planted_failure' "$BASELINE_SANDBOX/runner-control.out"; then
+  printf '%s\n' "Planted failing test was never executed; the run_tests.py verdict control proves nothing." >&2
+  exit 1
+fi
+
+# Content contracts on air_tests.py, app_tests.py and geocode_tests.py prove
+# nothing unless run_tests.py actually executes those modules. Load the real
+# suite and require every discovered test module to be represented in it.
+if ! (cd "$ROOT_DIR" && "$PYTHON" -I -B - <<'SUITE_COMPOSITION'
+import sys
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, ".")
+import run_tests
+
+
+def leaves(suite):
+    for test in suite:
+        if isinstance(test, unittest.TestSuite):
+            yield from leaves(test)
+        else:
+            yield test
+
+
+loaded = {test.id().split(".")[0] for test in leaves(run_tests.load_suite())}
+runner = Path(run_tests.__file__).stem
+discovered = {path.stem for path in Path(".").glob("*_tests.py")} - {runner}
+missing = sorted(discovered - loaded)
+if missing:
+    sys.stderr.write("test modules absent from the executed suite: %s\n" % ", ".join(missing))
+    raise SystemExit(1)
+SUITE_COMPOSITION
+) >"$BASELINE_SANDBOX/suite-composition.out" 2>&1; then
+  printf '%s\n' "run_tests.py must execute every discovered *_tests.py module." >&2
+  cat "$BASELINE_SANDBOX/suite-composition.out" >&2
+  exit 1
+fi
+
 for make_authority_test_contract in \
   '30 target/authority cases' \
+  '3 make check runner dispatch observations' \
+  '2 selection-harness rejection controls' \
   '6 raw Make-syntax controls' \
   '2 MAKEFILE_LIST rejections' \
   '2 startup-boundary cases' \
